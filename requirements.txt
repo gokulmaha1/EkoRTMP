@@ -1,2 +1,5 @@
 PyGObject
 pycairo
+fastapi
+uvicorn
+python-multipart

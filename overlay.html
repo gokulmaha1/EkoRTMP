@@ -1,26 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Stream Overlay</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="overlay-container">
+        <!-- Webview Background/Overlay -->
+        <div class="webview-layer">
+            <iframe id="webview" src=""></iframe>
+        </div>
+
+        <!-- Custom Overlays -->
         <div class="lower-third">
-            <h1>Live Stream</h1>
-            <p>Broadcasting from Hostinger VPS</p>
+            <h1 id="title">Live Stream</h1>
+            <p id="subtitle">Starting soon...</p>
+            <div id="info" class="info-ticker"></div>
         </div>
         <div class="clock" id="clock">00:00:00</div>
     </div>
 
     <script>
+        const titleEl = document.getElementById('title');
+        const subtitleEl = document.getElementById('subtitle');
+        const infoEl = document.getElementById('info');
+        const webviewFrame = document.getElementById('webview');
+
+        // Clock
         function updateClock() {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString();
         }
         setInterval(updateClock, 1000);
         updateClock();
+
+        // Data polling
+        let currentUrl = "";
+
+        async function fetchOverlayData() {
+            try {
+                // Fetch from the server relative path
+                const res = await fetch('/overlay/data');
+                const data = await res.json();
+
+                if (data.title) titleEl.innerText = data.title;
+                if (data.subtitle) subtitleEl.innerText = data.subtitle;
+                if (data.info) infoEl.innerText = data.info;
+
+                if (data.webview_url && data.webview_url !== currentUrl) {
+                    currentUrl = data.webview_url;
+                    webviewFrame.src = currentUrl;
+                    webviewFrame.classList.add('active');
+                } else if (!data.webview_url) {
+                    currentUrl = "";
+                    webviewFrame.classList.remove('active');
+                    webviewFrame.src = ""; // Clear
+                }
+
+            } catch (err) {
+                console.error("Failed to fetch overlay data:", err);
+            }
+        }
+
+        // Poll every 1 second
+        setInterval(fetchOverlayData, 1000);
+        fetchOverlayData();
     </script>
 </body>
+
 </html>

@@ -36,10 +36,15 @@ class StreamOverlayApp:
         self.webview.set_background_color(Gtk.gdk.RGBA(0, 0, 0, 0)) # Transparent background
         self.window.add(self.webview)
         
-        # Load local HTML file
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        html_path = os.path.join(current_dir, 'overlay.html')
-        self.webview.load_uri(f'file://{html_path}')
+        # Load overlay
+        overlay_url = os.environ.get('OVERLAY_URL')
+        if not overlay_url:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            html_path = os.path.join(current_dir, 'overlay.html')
+            overlay_url = f'file://{html_path}'
+        
+        print(f"Loading overlay from: {overlay_url}")
+        self.webview.load_uri(overlay_url)
         
         self.window.show_all()
         

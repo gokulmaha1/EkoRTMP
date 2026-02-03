@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Command Center</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="glass-panel">
+            <div class="logo">
+                <span class="logo-icon">📡</span>
+                <h1>Eko<span class="highlight">RTMP</span></h1>
+            </div>
+            <div class="status-indicator" id="connectionStatus">
+                <span class="dot"></span>
+                <span class="text">System Ready</span>
+            </div>
+        </header>
+
+        <main>
+            <!-- Control Section -->
+            <section class="control-panel glass-panel">
+                <h2>Stream Control</h2>
+                <div class="stream-status">
+                    <div class="status-ring" id="streamStatusRing">
+                        <div class="inner-circle">
+                            <span id="streamStatusText">OFFLINE</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button id="btnStart" class="btn btn-primary">
+                        <span class="icon">▶</span> Start Stream
+                    </button>
+                    <button id="btnStop" class="btn btn-danger" disabled>
+                        <span class="icon">⏹</span> Stop Stream
+                    </button>
+                </div>
+            </section>
+
+            <!-- Overlay Editor Section -->
+            <section class="overlay-panel glass-panel">
+                <div class="panel-header">
+                    <h2>Overlay Manager</h2>
+                    <button id="btnUpdateOverlay" class="btn btn-secondary">
+                        <span class="icon">⚡</span> Update Live
+                    </button>
+                </div>
+
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Stream Title</label>
+                        <input type="text" id="inpTitle" placeholder="e.g. Late Night Coding">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Subtitle</label>
+                        <input type="text" id="inpSubtitle" placeholder="e.g. Building an RTMP Server">
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label>Info Ticker</label>
+                        <input type="text" id="inpInfo" placeholder="e.g. Follow for more updates! | !commands">
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label>External Webview URL</label>
+                        <div class="url-input-wrapper">
+                            <input type="url" id="inpWebview" placeholder="https://external-widget.com/chat">
+                            <span class="badge">Experimental</span>
+                        </div>
+                        <small>Embed external content like chat or alerts directly into the stream.</small>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <div class="preview-note">
+            <p>Preview: Open <a href="/overlay" target="_blank" class="link">Overlay View</a> in a new tab</p>
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+
+</html>
