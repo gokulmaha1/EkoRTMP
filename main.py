@@ -24,7 +24,7 @@ FRAMERATE = 30
 
 class StreamOverlayApp:
     def __init__(self):
-        self.mainloop = Gtk.MainLoop()
+        self.mainloop = GLib.MainLoop()
         
         # --- shared state for overlay ---
         self.surface_lock = threading.Lock()
