@@ -25,11 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Stream Controls
 btnStart.addEventListener('click', async () => {
-    const rtmpUrl = document.getElementById('inpRtmpUrl').value;
-    if (!rtmpUrl) {
-        alert("Please enter an RTMP URL");
+    const streamKey = document.getElementById('inpRtmpUrl').value;
+    if (!streamKey) {
+        alert("Please enter your Stream Key");
         return;
     }
+
+    // Automatically prepend YouTube URL
+    const rtmpUrl = `rtmp://a.rtmp.youtube.com/live2/${streamKey}`;
 
     setLoading(true);
     try {
