@@ -3,3 +3,4 @@ pycairo
 fastapi
 uvicorn
 python-multipart
+websockets
