@@ -18,16 +18,26 @@ let pollingInterval = null;
 document.addEventListener('DOMContentLoaded', () => {
     fetchStatus();
     fetchOverlayData();
-    
+
     // Poll status every 2 seconds
     pollingInterval = setInterval(fetchStatus, 2000);
 });
 
 // Stream Controls
 btnStart.addEventListener('click', async () => {
+    const rtmpUrl = document.getElementById('inpRtmpUrl').value;
+    if (!rtmpUrl) {
+        alert("Please enter an RTMP URL");
+        return;
+    }
+
     setLoading(true);
     try {
-        const res = await fetch(`${API_BASE}/stream/start`, { method: 'POST' });
+        const res = await fetch(`${API_BASE}/stream/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rtmp_url: rtmpUrl })
+        });
         const data = await res.json();
         console.log('Start stream:', data);
         setTimeout(fetchStatus, 1000); // Check status shortly after
@@ -64,20 +74,20 @@ btnUpdateOverlay.addEventListener('click', async () => {
     // Visual feedback
     const originalText = btnUpdateOverlay.innerHTML;
     btnUpdateOverlay.innerHTML = '<span class="icon">⏳</span> Updating...';
-    
+
     try {
         await fetch(`${API_BASE}/overlay`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        
+
         // Success feedback
         btnUpdateOverlay.innerHTML = '<span class="icon">✔</span> Updated!';
         setTimeout(() => {
             btnUpdateOverlay.innerHTML = originalText;
         }, 1500);
-        
+
     } catch (err) {
         console.error('Error updating overlay:', err);
         btnUpdateOverlay.innerHTML = '<span class="icon">⚠</span> Error';
@@ -100,7 +110,7 @@ async function fetchOverlayData() {
     try {
         const res = await fetch('/overlay/data');
         const data = await res.json();
-        
+
         if (data.title) inpTitle.value = data.title;
         if (data.subtitle) inpSubtitle.value = data.subtitle;
         if (data.info) inpInfo.value = data.info;

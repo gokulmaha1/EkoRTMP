@@ -17,8 +17,12 @@ sudo apt update
 sudo apt install docker.io
 ```
 
-### 2. Upload Code
-Upload this directory to your VPS (using SCP, SFTP, or Git).
+### 2. Setup on Server
+SSH into your VPS and clone the repository:
+```bash
+git clone https://github.com/gokulmaha1/EkoRTMP.git
+cd EkoRTMP
+```
 
 ### 3. Build Docker Image
 Run the following command in the project directory:
@@ -36,7 +40,6 @@ You need to specify the RTMP URL where you want to stream.
 sudo docker run -d \
   --name broadcaster \
   -p 8000:8000 \
-  -e RTMP_URL="rtmp://live.twitch.tv/app/YOUR_STREAM_KEY" \
   rtmp-broadcaster
 ```
 

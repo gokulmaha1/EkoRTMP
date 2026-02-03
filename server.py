@@ -80,8 +80,11 @@ def update_overlay(data: OverlayUpdate):
     
     return {"status": "updated", "data": current_data}
 
+class StreamConfig(BaseModel):
+    rtmp_url: Optional[str] = None
+
 @app.post("/api/stream/start")
-def start_stream():
+def start_stream(config: StreamConfig):
     global stream_process
     if stream_process and stream_process.poll() is None:
         return {"status": "already_running"}
@@ -91,6 +94,9 @@ def start_stream():
     # but more importantly we need to make sure main.py requests the overlay from THIS server.
     env = os.environ.copy()
     env["OVERLAY_URL"] = "http://127.0.0.1:8000/overlay"
+    
+    if config.rtmp_url:
+        env["RTMP_URL"] = config.rtmp_url
     
     try:
         # Popen is non-blocking
