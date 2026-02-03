@@ -12,12 +12,17 @@ const inpSubtitle = document.getElementById('inpSubtitle');
 const inpInfo = document.getElementById('inpInfo');
 const inpWebview = document.getElementById('inpWebview');
 
+const consoleWindow = document.getElementById('consoleWindow');
+const btnClearLogs = document.getElementById('btnClearLogs');
+
 let pollingInterval = null;
+let logSocket = null;
 
 // Init
 document.addEventListener('DOMContentLoaded', () => {
     fetchStatus();
     fetchOverlayData();
+    connectLogSocket();
 
     // Poll status every 2 seconds
     pollingInterval = setInterval(fetchStatus, 2000);
@@ -46,6 +51,7 @@ btnStart.addEventListener('click', async () => {
         setTimeout(fetchStatus, 1000); // Check status shortly after
     } catch (err) {
         console.error('Error starting stream:', err);
+        addLog(`Error starting stream: ${err}`, "system");
     } finally {
         setLoading(false);
     }
@@ -96,6 +102,54 @@ btnUpdateOverlay.addEventListener('click', async () => {
         btnUpdateOverlay.innerHTML = '<span class="icon">⚠</span> Error';
     }
 });
+
+// WebSocket Logs
+function connectLogSocket() {
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const wsUrl = `${proto}://${window.location.host}/ws/logs`;
+
+    console.log("Connecting to WebSocket:", wsUrl);
+    logSocket = new WebSocket(wsUrl);
+
+    logSocket.onopen = () => {
+        addLog("Connected to log stream.", "system");
+    };
+
+    logSocket.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            if (data.log) {
+                addLog(data.log);
+            }
+        } catch (e) {
+            console.error("Log parse error", e);
+        }
+    };
+
+    logSocket.onclose = () => {
+        console.warn("WebSocket closed. Reconnecting...");
+        setTimeout(connectLogSocket, 3000);
+    };
+
+    logSocket.onerror = (err) => {
+        console.error("WebSocket error:", err);
+    };
+}
+
+function addLog(msg, type = "") {
+    if (!consoleWindow) return;
+    const div = document.createElement('div');
+    div.className = `log-line ${type}`;
+    div.innerText = msg;
+    consoleWindow.appendChild(div);
+    consoleWindow.scrollTop = consoleWindow.scrollHeight;
+}
+
+if (btnClearLogs) {
+    btnClearLogs.addEventListener('click', () => {
+        consoleWindow.innerHTML = '';
+    });
+}
 
 // Data Fetching
 async function fetchStatus() {
