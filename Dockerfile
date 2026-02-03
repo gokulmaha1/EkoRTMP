@@ -38,9 +38,12 @@ ENV GST_DEBUG=2
 ENV DISPLAY=:99
 
 # Entrypoint script to handle Xvfb
+# Entrypoint script to handle Xvfb
 RUN echo '#!/bin/bash\n\
-rm -f /tmp/.X99-lock\n\
-Xvfb :99 -screen 0 1280x720x24 > /dev/null 2>&1 &\n\
-exec python3 main.py "$@"' > /entrypoint.sh && chmod +x /entrypoint.sh
+    rm -f /tmp/.X99-lock\n\
+    Xvfb :99 -screen 0 1280x720x24 > /dev/null 2>&1 &\n\
+    exec uvicorn server:app --host 0.0.0.0 --port 8000' > /entrypoint.sh && chmod +x /entrypoint.sh
+
+EXPOSE 8000
 
 ENTRYPOINT ["/entrypoint.sh"]
