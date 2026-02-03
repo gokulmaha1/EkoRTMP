@@ -159,7 +159,7 @@ def start_stream(config: StreamConfig):
         # Popen is non-blocking
         # Redirect stdout and stderr to the same pipe
         stream_process = subprocess.Popen(
-            [sys.executable, "main.py"], 
+            [sys.executable, "-u", "main.py"], 
             env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, # Merge stderr into stdout

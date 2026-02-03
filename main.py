@@ -9,6 +9,8 @@ gi.require_version('Gst', '1.0')
 gi.require_version('Gtk', '3.0')
 gi.require_version('WebKit2', '4.0')
 
+print("DEBUG: main.py is starting...", flush=True)
+
 from gi.repository import Gst, Gtk, GObject, WebKit2, GLib
 
 # Initialize GStreamer and GTK
