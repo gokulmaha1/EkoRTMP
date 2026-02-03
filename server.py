@@ -93,7 +93,7 @@ def start_stream(config: StreamConfig):
     # We set an env var so main.py knows it's being run from server if needed, 
     # but more importantly we need to make sure main.py requests the overlay from THIS server.
     env = os.environ.copy()
-    env["OVERLAY_URL"] = "http://127.0.0.1:8000/overlay"
+    env["OVERLAY_URL"] = "http://127.0.0.1:8123/overlay"
     
     if config.rtmp_url:
         env["RTMP_URL"] = config.rtmp_url

@@ -39,13 +39,13 @@ You need to specify the RTMP URL where you want to stream.
 ```bash
 sudo docker run -d \
   --name broadcaster \
-  -p 8000:8000 \
+  -p 8123:8123 \
   rtmp-broadcaster
 ```
 
 ### 5. Access the Dashboard
 Open your browser and navigate to:
-`http://YOUR_VPS_IP:8000`
+`http://YOUR_VPS_IP:8123`
 
 ### 6. Customization
 - **Overlay**: The overlay is now managed via the dashboard.
@@ -56,4 +56,4 @@ If the stream doesn't start, check logs:
 ```bash
 sudo docker logs broadcaster
 ```
-- Ensure port 8000 is allowed in your VPS firewall.
+- Ensure port 8123 is allowed in your VPS firewall.
