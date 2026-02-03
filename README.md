@@ -24,7 +24,14 @@ git clone https://github.com/gokulmaha1/EkoRTMP.git
 cd EkoRTMP
 ```
 
-### 3. Build Docker Image
+### 3. Firewall Setup (Important)
+Allow the dashboard port through your server's firewall:
+```bash
+sudo ufw allow 8123/tcp
+sudo ufw reload
+```
+
+### 4. Build Docker Image
 Run the following command in the project directory:
 ```bash
 sudo docker build -t rtmp-broadcaster .

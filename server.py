@@ -3,14 +3,71 @@ import subprocess
 import signal
 import json
 import sys
-from fastapi import FastAPI, UploadFile, Form
+import threading
+import queue
+import asyncio
+from fastapi import FastAPI, UploadFile, Form, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 app = FastAPI()
+
+# Log Management
+log_queue = queue.Queue()
+connected_websockets: List[WebSocket] = []
+
+def log_reader(proc):
+    """Reads stdout from the subprocess and pushes to the log queue."""
+    for line in iter(proc.stdout.readline, b''):
+        decoded_line = line.decode('utf-8').strip()
+        if decoded_line:
+            print(f"[STREAM] {decoded_line}")  # Also print to server console
+            log_queue.put(decoded_line)
+    proc.stdout.close()
+
+async def broadcast_logs():
+    """Background task to broadcast logs to all connected websockets."""
+    while True:
+        try:
+            # Non-blocking get from queue
+            try:
+                log_line = log_queue.get_nowait()
+                msg = json.dumps({"log": log_line})
+                # Broadcast to all
+                to_remove = []
+                for ws in connected_websockets:
+                    try:
+                        await ws.send_text(msg)
+                    except Exception:
+                        to_remove.append(ws)
+                
+                for ws in to_remove:
+                    if ws in connected_websockets:
+                        connected_websockets.remove(ws)
+                        
+            except queue.Empty:
+                await asyncio.sleep(0.1)
+        except Exception as e:
+            print(f"Error in broadcast loop: {e}")
+            await asyncio.sleep(1)
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(broadcast_logs())
+
+@app.websocket("/ws/logs")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    connected_websockets.append(websocket)
+    try:
+        while True:
+            await websocket.receive_text() # Keep connection open
+    except WebSocketDisconnect:
+        if websocket in connected_websockets:
+            connected_websockets.remove(websocket)
 
 # Enable CORS
 app.add_middleware(
@@ -100,7 +157,19 @@ def start_stream(config: StreamConfig):
     
     try:
         # Popen is non-blocking
-        stream_process = subprocess.Popen([sys.executable, "main.py"], env=env)
+        # Redirect stdout and stderr to the same pipe
+        stream_process = subprocess.Popen(
+            [sys.executable, "main.py"], 
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT, # Merge stderr into stdout
+            bufsize=1 # Line buffered
+        )
+        
+        # Start log reader thread
+        t = threading.Thread(target=log_reader, args=(stream_process,), daemon=True)
+        t.start()
+        
         return {"status": "started", "pid": stream_process.pid}
     except Exception as e:
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
