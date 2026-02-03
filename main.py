@@ -11,7 +11,7 @@ gi.require_version('WebKit2', '4.0')
 
 print("DEBUG: main.py is starting...", flush=True)
 
-from gi.repository import Gst, Gtk, GObject, WebKit2, GLib
+from gi.repository import Gst, Gtk, GObject, WebKit2, GLib, Gdk
 
 # Initialize GStreamer and GTK
 Gst.init(None)
@@ -35,7 +35,7 @@ class StreamOverlayApp:
         self.window.set_default_size(WIDTH, HEIGHT)
         
         self.webview = WebKit2.WebView()
-        self.webview.set_background_color(Gtk.gdk.RGBA(0, 0, 0, 0)) # Transparent background
+        self.webview.set_background_color(Gdk.RGBA(0, 0, 0, 0)) # Transparent background
         self.window.add(self.webview)
         
         # Load overlay
