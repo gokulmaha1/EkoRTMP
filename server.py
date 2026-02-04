@@ -187,6 +187,63 @@ def update_overlay(data: OverlayUpdate):
         print(f"Error updating overlay: {e}")
         return {"status": "error"}
 
+# --- Layout Config API ---
+class ConfigUpdate(BaseModel):
+    brand_color_primary: Optional[str] = None # e.g. #c0392b
+    brand_color_secondary: Optional[str] = None # e.g. #f1c40f
+    brand_color_dark: Optional[str] = None # e.g. #2c3e50
+    logo_url: Optional[str] = None
+    ticker_speed: Optional[int] = None # 10-100 (seconds)
+    # Text Labels
+    default_headline: Optional[str] = None
+    ticker_label: Optional[str] = None
+    breaking_label: Optional[str] = None
+
+@app.get("/api/config")
+def get_config(db: Session = Depends(get_db)):
+    # Helper to get value or default
+    def get_val(key, default):
+        item = db.query(SystemConfig).filter(SystemConfig.key == key).first()
+        return item.value if item else default
+
+    return {
+        "brand_color_primary": get_val("brand_color_primary", "#c0392b"),
+        "brand_color_secondary": get_val("brand_color_secondary", "#f1c40f"),
+        "brand_color_dark": get_val("brand_color_dark", "#2c3e50"),
+        "logo_url": get_val("logo_url", "/media/logo.gif"),
+        "ticker_speed": int(get_val("ticker_speed", "30")),
+        "default_headline": get_val("default_headline", "Welcome to EKO Professional News System..."),
+        "ticker_label": get_val("ticker_label", "NEWS UPDATES"),
+        "breaking_label": get_val("breaking_label", "BREAKING")
+    }
+
+@app.post("/api/config")
+async def update_config(conf: ConfigUpdate, db: Session = Depends(get_db)):
+    def set_val(key, val):
+        if val is None: return
+        item = db.query(SystemConfig).filter(SystemConfig.key == key).first()
+        if not item:
+            item = SystemConfig(key=key, value=str(val))
+            db.add(item)
+        else:
+            item.value = str(val)
+    
+    set_val("brand_color_primary", conf.brand_color_primary)
+    set_val("brand_color_secondary", conf.brand_color_secondary)
+    set_val("brand_color_dark", conf.brand_color_dark)
+    set_val("logo_url", conf.logo_url)
+    set_val("ticker_speed", conf.ticker_speed)
+    set_val("default_headline", conf.default_headline)
+    set_val("ticker_label", conf.ticker_label)
+    set_val("breaking_label", conf.breaking_label)
+    
+    db.commit()
+    
+    # Broadcast to Overlay
+    await broadcast_news_update("CONFIG_UPDATED", conf.dict(exclude_none=True))
+    
+    return {"status": "success"}
+
 # --- Pydantic Models for News API ---
 class NewsCreate(BaseModel):
     title_tamil: str

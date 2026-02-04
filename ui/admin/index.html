@@ -348,10 +348,76 @@
                     </div>
                 </div>
 
-                <!-- Global Settings (Placeholder for now) -->
-                <div class="bg-white rounded-lg shadow p-6 opacity-50 cursor-not-allowed">
-                    <h3 class="font-bold text-gray-500 mb-4">Branding Config (Coming Soon)</h3>
-                    <p>Control Logo, Colors, and Scrolling Speed here.</p>
+                <!-- Brand Configuration -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-palette mr-2"></i> Branding & Behavior
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Colors -->
+                        <div class="space-y-4">
+                            <h4 class="font-semibold text-sm border-b pb-1">Theme Colors</h4>
+                            <div class="flex items-center justify-between">
+                                <label class="text-sm text-gray-600">Primary (Red)</label>
+                                <input type="color" id="inpColorPrimary" class="h-8 w-16 cursor-pointer"
+                                    value="#c0392b">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <label class="text-sm text-gray-600">Secondary (Yellow)</label>
+                                <input type="color" id="inpColorSecondary" class="h-8 w-16 cursor-pointer"
+                                    value="#f1c40f">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <label class="text-sm text-gray-600">Background (Dark)</label>
+                                <input type="color" id="inpColorDark" class="h-8 w-16 cursor-pointer" value="#2c3e50">
+                            </div>
+                        </div>
+
+                        <!-- Settings -->
+                        <div class="space-y-4">
+                            <h4 class="font-semibold text-sm border-b pb-1">Settings</h4>
+                            <div>
+                                <label class="block text-sm text-gray-600 mb-1">Logo URL</label>
+                                <input type="text" id="inpLogoUrl"
+                                    class="w-full border border-gray-300 rounded p-2 text-sm" value="/media/logo.gif">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-600 mb-1">Ticker Speed (Seconds)</label>
+                                <input type="range" id="inpTickerSpeed" min="10" max="60" value="30" class="w-full">
+                                <div class="text-xs text-right text-gray-500" id="lblTickerSpeed">30s</div>
+                            </div>
+                        </div>
+
+                        <!-- Text Labels -->
+                        <div class="space-y-4 md:col-span-2 border-t pt-4">
+                            <h4 class="font-semibold text-sm border-b pb-1">Text Labels</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-1">Ticker Label</label>
+                                    <input type="text" id="inpTickerLabel"
+                                        class="w-full border border-gray-300 rounded p-2 text-sm" value="NEWS UPDATES">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-1">Breaking Label</label>
+                                    <input type="text" id="inpBreakingLabel"
+                                        class="w-full border border-gray-300 rounded p-2 text-sm" value="BREAKING">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-1">Default Headline</label>
+                                    <input type="text" id="inpDefaultHeadline"
+                                        class="w-full border border-gray-300 rounded p-2 text-sm"
+                                        value="Welcome to EKO Professional News System...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t flex justify-end">
+                        <button onclick="saveConfig()"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-bold shadow transition">
+                            <i class="fas fa-save mr-2"></i> Update Overlay Configuration
+                        </button>
+                    </div>
                 </div>
             </div>
 

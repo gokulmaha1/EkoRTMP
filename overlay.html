@@ -172,12 +172,12 @@
             padding-top: 20px;
         }
 
-        .logo-text {
-            font-family: 'Oswald', sans-serif;
-            font-size: 40px;
-            font-weight: 700;
-            color: white;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        .logo-img {
+            width: 150px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            margin-bottom: 20px;
         }
 
         .live-box {
@@ -289,7 +289,7 @@
         <div class="right-panel">
             <div class="panel-widget brand-logo">
                 <div class="live-box">LIVE</div>
-                <div class="logo-text">EKO TV</div>
+                <img src="/media/logo.gif" class="logo-img" alt="EKO TV">
                 <div class="clock" id="clock">00:00</div>
             </div>
 
@@ -423,11 +423,14 @@
             const msg = JSON.parse(event.data);
             if (msg.type.startsWith('NEWS')) {
                 fetchNews();
+            } else if (msg.type === 'CONFIG_UPDATED') {
+                applyConfig(msg.payload);
             }
         };
 
         // Initial Load
         fetchNews();
+        fetchConfig();
 
         // Poll for Webview/Media URL
         setInterval(async () => {
@@ -439,6 +442,52 @@
                 }
             } catch (e) { }
         }, 1000); // Faster polling for responsiveness
+
+        // --- Config Management ---
+        async function fetchConfig() {
+            try {
+                const res = await fetch('/api/config');
+                const conf = await res.json();
+                applyConfig(conf);
+            } catch (e) { console.error(e); }
+        }
+
+        function applyConfig(conf) {
+            const root = document.documentElement;
+            if (conf.brand_color_primary) root.style.setProperty('--brand-red', conf.brand_color_primary);
+            if (conf.brand_color_secondary) root.style.setProperty('--brand-yellow', conf.brand_color_secondary);
+            if (conf.brand_color_dark) root.style.setProperty('--brand-dark', conf.brand_color_dark);
+
+            if (conf.logo_url) {
+                const img = document.querySelector('.logo-img');
+                if (img) img.src = conf.logo_url;
+            }
+
+            if (conf.ticker_speed) {
+                const content = document.querySelector('.ticker-content');
+                if (content) content.style.animationDuration = conf.ticker_speed + 's';
+            }
+
+            // Text Labels
+            if (conf.default_headline) {
+                // Only update if not currently showing breaking news
+                const headlines = newsItems.filter(i => i.type === 'BREAKING');
+                if (headlines.length === 0) {
+                    const el = document.getElementById('topHeadline');
+                    if (el) el.innerText = conf.default_headline;
+                }
+            }
+
+            if (conf.ticker_label) {
+                const el = document.querySelector('.ticker-label');
+                if (el) el.innerText = conf.ticker_label;
+            }
+
+            if (conf.breaking_label) {
+                const el = document.querySelector('.breaking-badge');
+                if (el) el.innerText = conf.breaking_label;
+            }
+        }
 
     </script>
     <!-- FontAwesome for Ticker icons -->

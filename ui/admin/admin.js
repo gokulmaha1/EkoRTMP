@@ -21,6 +21,7 @@ const pageTitle = document.getElementById('pageTitle');
 // Init
 document.addEventListener('DOMContentLoaded', () => {
     fetchNews();
+    fetchConfig();
     connectWebSocket();
     document.getElementById('startTime').innerText = new Date().toLocaleTimeString();
 });
@@ -112,6 +113,56 @@ async function toggleActive(id, currentState) {
         console.error("Toggle error:", err);
     }
 }
+
+// --- Layout Config ---
+async function fetchConfig() {
+    try {
+        const res = await fetch(`${API_BASE}/config`);
+        const conf = await res.json();
+
+        document.getElementById('inpColorPrimary').value = conf.brand_color_primary || "#c0392b";
+        document.getElementById('inpColorSecondary').value = conf.brand_color_secondary || "#f1c40f";
+        document.getElementById('inpColorDark').value = conf.brand_color_dark || "#2c3e50";
+        document.getElementById('inpLogoUrl').value = conf.logo_url || "/media/logo.gif";
+        document.getElementById('inpTickerSpeed').value = conf.ticker_speed || 30;
+        document.getElementById('lblTickerSpeed').innerText = (conf.ticker_speed || 30) + 's';
+
+        // Text Labels
+        document.getElementById('inpDefaultHeadline').value = conf.default_headline || "Welcome to EKO Professional News System...";
+        document.getElementById('inpTickerLabel').value = conf.ticker_label || "NEWS UPDATES";
+        document.getElementById('inpBreakingLabel').value = conf.breaking_label || "BREAKING";
+    } catch (e) { console.error(e); }
+}
+
+async function saveConfig() {
+    const payload = {
+        brand_color_primary: document.getElementById('inpColorPrimary').value,
+        brand_color_secondary: document.getElementById('inpColorSecondary').value,
+        brand_color_dark: document.getElementById('inpColorDark').value,
+        logo_url: document.getElementById('inpLogoUrl').value,
+        ticker_speed: parseInt(document.getElementById('inpTickerSpeed').value),
+        default_headline: document.getElementById('inpDefaultHeadline').value,
+        ticker_label: document.getElementById('inpTickerLabel').value,
+        breaking_label: document.getElementById('inpBreakingLabel').value
+    };
+
+    try {
+        await fetch(`${API_BASE}/config`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        alert("Configuration Saved & Broadcasted!");
+    } catch (e) {
+        console.error(e);
+        alert("Failed to save config");
+    }
+}
+
+// Init speed listener
+document.getElementById('inpTickerSpeed').addEventListener('input', (e) => {
+    document.getElementById('lblTickerSpeed').innerText = e.target.value + 's';
+});
 
 // --- News Tabs & External Fetching ---
 function setNewsTab(tab) {
