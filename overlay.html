@@ -97,20 +97,25 @@
         .bottom-ticker {
             grid-row: 3;
             grid-column: 1 / span 2;
-            background-color: var(--brand-dark);
+            background-color: white;
+            /* White Background */
             display: flex;
             align-items: center;
             z-index: 20;
-            border-top: 4px solid var(--brand-yellow);
+            border-top: 4px solid var(--brand-red);
+            /* Red Border Top */
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
         }
 
         .ticker-label {
-            background-color: var(--brand-yellow);
-            color: black;
+            background-color: var(--brand-red);
+            /* Red Background */
+            color: white;
+            /* White Text */
             font-family: 'Oswald', sans-serif;
             font-weight: 700;
-            font-size: 24px;
-            padding: 0 30px;
+            font-size: 20px;
+            padding: 0 20px;
             height: 100%;
             display: flex;
             align-items: center;
@@ -130,8 +135,10 @@
             padding-left: 100%;
             animation: ticker 25s linear infinite;
             font-size: 24px;
-            font-weight: 500;
-            color: white;
+            font-weight: 700;
+            /* Bolder */
+            color: black;
+            /* Black Text */
         }
 
         .ticker-item {
@@ -142,19 +149,19 @@
 
         .ticker-item i {
             margin-right: 10px;
-            color: var(--brand-yellow);
+            color: var(--brand-red);
         }
-
-
 
         .right-panel {
             display: flex;
             align-items: center;
             height: 100%;
-            background-color: var(--brand-dark);
+            background-color: white;
+            /* White Background */
             padding-right: 20px;
             white-space: nowrap;
             z-index: 30;
+            border-left: 1px solid #eee;
         }
 
         .panel-widget {
@@ -192,7 +199,10 @@
         .clock {
             font-family: 'Oswald', sans-serif;
             font-size: 24px;
-            color: var(--brand-yellow);
+            color: #333;
+            /* Dark Grey Clock */
+            font-weight: 700;
+            margin-left: 10px;
         }
 
         /* Breaking Box in Right Panel */
