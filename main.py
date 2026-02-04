@@ -43,6 +43,7 @@ class StreamOverlayApp:
         settings.set_enable_webgl(True)
         # Spoof a standard browser User-Agent to avoid being blocked
         settings.set_user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+        settings.set_media_playback_requires_user_gesture(False) # Allow autoplay
         self.webview.set_settings(settings)
         
         self.webview.set_background_color(Gdk.RGBA(0, 0, 0, 0)) # Transparent background
@@ -73,7 +74,7 @@ class StreamOverlayApp:
             f'videotestsrc pattern=ball ! video/x-raw,width={WIDTH},height={HEIGHT},framerate={FRAMERATE}/1 ! '
             'videoconvert ! cairooverlay name=overlay ! videoconvert ! '
             'x264enc bitrate=2500 tune=zerolatency speed-preset=veryfast key-int-max=60 ! mux. '
-            'audiotestsrc wave=silence ! audio/x-raw,rate=44100,channels=2 ! '
+            'audiotestsrc wave=ticks ! audio/x-raw,rate=44100,channels=2 ! '
             'voaacenc bitrate=128000 ! mux.'
         )
         
