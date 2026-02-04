@@ -131,6 +131,7 @@ async function fetchConfig() {
         document.getElementById('inpDefaultHeadline').value = conf.default_headline || "Welcome to EKO Professional News System...";
         document.getElementById('inpTickerLabel').value = conf.ticker_label || "NEWS UPDATES";
         document.getElementById('inpBreakingLabel').value = conf.breaking_label || "BREAKING";
+        document.getElementById('inpLiveLabel').value = conf.live_label || "LIVE";
     } catch (e) { console.error(e); }
 }
 
@@ -143,7 +144,8 @@ async function saveConfig() {
         ticker_speed: parseInt(document.getElementById('inpTickerSpeed').value),
         default_headline: document.getElementById('inpDefaultHeadline').value,
         ticker_label: document.getElementById('inpTickerLabel').value,
-        breaking_label: document.getElementById('inpBreakingLabel').value
+        breaking_label: document.getElementById('inpBreakingLabel').value,
+        live_label: document.getElementById('inpLiveLabel').value
     };
 
     try {

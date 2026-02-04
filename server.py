@@ -198,6 +198,7 @@ class ConfigUpdate(BaseModel):
     default_headline: Optional[str] = None
     ticker_label: Optional[str] = None
     breaking_label: Optional[str] = None
+    live_label: Optional[str] = None # New
 
 @app.get("/api/config")
 def get_config(db: Session = Depends(get_db)):
@@ -214,7 +215,8 @@ def get_config(db: Session = Depends(get_db)):
         "ticker_speed": int(get_val("ticker_speed", "30")),
         "default_headline": get_val("default_headline", "Welcome to EKO Professional News System..."),
         "ticker_label": get_val("ticker_label", "NEWS UPDATES"),
-        "breaking_label": get_val("breaking_label", "BREAKING")
+        "breaking_label": get_val("breaking_label", "BREAKING"),
+        "live_label": get_val("live_label", "LIVE")
     }
 
 @app.post("/api/config")
@@ -236,7 +238,8 @@ async def update_config(conf: ConfigUpdate, db: Session = Depends(get_db)):
     set_val("default_headline", conf.default_headline)
     set_val("ticker_label", conf.ticker_label)
     set_val("breaking_label", conf.breaking_label)
-    
+    set_val("live_label", conf.live_label)
+
     db.commit()
     
     # Broadcast to Overlay
