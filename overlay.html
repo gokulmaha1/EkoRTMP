@@ -10,24 +10,29 @@
         rel="stylesheet">
     <style>
         :root {
-            --brand-red: #c0392b;
-            --brand-dark: #2c3e50;
-            --brand-yellow: #f1c40f;
-            --text-white: #ffffff;
+            /* Palette: Tamil News Style */
+            --header-bg-start: #b90909;
+            /* Deep Red */
+            --header-bg-mid: #e71d1d;
+            /* Bright Red */
+            --header-bg-end: #8a0606;
+            /* Darker Red */
 
-            /* Layout Dimensions */
-            --header-height: 80px;
-            --ticker-height: 60px;
+            --footer-bg: #ffffff;
+            --text-black: #000000;
+            --text-white: #ffffff;
+            --accent-gold: #f1c40f;
+
+            --header-height: 90px;
+            --ticker-height: 70px;
         }
 
         body {
             margin: 0;
             padding: 0;
             background-color: #000;
-            /* Black background for LED wall */
             overflow: hidden;
             font-family: 'Roboto', 'Baloo Thambi 2', sans-serif;
-            /* Baloo for Tamil */
         }
 
         .container {
@@ -38,7 +43,217 @@
             grid-template-rows: var(--header-height) 1fr var(--ticker-height);
         }
 
-        /* --- ZONE 0: Main Video Area --- */
+        /* --- HEADER --- */
+        .top-header {
+            grid-row: 1;
+            grid-column: 1 / span 2;
+            background: linear-gradient(90deg, var(--header-bg-start) 0%, var(--header-bg-mid) 50%, var(--header-bg-end) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 20;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 0 10px;
+        }
+
+        /* Glossy Shine Overlay */
+        .header-shine {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.0) 100%);
+            pointer-events: none;
+        }
+
+        .header-left {
+            flex: 0 0 150px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .location-tag {
+            background: linear-gradient(to bottom, #fff 0%, #eee 100%);
+            color: #b90909;
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-weight: 800;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            border: 1px solid #ccc;
+        }
+
+        .header-center {
+            flex: 1;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .breaking-text {
+            color: white;
+            font-size: 38px;
+            /* Bigger font */
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-right {
+            flex: 0 0 150px;
+            display: flex;
+            justify-content: flex-end;
+            padding-right: 10px;
+        }
+
+        .breaking-badge {
+            background: #fff;
+            color: #d60000;
+            font-family: 'Oswald', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            padding: 2px 10px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .blink-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #d60000;
+            animation: blink 1s infinite;
+        }
+
+        /* --- FOOTER --- */
+        .bottom-ticker {
+            grid-row: 3;
+            grid-column: 1 / span 2;
+            background-color: var(--footer-bg);
+            display: flex;
+            align-items: center;
+            z-index: 20;
+            border-top: 4px solid var(--header-bg-mid);
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .ticker-label {
+            background-color: var(--header-bg-mid);
+            color: white;
+            font-family: 'Oswald', sans-serif;
+            font-weight: 700;
+            font-size: 22px;
+            padding: 0 25px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            text-transform: uppercase;
+            box-shadow: 4px 0 5px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 5;
+        }
+
+        .ticker-wrapper {
+            flex-grow: 1;
+            overflow: hidden;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            background: #fff;
+        }
+
+        .ticker-content {
+            display: inline-block;
+            padding-left: 100%;
+            animation: ticker 30s linear infinite;
+            font-size: 28px;
+            /* Massive Text */
+            font-weight: 800;
+            color: var(--text-black);
+            line-height: var(--ticker-height);
+        }
+
+        .ticker-item {
+            margin-right: 80px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .ticker-item i {
+            margin-right: 12px;
+            color: var(--header-bg-mid);
+            font-size: 12px;
+        }
+
+        .right-panel {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            background-color: #f1f2f6;
+            /* Very light grey */
+            padding: 0 15px;
+            border-left: 1px solid #ddd;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .live-badge {
+            background: #d60000;
+            color: white;
+            font-family: 'Oswald', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .blink-dot-white {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: white;
+            animation: blink 1s infinite;
+        }
+
+        .datetime-box {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: center;
+            line-height: 1.1;
+        }
+
+        .time-text {
+            font-family: 'Oswald', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .date-text {
+            font-family: 'Roboto', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+
+        /* --- CONTENT WRAPPER --- */
         .main-content-wrapper {
             grid-row: 2;
             grid-column: 1;
@@ -46,17 +261,15 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #333;
-            /* Dark Grey for Wrapper */
+            background-color: #000;
         }
 
         .video-area {
             flex-grow: 1;
             position: relative;
-            background-color: blue;
-            /* DEBUG: Blue Background */
+            background-color: #1a1a1a;
             overflow: hidden;
-            transition: width 0.5s ease;
+            width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -64,11 +277,10 @@
 
         .l-bar-area {
             width: 0;
-            /* Default 0 width (Hidden) */
             height: 100%;
-            background-color: yellow;
-            /* DEBUG: Yellow Background */
+            background-color: #000;
             overflow: hidden;
+            display: none;
             transition: width 0.5s ease;
             position: relative;
         }
@@ -80,171 +292,7 @@
             height: 100%;
             border: none;
             object-fit: contain;
-            /* OR cover, depending on preference */
             display: none;
-            /* Hidden by default */
-        }
-
-        /* --- ZONE 1: Top Header --- */
-        .top-header {
-            grid-row: 1;
-            grid-column: 1 / span 2;
-            background: linear-gradient(90deg, var(--brand-red) 0%, #a90e0e 100%);
-            display: flex;
-            align-items: center;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-            z-index: 20;
-            padding: 0 20px;
-        }
-
-        .breaking-badge {
-            background-color: white;
-            color: var(--brand-red);
-            padding: 5px 20px;
-            font-family: 'Oswald', sans-serif;
-            font-weight: 700;
-            font-size: 28px;
-            text-transform: uppercase;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-            margin-right: 20px;
-            animation: pulse-red 2s infinite;
-        }
-
-        .breaking-text {
-            color: white;
-            font-size: 32px;
-            font-weight: 700;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* --- ZONE 2: Bottom Ticker --- */
-        .bottom-ticker {
-            grid-row: 3;
-            grid-column: 1 / span 2;
-            background-color: white;
-            /* White Background */
-            display: flex;
-            align-items: center;
-            z-index: 20;
-            border-top: 4px solid var(--brand-red);
-            /* Red Border Top */
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .ticker-label {
-            background-color: var(--brand-red);
-            /* Red Background */
-            color: white;
-            /* White Text */
-            font-family: 'Oswald', sans-serif;
-            font-weight: 700;
-            font-size: 20px;
-            padding: 0 20px;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            text-transform: uppercase;
-        }
-
-        .ticker-wrapper {
-            flex-grow: 1;
-            overflow: hidden;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-        }
-
-        .ticker-content {
-            display: inline-block;
-            padding-left: 100%;
-            animation: ticker 25s linear infinite;
-            font-size: 24px;
-            font-weight: 700;
-            /* Bolder */
-            color: black;
-            /* Black Text */
-        }
-
-        .ticker-item {
-            margin-right: 100px;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        .ticker-item i {
-            margin-right: 10px;
-            color: var(--brand-red);
-        }
-
-        .right-panel {
-            display: flex;
-            align-items: center;
-            height: 100%;
-            background-color: white;
-            /* White Background */
-            padding-right: 20px;
-            white-space: nowrap;
-            z-index: 30;
-            border-left: 1px solid #eee;
-        }
-
-        .panel-widget {
-            padding: 20px;
-            text-align: center;
-            color: white;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        /* Branding */
-        .brand-logo {
-            margin-bottom: auto;
-            padding-top: 20px;
-        }
-
-        .logo-img {
-            height: 40px;
-            /* Fit in 60px ticker */
-            width: auto;
-            display: block;
-            margin: 0 15px;
-        }
-
-        .live-box {
-            display: inline-block;
-            background-color: var(--brand-red);
-            color: white;
-            padding: 2px 10px;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 4px;
-            animation: blink 1.5s infinite;
-        }
-
-        .clock {
-            font-family: 'Oswald', sans-serif;
-            font-size: 24px;
-            color: #333;
-            /* Dark Grey Clock */
-            font-weight: 700;
-            margin-left: 10px;
-        }
-
-        /* Breaking Box in Right Panel */
-        .breaking-side-list {
-            flex-grow: 1;
-            padding: 10px;
-            overflow: hidden;
-        }
-
-        .side-item {
-            background-color: rgba(255, 255, 255, 0.1);
-            padding: 10px;
-            margin-bottom: 10px;
-            border-left: 3px solid var(--brand-red);
-            font-size: 16px;
-            animation: fadeIn 0.5s ease;
         }
 
         /* Animations */
@@ -266,33 +314,7 @@
             }
 
             50% {
-                opacity: 0.5;
-            }
-        }
-
-        @keyframes pulse-red {
-            0% {
-                box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7);
-            }
-
-            70% {
-                box-shadow: 0 0 0 10px rgba(192, 57, 43, 0);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(192, 57, 43, 0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
+                opacity: 0.4;
             }
         }
     </style>
@@ -304,29 +326,43 @@
 
         <!-- Header -->
         <div class="top-header">
-            <div class="breaking-badge">BREAKING</div>
-            <div class="breaking-text" id="topHeadline">
-                Welcome to EKO Professional News System...
+            <div class="header-shine"></div> <!-- Glossy Effect -->
+
+            <div class="header-left">
+                <div class="location-tag">
+                    <span class="loc-icon"><i class="fas fa-map-marker-alt"></i></span>
+                    <span id="locationText">CHENNAI</span>
+                </div>
+            </div>
+
+            <div class="header-center">
+                <div class="breaking-text" id="topHeadline">
+                    Welcome to EKO Professional News System...
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="breaking-badge">
+                    <span class="blink-dot"></span> BREAKING
+                </div>
             </div>
         </div>
 
         <!-- Main Content Wrapper (Video + L-Bar) -->
         <div class="main-content-wrapper">
-
             <!-- Video Area -->
             <div class="video-area">
-                <div
-                    style="width: 100%; height: 100%; background-color: red; display: flex; align-items: center; justify-content: center; color: white; font-size: 50px; font-weight: bold;">
-                    TEST PATTERN (RED)
-                </div>
+                <iframe id="webview" src=""></iframe>
+                <video id="videoPlayer" muted playsinline
+                    style="display:none; width:100%; height:100%; object-fit:contain;"></video>
+                <img id="imagePlayer" src="" style="display:none; width:100%; height:100%; object-fit:contain;">
             </div>
 
-            <!-- L-Bar Content Area (Hidden by CSS default) -->
-            <div class="l-bar-area" id="lBarArea"></div>
-
+            <!-- L-Bar Content Area -->
+            <div class="l-bar-area" id="lBarArea">
+                <div id="lBarContent" style="width:100%; height:100%;"></div>
+            </div>
         </div>
-
-
 
         <!-- Ticker -->
         <div class="bottom-ticker">
@@ -337,9 +373,15 @@
                 </div>
             </div>
             <div class="right-panel">
-                <div class="live-box">LIVE</div>
-                <img src="/media/logo.gif" class="logo-img" alt="EKO TV">
-                <div class="clock" id="clock">00:00</div>
+                <div class="live-badge">
+                    LIVE <span class="blink-dot-white"></span>
+                </div>
+                <div class="datetime-box">
+                    <div class="date-text" id="dateDisplay">01/01/2026</div>
+                    <div class="time-text" id="clock">12:00 PM</div>
+                </div>
+                <!-- Optional: Enable logo if needed, currently using clean look -->
+                <!-- <img src="/media/logo.gif" class="logo-img" alt="EKO TV"> -->
             </div>
         </div>
 
@@ -362,12 +404,26 @@
         let newsItems = [];
         let currentMediaUrl = "";
 
-        // Clock
+        // Clock & Date
         function updateClock() {
             const now = new Date();
+
+            // Time (e.g., 12:45 PM)
             document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', {
-                timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit'
+                timeZone: 'Asia/Kolkata',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
             });
+
+            // Date (e.g., 25/12/2026) -> user asked for DD/MM/YY ??
+            // Let's do standard DD/MM/YYYY for clarity or DD/MM/YY
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+
+            const dateStr = `${day}/${month}/${year}`;
+            document.getElementById('dateDisplay').innerText = dateStr;
         }
         setInterval(updateClock, 1000);
         updateClock();
@@ -483,35 +539,24 @@
         };
 
         // Initial Load
-        /* 
-           DISABLE ALL LOGIC for Layout Verification
-           We want to see a full screen Red Box.
-        */
-        // fetchNews();
-        // applyConfig({ layout_mode: 'FULL' });
-        // fetchConfig(); 
+        fetchNews();
 
-        // TEST: Static Box
-        // TEST: Hardcoded Video (HTTPS)
+        // Load Config (will trigger ApplyConfig -> Layout Fix)
+        fetchConfig();
+
+        // TEST: Hardcoded Video (HTTPS) - RESTORED
         const TEST_VIDEO = "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-
         setTimeout(() => {
-            console.log("Triggering Debug Video Load...");
             updateMedia(TEST_VIDEO);
-
-            // Force play again just in case
-            const v = document.getElementById('videoPlayer');
-            v.muted = true;
-            v.play().catch(e => console.error("Force Play Error:", e));
-
         }, 1500);
 
-        // Re-enable Polling for Config/Media
+        // Re-enable Polling
         setInterval(async () => {
             try {
-                // Only fetch if we aren't testing hardcoded video
-                // For now, let's just log
+                // Uncomment to enable real polling again
                 // const res = await fetch('/overlay/data');
+                // const d = await res.json();
+                // if (d.webview_url !== undefined) updateMedia(d.webview_url);
             } catch (e) { }
         }, 3000);
 
@@ -572,7 +617,9 @@
 
             if (conf.layout_mode === 'L_BAR') {
                 const width = conf.lbar_width || 25; // Default 25%
-                lBar.style.width = width + "%";
+                lBar.style.display = 'block'; // SHOW
+                // Slight delay to allow display:block to render before animating width
+                setTimeout(() => lBar.style.width = width + "%", 10);
 
                 // Position
                 if (conf.lbar_position === 'LEFT') {
@@ -609,6 +656,7 @@
                 // Full Screen
                 lBar.style.width = "0";
                 lBar.style.backgroundImage = 'none';
+                setTimeout(() => lBar.style.display = 'none', 500); // Hide after transition
                 lBarContent.innerHTML = ""; // Clear content to save resources
             }
         }
