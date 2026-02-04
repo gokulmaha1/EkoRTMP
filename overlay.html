@@ -47,6 +47,8 @@
             height: 100%;
             overflow: hidden;
             background-color: #000;
+            border: 2px solid green;
+            /* DEBUG */
         }
 
         .video-area {
@@ -55,7 +57,8 @@
             background-color: #1a1a1a;
             overflow: hidden;
             transition: width 0.5s ease;
-            /* Smooth Squeeze */
+            border: 2px solid red;
+            /* DEBUG */
         }
 
         .l-bar-area {
@@ -418,16 +421,19 @@
 
             if (['mp4', 'webm', 'ogg', 'mov'].includes(ext)) {
                 // Video
+                console.log("Attempting to play video:", url);
                 elVideo.src = url;
                 elVideo.style.display = 'block';
-                elVideo.muted = false; // Try unmuted
+                elVideo.muted = true; // FORCE MUTED for Autoplay to work
+
                 var playPromise = elVideo.play();
                 if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        console.log("Autoplay prevented:", error);
-                        elVideo.muted = true;
-                        elVideo.play();
-                    });
+                    playPromise.then(_ => {
+                        console.log("Video started playing");
+                    })
+                        .catch(error => {
+                            console.error("Autoplay Error:", error);
+                        });
                 }
             } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
                 // Image
