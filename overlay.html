@@ -462,6 +462,7 @@
         }, 2000); // Wait for page load
 
         // Poll for Webview/Media URL
+        /*
         setInterval(async () => {
             try {
                 const res = await fetch('/overlay/data');
@@ -471,6 +472,7 @@
                 }
             } catch (e) { }
         }, 1000); // Faster polling for responsiveness
+        */
 
         // --- Config Management ---
         async function fetchConfig() {
