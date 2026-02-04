@@ -267,6 +267,39 @@ class StreamConfig(BaseModel):
     rtmp_url: Optional[str] = None
     stream_key: Optional[str] = None
 
+@app.post("/api/stream/start")
+def start_stream(config: StreamConfig, db: Session = Depends(get_db)):
+    global stream_process
+    
+    # Persist the stream key if provided
+    if config.stream_key:
+        set_system_config(db, "stream_key", config.stream_key)
+    
+    if stream_process and stream_process.poll() is None:
+        return {"status": "already_running"}
+    
+    env = os.environ.copy()
+    env["OVERLAY_URL"] = "http://127.0.0.1:8123/overlay"
+    
+    if config.rtmp_url:
+        env["RTMP_URL"] = config.rtmp_url
+    
+    try:
+        stream_process = subprocess.Popen(
+            [sys.executable, "-u", "main.py"], 
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            bufsize=1
+        )
+        
+        t = threading.Thread(target=log_reader, args=(stream_process,), daemon=True)
+        t.start()
+        
+        return {"status": "started", "pid": stream_process.pid}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
 @app.post("/api/stream/stop")
 def stop_stream():
     global stream_process
