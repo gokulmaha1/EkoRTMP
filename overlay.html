@@ -46,22 +46,28 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #000;
+            background-color: #333;
+            /* Dark Grey for Wrapper */
         }
 
         .video-area {
             flex-grow: 1;
             position: relative;
-            background-color: #1a1a1a;
+            background-color: blue;
+            /* DEBUG: Blue Background */
             overflow: hidden;
             transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .l-bar-area {
             width: 0;
             /* Default 0 width (Hidden) */
             height: 100%;
-            background-color: #000;
+            background-color: yellow;
+            /* DEBUG: Yellow Background */
             overflow: hidden;
             transition: width 0.5s ease;
             position: relative;
@@ -309,14 +315,20 @@
 
             <!-- Video Area -->
             <div class="video-area">
+                <div
+                    style="position:absolute; color:white; z-index:10; top:0; left:0; background:rgba(0,0,0,0.5); padding:5px;">
+                    VIDEO AREA</div>
                 <iframe id="webview" src=""></iframe>
-                <video id="videoPlayer" muted autoplay
-                    style="display:none; width:100%; height:100%; object-fit:contain;"></video>
+                <!-- Removed display:none for debugging -->
+                <video id="videoPlayer" muted playsinline
+                    style="width:100%; height:100%; object-fit:contain; border: 4px solid white;"></video>
                 <img id="imagePlayer" src="" style="display:none; width:100%; height:100%; object-fit:contain;">
             </div>
 
             <!-- L-Bar Content Area -->
             <div class="l-bar-area" id="lBarArea">
+                <div style="position:absolute; color:black; z-index:10; top:0; left:0; font-weight:bold;">L-BAR AREA
+                </div>
                 <div id="lBarContent" style="width:100%; height:100%;"></div>
             </div>
 
@@ -485,9 +497,18 @@
         applyConfig({ layout_mode: 'FULL' });
         fetchConfig(); // Then fetch real config
 
-        // TEST: Hardcoded Video (Big Buck Bunny)
+        // TEST: Hardcoded Video (HTTPS)
+        const TEST_VIDEO = "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+
         setTimeout(() => {
-            updateMedia("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4");
+            console.log("Triggering Debug Video Load...");
+            updateMedia(TEST_VIDEO);
+
+            // Force play again just in case
+            const v = document.getElementById('videoPlayer');
+            v.muted = true;
+            v.play().catch(e => console.error("Force Play Error:", e));
+
         }, 1500);
 
         // Re-enable Polling for Config/Media
