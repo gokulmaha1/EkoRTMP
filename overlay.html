@@ -280,6 +280,9 @@
         <!-- Video Area -->
         <div class="video-area">
             <iframe id="webview" src=""></iframe>
+            <video id="videoPlayer" muted autoplay
+                style="display:none; width:100%; height:100%; object-fit:contain;"></video>
+            <img id="imagePlayer" src="" style="display:none; width:100%; height:100%; object-fit:contain;">
         </div>
 
         <!-- Right Panel -->
@@ -318,9 +321,12 @@
         const elTickerText = document.getElementById('tickerText');
         const elSidePanel = document.getElementById('sidePanel');
         const elWebview = document.getElementById('webview');
+        const elVideo = document.getElementById('videoPlayer');
+        const elImage = document.getElementById('imagePlayer');
 
         // State
         let newsItems = [];
+        let currentMediaUrl = "";
 
         // Clock
         function updateClock() {
@@ -351,8 +357,6 @@
                 elTopHeadline.parentElement.style.display = 'flex';
             } else {
                 elTopHeadline.innerText = "";
-                // Optional: Hide top bar if no breaking news?
-                // elTopHeadline.parentElement.style.display = 'none';
             }
 
             // 2. Ticker (All TICKER types)
@@ -360,7 +364,7 @@
             const tickerHtml = tickers.map(t =>
                 `<span class="ticker-item"><i class="fas fa-circle" style="font-size:10px;"></i> ${t.title_tamil}</span>`
             ).join("");
-            elTickerText.innerHTML = tickerHtml + tickerHtml; // Duplicate for smooth loop illusion
+            elTickerText.innerHTML = tickerHtml + tickerHtml;
 
             // 3. Side Panel (Latest 3 items usually, or FLASH)
             const sidebarItems = newsItems.slice(0, 4);
@@ -372,29 +376,69 @@
             `).join("");
         }
 
+        function updateMedia(url) {
+            if (url === currentMediaUrl) return;
+            currentMediaUrl = url;
+
+            // Reset all
+            elWebview.style.display = 'none';
+            elVideo.style.display = 'none';
+            elImage.style.display = 'none';
+            elVideo.pause();
+            elWebview.src = 'about:blank'; // Unload iframe
+
+            if (!url) return;
+
+            // Detect Type
+            const ext = url.split('.').pop().toLowerCase().split('?')[0];
+
+            if (['mp4', 'webm', 'ogg', 'mov'].includes(ext)) {
+                // Video
+                elVideo.src = url;
+                elVideo.style.display = 'block';
+                elVideo.muted = false; // Try unmuted
+                var playPromise = elVideo.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Autoplay prevented:", error);
+                        elVideo.muted = true;
+                        elVideo.play();
+                    });
+                }
+            } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                // Image
+                elImage.src = url;
+                elImage.style.display = 'block';
+            } else {
+                // Iframe (YouTube, etc)
+                elWebview.src = url;
+                elWebview.style.display = 'block';
+            }
+        }
+
         // Connect WebSocket
         const ws = new WebSocket(WS_URL);
         ws.onopen = () => console.log("Connected to News Feed");
         ws.onmessage = (event) => {
             const msg = JSON.parse(event.data);
             if (msg.type.startsWith('NEWS')) {
-                fetchNews(); // Refresh logic
+                fetchNews();
             }
         };
 
         // Initial Load
         fetchNews();
 
-        // Legacy Poll for Webview URL (kept for consistency)
+        // Poll for Webview/Media URL
         setInterval(async () => {
             try {
                 const res = await fetch('/overlay/data');
                 const d = await res.json();
-                if (d.webview_url && elWebview.src !== d.webview_url) {
-                    elWebview.src = d.webview_url;
+                if (d.webview_url !== undefined) {
+                    updateMedia(d.webview_url);
                 }
             } catch (e) { }
-        }, 2000);
+        }, 1000); // Faster polling for responsiveness
 
     </script>
     <!-- FontAwesome for Ticker icons -->
