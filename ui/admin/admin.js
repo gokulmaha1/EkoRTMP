@@ -15,6 +15,9 @@ const statMainScreen = document.getElementById('statMainScreen');
 const inpWebviewUrl = document.getElementById('inpWebviewUrl');
 const inpFile = document.getElementById('inpFile');
 const uploadStatus = document.getElementById('uploadStatus');
+const progressContainer = document.getElementById('progressContainer');
+const progressBar = document.getElementById('progressBar');
+const progressText = document.getElementById('progressText');
 const mediaGallery = document.getElementById('mediaGallery');
 const pageTitle = document.getElementById('pageTitle');
 
