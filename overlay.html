@@ -473,13 +473,26 @@
         async function fetchNews() {
             try {
                 const res = await fetch('/api/news');
-                newsItems = await res.json();
+                const data = await res.json();
+
+                // Only update if data changed (simple count check or deep compare)
+                // For now, just update. Efficient enough for local.
+                newsItems = data;
+
+                console.log(`[Overlay] Fetched ${newsItems.length} news items.`);
                 updateUI();
-                startHeadlineRotation(); // Restart rotation with new data
+
+                // Only restart rotation if it's not running or we have new items
+                // Actually, allowing it to restart ensures we pick up new items in the cycle immediately
+                if (!headlineInterval) startHeadlineRotation();
+
             } catch (e) {
                 console.error("Fetch error", e);
             }
         }
+
+        // Poll News every 15 seconds (Fallback for WebSocket)
+        setInterval(fetchNews, 15000);
 
         function updateUI() {
             // Ticker (All Active Items)
