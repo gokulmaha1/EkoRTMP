@@ -35,6 +35,16 @@ class StreamOverlayApp:
         self.window.set_default_size(WIDTH, HEIGHT)
         
         self.webview = WebKit2.WebView()
+        
+        # Configure WebView Settings
+        settings = self.webview.get_settings()
+        settings.set_enable_write_console_messages_to_stdout(True) # Debugging
+        settings.set_enable_developer_extras(True)
+        settings.set_enable_webgl(True)
+        # Spoof a standard browser User-Agent to avoid being blocked
+        settings.set_user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+        self.webview.set_settings(settings)
+        
         self.webview.set_background_color(Gdk.RGBA(0, 0, 0, 0)) # Transparent background
         self.window.add(self.webview)
         
@@ -62,7 +72,7 @@ class StreamOverlayApp:
             f'flvmux name=mux streamable=true ! rtmpsink location="{RTMP_URL}" '
             f'videotestsrc pattern=ball ! video/x-raw,width={WIDTH},height={HEIGHT},framerate={FRAMERATE}/1 ! '
             'videoconvert ! cairooverlay name=overlay ! videoconvert ! '
-            'x264enc bitrate=2000 tune=zerolatency speed-preset=veryfast key-int-max=60 ! mux. '
+            'x264enc bitrate=2500 tune=zerolatency speed-preset=veryfast key-int-max=60 ! mux. '
             'audiotestsrc wave=silence ! audio/x-raw,rate=44100,channels=2 ! '
             'voaacenc bitrate=128000 ! mux.'
         )
