@@ -141,7 +141,7 @@
         // Clock
         function updateClock() {
             const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
         }
         setInterval(updateClock, 1000);
         updateClock();
