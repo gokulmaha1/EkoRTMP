@@ -11,57 +11,41 @@ const inpType = document.getElementById('inpType');
 const inpCategory = document.getElementById('inpCategory');
 const statTickers = document.getElementById('statTickers');
 const statBreaking = document.getElementById('statBreaking');
+const statMainScreen = document.getElementById('statMainScreen');
 const inpWebviewUrl = document.getElementById('inpWebviewUrl');
 const inpFile = document.getElementById('inpFile');
 const uploadStatus = document.getElementById('uploadStatus');
+const mediaGallery = document.getElementById('mediaGallery');
+const pageTitle = document.getElementById('pageTitle');
 
 // Init
 document.addEventListener('DOMContentLoaded', () => {
     fetchNews();
     connectWebSocket();
+    document.getElementById('startTime').innerText = new Date().toLocaleTimeString();
 });
 
-// --- Media & Screen ---
+// --- Navigation ---
+function switchView(viewName) {
+    // Hide all
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
 
-async function updateMainScreen() {
-    const url = inpWebviewUrl.value.trim();
-    if (!url) return;
+    // Show target
+    document.getElementById(`view-${viewName}`).classList.add('active');
+    document.getElementById(`nav-${viewName}`).classList.add('active');
 
-    try {
-        await fetch('/api/overlay/update', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ webview_url: url })
-        });
-        alert("Main screen updated!");
-    } catch (e) {
-        console.error(e);
-    }
-}
+    // Update Title
+    const titles = {
+        'dashboard': 'Live Overview',
+        'news': 'News Manager',
+        'media': 'Media Library',
+        'config': 'Layout Configuration'
+    };
+    pageTitle.innerText = titles[viewName] || 'Control Room';
 
-async function uploadMedia() {
-    const file = inpFile.files[0];
-    if (!file) return alert("Select a file first");
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-        const res = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData
-        });
-        const data = await res.json();
-
-        if (data.url) {
-            inpWebviewUrl.value = window.location.origin + data.url; // Auto-fill URL input
-            uploadStatus.style.display = 'block';
-            setTimeout(() => uploadStatus.style.display = 'none', 3000);
-        }
-    } catch (e) {
-        console.error("Upload error", e);
-        alert("Upload failed");
-    }
+    // Lazy Load
+    if (viewName === 'media') fetchMedia();
 }
 
 // --- API Interactions ---
@@ -99,6 +83,7 @@ async function submitNews() {
         if (res.ok) {
             inpTitleTamil.value = ""; // Clear input
             // List will auto-update via WebSocket
+            // Switch to queue view if not there?
         } else {
             alert("Failed to publish");
         }
@@ -128,6 +113,109 @@ async function toggleActive(id, currentState) {
     }
 }
 
+async function publishBreaking() {
+    const title = prompt("Enter Breaking News Headline:");
+    if (!title) return;
+
+    const payload = {
+        title_tamil: title,
+        type: "BREAKING",
+        category: "GENERAL",
+        is_active: true,
+        priority: 10
+    };
+
+    await fetch(`${API_BASE}/news`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    switchView('news');
+}
+
+
+// --- Media & Screen ---
+
+async function updateMainScreen() {
+    const url = inpWebviewUrl.value.trim();
+    setMainScreen(url);
+}
+
+async function setMainScreen(url) {
+    try {
+        await fetch('/api/overlay/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ webview_url: url })
+        });
+        if (url) alert("Main screen updated!");
+        statMainScreen.innerText = url ? "Active" : "Cleared";
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function uploadMedia() {
+    const file = inpFile.files[0];
+    if (!file) return alert("Select a file first");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+
+        if (data.url) {
+            inpWebviewUrl.value = window.location.origin + data.url; // Auto-fill URL input
+            uploadStatus.style.display = 'block';
+            setTimeout(() => uploadStatus.style.display = 'none', 3000);
+            fetchMedia(); // Refresh Gallery
+        }
+    } catch (e) {
+        console.error("Upload error", e);
+        alert("Upload failed");
+    }
+}
+
+async function fetchMedia() {
+    try {
+        const res = await fetch('/api/media');
+        const files = await res.json();
+        renderMedia(files);
+    } catch (e) { console.error(e); }
+}
+
+function renderMedia(files) {
+    mediaGallery.innerHTML = "";
+    if (files.length === 0) {
+        mediaGallery.innerHTML = "<p class='text-gray-400 col-span-4 text-center'>No media found.</p>";
+        return;
+    }
+
+    files.forEach(f => {
+        const isImg = f.name.match(/\.(jpeg|jpg|gif|png)$/) != null;
+        const preview = isImg ?
+            `<img src="${f.url}" class="h-24 w-full object-cover rounded mb-2">` :
+            `<div class="h-24 w-full bg-gray-200 rounded mb-2 flex items-center justify-center"><i class="fas fa-video text-gray-400 text-2xl"></i></div>`;
+
+        const html = `
+            <div class="bg-gray-50 border border-gray-200 rounded p-2 text-sm hover:shadow transition">
+                ${preview}
+                <div class="truncate font-bold mb-2" title="${f.name}">${f.name}</div>
+                <button onclick="setMainScreen('${window.location.origin}${f.url}')" class="w-full bg-slate-700 text-white py-1 rounded text-xs hover:bg-slate-600">
+                    <i class="fas fa-play mr-1"></i> Play On Screen
+                </button>
+            </div>
+        `;
+        mediaGallery.innerHTML += html;
+    });
+}
+
+
 // --- WebSocket ---
 
 function connectWebSocket() {
@@ -135,10 +223,10 @@ function connectWebSocket() {
 
     ws.onmessage = (event) => {
         const msg = JSON.parse(event.data);
-        console.log("WS Update:", msg);
         // On any update, just re-fetch the list for simplicity (for now)
-        // Optimization: Handle payload types to update local state without fetch
-        fetchNews();
+        if (msg.type.startsWith("NEWS")) {
+            fetchNews();
+        }
     };
 
     ws.onclose = () => {
@@ -158,22 +246,22 @@ function renderQueue() {
 
     newsQueue.forEach(item => {
         const isBreaking = item.type === 'BREAKING';
-        const cardClass = isBreaking ? 'border-l-4 border-red-500 bg-red-50' : 'bg-gray-50 border-l-4 border-gray-300';
+        const cardClass = isBreaking ? 'border-l-4 border-red-500 bg-red-50' : 'bg-white border-l-4 border-gray-300';
 
         const html = `
             <div class="p-3 rounded shadow-sm flex justify-between items-center ${cardClass}">
                 <div class="flex-1">
-                    <span class="text-xs font-bold uppercase ${isBreaking ? 'text-red-600' : 'text-gray-500'}">
+                    <span class="text-[10px] font-bold uppercase tracking-wider ${isBreaking ? 'text-red-600 bg-red-100 px-1 rounded' : 'text-gray-500'}">
                         ${item.type} • ${item.category}
                     </span>
-                    <h4 class="font-bold text-lg text-slate-800">${item.title_tamil}</h4>
-                    <p class="text-xs text-gray-400">ID: ${item.id} • ${new Date(item.created_at).toLocaleTimeString()}</p>
+                    <h4 class="font-bold text-lg text-slate-800 leading-tight mt-1">${item.title_tamil}</h4>
+                    <p class="text-[10px] text-gray-400 mt-1">ID: ${item.id} • ${new Date(item.created_at).toLocaleTimeString()}</p>
                 </div>
                 <div class="flex space-x-2 ml-4">
-                    <button onclick="toggleActive(${item.id}, ${item.is_active})" class="w-8 h-8 rounded-full flex items-center justify-center ${item.is_active ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-200 text-gray-400'}">
+                    <button onclick="toggleActive(${item.id}, ${item.is_active})" class="w-8 h-8 rounded-full flex items-center justify-center transition ${item.is_active ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-200 text-gray-400 hover:bg-gray-300'}">
                         <i class="fas fa-power-off"></i>
                     </button>
-                    <button onclick="deleteNews(${item.id})" class="w-8 h-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200 flex items-center justify-center">
+                    <button onclick="deleteNews(${item.id})" class="w-8 h-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200 flex items-center justify-center transition">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>

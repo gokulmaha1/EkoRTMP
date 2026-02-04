@@ -143,6 +143,14 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
+@app.get("/api/media")
+def list_media():
+    files = []
+    if os.path.exists("media"):
+        for f in os.listdir("media"):
+            files.append({"name": f, "url": f"/media/{f}"})
+    return files
+
 class OverlayUpdate(BaseModel):
     webview_url: Optional[str] = None
     title: Optional[str] = None

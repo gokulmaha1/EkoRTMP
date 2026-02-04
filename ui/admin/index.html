@@ -24,6 +24,20 @@
             }
         }
     </script>
+    <style>
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        .nav-link.active {
+            background-color: #1e293b;
+            color: white;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 h-screen flex overflow-hidden">
@@ -35,24 +49,30 @@
             <p class="text-xs text-gray-400 mt-1">Control Room</p>
         </div>
         <nav class="flex-1 p-4 space-y-2">
-            <a href="#" class="block p-3 rounded bg-slate-800 text-white font-semibold">
+            <button onclick="switchView('dashboard')" id="nav-dashboard"
+                class="nav-link w-full text-left block p-3 rounded hover:bg-slate-800 text-gray-300 transition active">
                 <i class="fas fa-satellite-dish mr-2"></i> Dashboard
-            </a>
-            <a href="#" class="block p-3 rounded hover:bg-slate-800 text-gray-300 transition">
+            </button>
+            <button onclick="switchView('news')" id="nav-news"
+                class="nav-link w-full text-left block p-3 rounded hover:bg-slate-800 text-gray-300 transition">
                 <i class="fas fa-newspaper mr-2"></i> News Manager
-            </a>
-            <a href="#" class="block p-3 rounded hover:bg-slate-800 text-gray-300 transition">
-                <i class="fas fa-sliders-h mr-2"></i> Layout Config
-            </a>
-            <a href="#" class="block p-3 rounded hover:bg-slate-800 text-gray-300 transition">
+            </button>
+            <button onclick="switchView('media')" id="nav-media"
+                class="nav-link w-full text-left block p-3 rounded hover:bg-slate-800 text-gray-300 transition">
                 <i class="fas fa-photo-video mr-2"></i> Media Library
-            </a>
+            </button>
+            <button onclick="switchView('config')" id="nav-config"
+                class="nav-link w-full text-left block p-3 rounded hover:bg-slate-800 text-gray-300 transition">
+                <i class="fas fa-sliders-h mr-2"></i> Layout Config
+            </button>
         </nav>
         <div class="p-4 border-t border-gray-700">
             <div class="flex items-center">
                 <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
                 <span class="text-sm">Systems Online</span>
             </div>
+            <a href="/" target="_blank" class="text-xs text-blue-400 mt-2 block hover:underline">Open Public View <i
+                    class="fas fa-external-link-alt"></i></a>
         </div>
     </aside>
 
@@ -61,7 +81,7 @@
 
         <!-- Top Header -->
         <header class="bg-white shadow p-4 flex justify-between items-center">
-            <h2 class="text-xl font-bold text-slate-800">Live Dashboard</h2>
+            <h2 class="text-xl font-bold text-slate-800" id="pageTitle">Overview</h2>
             <div class="flex items-center space-x-4">
                 <button onclick="publishBreaking()"
                     class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow font-bold animate-pulse">
@@ -77,60 +97,114 @@
         </header>
 
         <!-- Dynamic Content Area -->
-        <div class="flex-1 overflow-auto p-6 space-y-6">
+        <div class="flex-1 overflow-auto p-6 relative">
 
-            <!-- Quick Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Live Tickers -->
-                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-gray-500 text-sm">Active Tickers</p>
-                            <h3 class="text-3xl font-bold" id="statTickers">0</h3>
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="view-section active space-y-6">
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-500 text-sm">Active Tickers</p>
+                                <h3 class="text-3xl font-bold" id="statTickers">0</h3>
+                            </div>
+                            <i class="fas fa-list-ul text-blue-100 text-4xl"></i>
                         </div>
-                        <i class="fas fa-list-ul text-blue-100 text-4xl"></i>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow border-l-4 border-red-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-500 text-sm">Breaking News</p>
+                                <h3 class="text-3xl font-bold text-red-600" id="statBreaking">NONE</h3>
+                            </div>
+                            <i class="fas fa-exclamation-circle text-red-100 text-4xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow border-l-4 border-green-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-500 text-sm">Main Screen</p>
+                                <h3 class="text-xl font-bold truncate w-40" id="statMainScreen">Unknown</h3>
+                            </div>
+                            <i class="fas fa-tv text-green-100 text-4xl"></i>
+                        </div>
                     </div>
                 </div>
-                <!-- Breaking Status -->
-                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-red-500">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-gray-500 text-sm">Breaking News</p>
-                            <h3 class="text-3xl font-bold text-red-600" id="statBreaking">NONE</h3>
-                        </div>
-                        <i class="fas fa-exclamation-circle text-red-100 text-4xl"></i>
+
+                <!-- Recent Activity / Queue Preview -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-4 border-b">
+                        <h3 class="font-bold text-gray-700">Recent Activity</h3>
                     </div>
-                </div>
-                <!-- Viewers (Placeholder) -->
-                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-green-500">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="text-gray-500 text-sm">Stream Uptime</p>
-                            <h3 class="text-3xl font-bold" id="statUptime">--:--</h3>
-                        </div>
-                        <i class="fas fa-clock text-green-100 text-4xl"></i>
+                    <div class="p-6 text-gray-500 text-sm">
+                        System started at <span id="startTime">...</span>
                     </div>
                 </div>
             </div>
 
-            <!-- MAIN CONTROLLER (Video & Media) -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <!-- Main Screen URL -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-tv mr-2"></i> Main Screen Content</h3>
-                    <div class="flex space-x-2">
-                        <input type="text" id="inpWebviewUrl" class="flex-1 border border-gray-300 rounded p-2"
-                            placeholder="Enter YouTube Embed / Video URL...">
-                        <button onclick="updateMainScreen()"
-                            class="bg-slate-800 text-white px-4 rounded hover:bg-slate-700">Set</button>
+            <!-- VIEW: NEWS MANAGER -->
+            <div id="view-news" class="view-section">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                    <!-- NEWS ENTRY FORM -->
+                    <div class="bg-white rounded-lg shadow overflow-hidden h-fit">
+                        <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
+                            <h3 class="font-bold"><i class="fas fa-pen-nib mr-2"></i> Publish News</h3>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Headline (Tamil)</label>
+                                <input type="text" id="inpTitleTamil"
+                                    class="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="Enter headline in Tamil...">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                    <select id="inpType" class="w-full border border-gray-300 rounded p-2">
+                                        <option value="TICKER" selected>Scrolling Ticker</option>
+                                        <option value="BREAKING">Breaking News (Top)</option>
+                                        <option value="FLASH">Flash Alert (Yellow)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                    <select id="inpCategory" class="w-full border border-gray-300 rounded p-2">
+                                        <option value="GENERAL" selected>General</option>
+                                        <option value="POLITICS">Politics</option>
+                                        <option value="ELECTION">Election</option>
+                                        <option value="DISTRICT">District</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex space-x-3 pt-4">
+                                <button onclick="submitNews()"
+                                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold transition">
+                                    <i class="fas fa-paper-plane mr-2"></i> PUBLISH LIVE
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <p class="text-xs text-gray-400 mt-2">Example: https://www.youtube.com/embed/VIDEO_ID?autoplay=1</p>
-                </div>
 
-                <!-- Media Upload -->
+                    <!-- LIVE QUEUE -->
+                    <div class="bg-white rounded-lg shadow overflow-hidden flex flex-col h-[600px]">
+                        <div class="bg-slate-100 p-4 border-b border-gray-200 flex justify-between items-center">
+                            <h3 class="font-bold text-slate-700"><i class="fas fa-stream mr-2"></i> On-Air Queue</h3>
+                            <button onclick="fetchNews()" class="text-blue-600 hover:text-blue-800"><i
+                                    class="fas fa-sync"></i> Refresh</button>
+                        </div>
+                        <div id="newsQueue" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+                            <!-- Items Injected Here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: MEDIA LIBRARY -->
+            <div id="view-media" class="view-section space-y-6">
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-cloud-upload-alt mr-2"></i> Media
-                        Uploader</h3>
+                    <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-cloud-upload-alt mr-2"></i> Upload New
+                        Media</h3>
                     <div class="flex space-x-2 items-center">
                         <input type="file" id="inpFile"
                             class="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
@@ -139,79 +213,47 @@
                     </div>
                     <div id="uploadStatus" class="text-xs text-green-600 mt-2 font-bold hidden">Upload Complete!</div>
                 </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="font-bold text-slate-700 mb-4">Media Gallary</h3>
+                    <div id="mediaGallery" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <!-- Media Items -->
+                    </div>
+                </div>
             </div>
 
-            <!-- News Editor & Queue Split -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-                <!-- NEWS ENTRY FORM -->
-                <div class="bg-white rounded-lg shadow overflow-hidden">
-                    <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
-                        <h3 class="font-bold"><i class="fas fa-pen-nib mr-2"></i> Publish News</h3>
+            <!-- VIEW: CONFIG -->
+            <div id="view-config" class="view-section space-y-6">
+                <!-- Main Screen Controller -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-tv mr-2"></i> Main Screen Content</h3>
+                    <div class="flex space-x-2">
+                        <input type="text" id="inpWebviewUrl" class="flex-1 border border-gray-300 rounded p-2"
+                            placeholder="Enter YouTube Embed / Video URL...">
+                        <button onclick="updateMainScreen()"
+                            class="bg-slate-800 text-white px-4 rounded hover:bg-slate-700">Set</button>
                     </div>
-                    <div class="p-6 space-y-4">
-                        <!-- Headline Tamil -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Headline (Tamil)</label>
-                            <input type="text" id="inpTitleTamil"
-                                class="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="Enter headline in Tamil...">
-                        </div>
-
-                        <!-- Type & Category -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                                <select id="inpType" class="w-full border border-gray-300 rounded p-2">
-                                    <option value="TICKER">Scrolling Ticker</option>
-                                    <option value="BREAKING">Breaking News (Top)</option>
-                                    <option value="FLASH">Flash Alert (Yellow)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                                <select id="inpCategory" class="w-full border border-gray-300 rounded p-2">
-                                    <option value="GENERAL">General</option>
-                                    <option value="POLITICS">Politics</option>
-                                    <option value="ELECTION">Election</option>
-                                    <option value="DISTRICT">District</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Submit Buttons -->
-                        <div class="flex space-x-3 pt-4">
-                            <button onclick="submitNews()"
-                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold transition">
-                                <i class="fas fa-paper-plane mr-2"></i> PUBLISH LIVE
-                            </button>
-                            <button class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-gray-600">
-                                Save Draft
-                            </button>
-                        </div>
+                    <p class="text-xs text-gray-400 mt-2">Example:
+                        <code>https://www.youtube.com/embed/VIDEO_ID?autoplay=1</code></p>
+                    <div class="mt-4">
+                        <h4 class="font-semibold text-sm mb-2">Preset Actions:</h4>
+                        <button onclick="setMainScreen('')"
+                            class="bg-red-100 text-red-600 px-3 py-1 rounded text-sm hover:bg-red-200">Clear
+                            Screen</button>
                     </div>
                 </div>
 
-                <!-- LIVE QUEUE -->
-                <div class="bg-white rounded-lg shadow overflow-hidden flex flex-col h-[500px]">
-                    <div class="bg-slate-100 p-4 border-b border-gray-200 flex justify-between items-center">
-                        <h3 class="font-bold text-slate-700"><i class="fas fa-stream mr-2"></i> On-Air Queue</h3>
-                        <span
-                            class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full uppercase font-bold">Live
-                            Sync</span>
-                    </div>
-                    <div id="newsQueue" class="flex-1 overflow-y-auto p-4 space-y-3">
-                        <!-- Items will be injected here via JS -->
-                        <div class="p-4 text-center text-gray-400 italic">Loading active news...</div>
-                    </div>
+                <!-- Global Settings (Placeholder for now) -->
+                <div class="bg-white rounded-lg shadow p-6 opacity-50 cursor-not-allowed">
+                    <h3 class="font-bold text-gray-500 mb-4">Branding Config (Coming Soon)</h3>
+                    <p>Control Logo, Colors, and Scrolling Speed here.</p>
                 </div>
-
             </div>
 
         </div>
     </main>
 
-    <script src="admin.js"></script>
+    <script src="/static/admin/admin.js"></script>
 </body>
 
 </html>
