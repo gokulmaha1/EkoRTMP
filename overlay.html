@@ -316,21 +316,13 @@
             <!-- Video Area -->
             <div class="video-area">
                 <div
-                    style="position:absolute; color:white; z-index:10; top:0; left:0; background:rgba(0,0,0,0.5); padding:5px;">
-                    VIDEO AREA</div>
-                <iframe id="webview" src=""></iframe>
-                <!-- Removed display:none for debugging -->
-                <video id="videoPlayer" muted playsinline
-                    style="width:100%; height:100%; object-fit:contain; border: 4px solid white;"></video>
-                <img id="imagePlayer" src="" style="display:none; width:100%; height:100%; object-fit:contain;">
+                    style="width: 100%; height: 100%; background-color: red; display: flex; align-items: center; justify-content: center; color: white; font-size: 50px; font-weight: bold;">
+                    TEST PATTERN (RED)
+                </div>
             </div>
 
-            <!-- L-Bar Content Area -->
-            <div class="l-bar-area" id="lBarArea">
-                <div style="position:absolute; color:black; z-index:10; top:0; left:0; font-weight:bold;">L-BAR AREA
-                </div>
-                <div id="lBarContent" style="width:100%; height:100%;"></div>
-            </div>
+            <!-- L-Bar Content Area (Hidden by CSS default) -->
+            <div class="l-bar-area" id="lBarArea"></div>
 
         </div>
 
@@ -491,12 +483,15 @@
         };
 
         // Initial Load
-        fetchNews();
+        /* 
+           DISABLE ALL LOGIC for Layout Verification
+           We want to see a full screen Red Box.
+        */
+        // fetchNews();
+        // applyConfig({ layout_mode: 'FULL' });
+        // fetchConfig(); 
 
-        // FORCE FULL SCREEN RESET INITIALLY
-        applyConfig({ layout_mode: 'FULL' });
-        fetchConfig(); // Then fetch real config
-
+        // TEST: Static Box
         // TEST: Hardcoded Video (HTTPS)
         const TEST_VIDEO = "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
