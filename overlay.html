@@ -426,35 +426,71 @@
         setInterval(updateClock, 1000);
         updateClock();
 
+        // Headline Rotator (Streams RSS/News one by one in Header)
+        function startHeadlineRotation() {
+            if (headlineInterval) clearInterval(headlineInterval);
+            headlineRotation(); // Run immediately
+            headlineInterval = setInterval(headlineRotation, 10000); // Change every 10s
+        }
+
+        function headlineRotation() {
+            if (!newsItems || newsItems.length === 0) return;
+
+            // Priority: Show BREAKING items first, then rotate all others
+            const breaking = newsItems.filter(i => i.type === 'BREAKING');
+            let candidates = [];
+
+            if (breaking.length > 0) {
+                // If there are breaking news, only cycle them
+                candidates = breaking;
+            } else {
+                // Otherwise cycle everything (TICKER, GENERAL, etc)
+                // Filter out items that are strictly for Ticker if needed, but user said "same content"
+                candidates = newsItems.filter(i => i.is_active);
+            }
+
+            if (candidates.length === 0) return;
+
+            // Wrap index
+            headlineIndex = (headlineIndex + 1) % candidates.length;
+            const item = candidates[headlineIndex];
+
+            // Update UI with Fade
+            elTopHeadline.style.opacity = '0';
+            setTimeout(() => {
+                elTopHeadline.innerText = item.title_tamil;
+                // Optional: Update Location tag if item has it
+                if (item.source_url) {
+                    // Update location/source tag logic here if wanted
+                    // document.getElementById('locationText').innerText = item.source_url;
+                }
+                elTopHeadline.style.opacity = '1';
+                elTopHeadline.parentElement.style.display = 'flex'; // Ensure visible
+            }, 500);
+        }
+
         // Data Management
         async function fetchNews() {
             try {
                 const res = await fetch('/api/news');
                 newsItems = await res.json();
                 updateUI();
+                startHeadlineRotation(); // Restart rotation with new data
             } catch (e) {
                 console.error("Fetch error", e);
             }
         }
 
         function updateUI() {
-            // 1. Top Headline (Priority BREAKING)
-            const breaking = newsItems.find(i => i.type === 'BREAKING');
-            if (breaking) {
-                elTopHeadline.innerText = breaking.title_tamil;
-                elTopHeadline.parentElement.style.display = 'flex';
-            } else {
-                elTopHeadline.innerText = "";
+            // Ticker (All Active Items)
+            // User said: "same content can be used in live ticker also"
+            const activeItems = newsItems.filter(i => i.is_active);
+            if (activeItems.length > 0) {
+                const tickerHtml = activeItems.map(t =>
+                    `<span class="ticker-item"><i class="fas fa-circle" style="font-size:10px;"></i> ${t.title_tamil}</span>`
+                ).join("");
+                elTickerText.innerHTML = tickerHtml + tickerHtml; // Duplicate for smooth loop
             }
-
-            // 2. Ticker (All TICKER types)
-            const tickers = newsItems.filter(i => i.type === 'TICKER' || i.type === 'GENERAL');
-            const tickerHtml = tickers.map(t =>
-                `<span class="ticker-item"><i class="fas fa-circle" style="font-size:10px;"></i> ${t.title_tamil}</span>`
-            ).join("");
-            elTickerText.innerHTML = tickerHtml + tickerHtml;
-
-
         }
 
         function updateMedia(url) {

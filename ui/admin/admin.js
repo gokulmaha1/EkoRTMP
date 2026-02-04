@@ -518,9 +518,12 @@ function renderQueue() {
         const html = `
             <div class="p-3 rounded shadow-sm flex justify-between items-center ${cardClass}">
                 <div class="flex-1">
-                    <span class="text-[10px] font-bold uppercase tracking-wider ${isBreaking ? 'text-red-600 bg-red-100 px-1 rounded' : 'text-gray-500'}">
-                        ${item.type} • ${item.category}
-                    </span>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[10px] font-bold uppercase tracking-wider ${isBreaking ? 'text-red-600 bg-red-100 px-1 rounded' : 'text-gray-500'}">
+                            ${item.type} • ${item.category}
+                        </span>
+                        ${item.source === 'RSS' ? `<span class="bg-blue-100 text-blue-600 text-[9px] font-bold px-1 rounded uppercase"><i class="fas fa-rss"></i> RSS</span>` : ''}
+                    </div>
                     <h4 class="font-bold text-lg text-slate-800 leading-tight mt-1">${item.title_tamil}</h4>
                     <p class="text-[10px] text-gray-400 mt-1">ID: ${item.id} • ${new Date(item.created_at).toLocaleTimeString()}</p>
                 </div>

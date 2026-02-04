@@ -69,12 +69,6 @@ async def broadcast_news_update(type: str, data: dict):
     for ws in to_remove:
         news_websockets.remove(ws)
 
-@app.on_event("startup")
-async def startup_event():
-    # Initialize DB
-    database.init_db()
-    asyncio.create_task(broadcast_logs())
-
 # WebSocket for Logs
 @app.websocket("/ws/logs")
 async def websocket_endpoint(websocket: WebSocket):
@@ -98,6 +92,74 @@ async def news_websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         if websocket in news_websockets:
             news_websockets.remove(websocket)
+
+# --- RSS Background Sync ---
+async def sync_rss_feeds():
+    """Background task to sync RSS feeds periodically."""
+    while True:
+        try:
+            db = database.SessionLocal()
+            feeds = db.query(NewsFeed).filter(NewsFeed.is_active == True).all()
+            
+            new_items_count = 0
+            
+            for feed in feeds:
+                print(f"[RSS] Fetching {feed.name}...")
+                items = news_fetcher.fetch_rss_feed(feed.url)
+                
+                for item in items:
+                    # Check if exists
+                    exists = db.query(NewsItem).filter(NewsItem.external_id == item['id']).first()
+                    if not exists:
+                        # Create new item
+                        new_news = NewsItem(
+                            title_tamil=item['title'], # Google News Tamil returns Tamil titles
+                            title_english="",
+                            type="TICKER", # Default to Ticker so it scrolls
+                            category="GENERAL",
+                            source="RSS",
+                            source_url=feed.name, # Use Feed Name as source label
+                            external_id=item['id'],
+                            media_url=item['image'],
+                            is_active=True,
+                            priority=5 # Normal priority
+                        )
+                        db.add(new_news)
+                        new_items_count += 1
+            
+            if new_items_count > 0:
+                db.commit()
+                print(f"[RSS] Added {new_items_count} new items.")
+                # Broadcast update
+                await broadcast_news_update("NEWS_REFRESH", {"count": new_items_count})
+            
+            db.close()
+            
+        except Exception as e:
+            print(f"[RSS] Sync Error: {e}")
+        
+        await asyncio.sleep(60) # Sync every 60 seconds
+
+@app.on_event("startup")
+async def startup_event():
+    # Initialize DB
+    database.init_db()
+    
+    # Add Default Google News Feed if not exists
+    db = database.SessionLocal()
+    if db.query(NewsFeed).count() == 0:
+        default_feed = NewsFeed(
+            name="Google News (Tamil)",
+            url="https://news.google.com/rss?hl=ta&gl=IN&ceid=IN:ta",
+            source_type="RSS"
+        )
+        db.add(default_feed)
+        db.commit()
+        print("[System] Added default Google News Feed.")
+    db.close()
+
+    asyncio.create_task(broadcast_logs())
+    asyncio.create_task(sync_rss_feeds()) # Start RSS Sync
 
 # Enable CORS
 app.add_middleware(
