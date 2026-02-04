@@ -29,6 +29,9 @@
         const infoEl = document.getElementById('info');
         const webviewFrame = document.getElementById('webview');
 
+        const lowerThird = document.querySelector('.lower-third');
+        const clock = document.querySelector('.clock');
+
         // Clock
         function updateClock() {
             const now = new Date();
@@ -58,6 +61,15 @@
                     currentUrl = "";
                     webviewFrame.classList.remove('active');
                     webviewFrame.src = ""; // Clear
+                }
+
+                // Handle Overlay Visibility
+                if (data.hide_overlays) {
+                    lowerThird.style.display = 'none';
+                    clock.style.display = 'none';
+                } else {
+                    lowerThird.style.display = 'block';
+                    clock.style.display = 'block';
                 }
 
             } catch (err) {

@@ -62,7 +62,7 @@ class StreamOverlayApp:
             f'flvmux name=mux streamable=true ! rtmpsink location="{RTMP_URL}" '
             f'videotestsrc pattern=ball ! video/x-raw,width={WIDTH},height={HEIGHT},framerate={FRAMERATE}/1 ! '
             'videoconvert ! cairooverlay name=overlay ! videoconvert ! '
-            'x264enc bitrate=2000 tune=zerolatency speed-preset=veryfast ! mux. '
+            'x264enc bitrate=2000 tune=zerolatency speed-preset=veryfast key-int-max=60 ! mux. '
             'audiotestsrc wave=silence ! audio/x-raw,rate=44100,channels=2 ! '
             'voaacenc bitrate=128000 ! mux.'
         )

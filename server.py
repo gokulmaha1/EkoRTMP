@@ -98,6 +98,7 @@ class OverlayUpdate(BaseModel):
     subtitle: Optional[str] = None
     info: Optional[str] = None
     webview_url: Optional[str] = None
+    hide_overlays: Optional[bool] = None
 
 @app.get("/")
 def read_root():
@@ -131,6 +132,7 @@ def update_overlay(data: OverlayUpdate):
     if data.subtitle is not None: current_data["subtitle"] = data.subtitle
     if data.info is not None: current_data["info"] = data.info
     if data.webview_url is not None: current_data["webview_url"] = data.webview_url
+    if data.hide_overlays is not None: current_data["hide_overlays"] = data.hide_overlays
 
     with open(OVERLAY_FILE, "w") as f:
         json.dump(current_data, f)

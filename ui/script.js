@@ -11,6 +11,7 @@ const inpTitle = document.getElementById('inpTitle');
 const inpSubtitle = document.getElementById('inpSubtitle');
 const inpInfo = document.getElementById('inpInfo');
 const inpWebview = document.getElementById('inpWebview');
+const chkHideOverlays = document.getElementById('chkHideOverlays');
 
 const consoleWindow = document.getElementById('consoleWindow');
 const btnClearLogs = document.getElementById('btnClearLogs');
@@ -24,6 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchOverlayData();
     connectLogSocket();
 
+    // Load saved stream key
+    const savedKey = localStorage.getItem('eko_stream_key');
+    if (savedKey) {
+        document.getElementById('inpRtmpUrl').value = savedKey;
+    }
+
     // Poll status every 2 seconds
     pollingInterval = setInterval(fetchStatus, 2000);
 });
@@ -35,6 +42,9 @@ btnStart.addEventListener('click', async () => {
         alert("Please enter your Stream Key");
         return;
     }
+
+    // Save to localStorage
+    localStorage.setItem('eko_stream_key', streamKey);
 
     // Automatically prepend YouTube URL
     const rtmpUrl = `rtmp://a.rtmp.youtube.com/live2/${streamKey}`;
@@ -77,7 +87,8 @@ btnUpdateOverlay.addEventListener('click', async () => {
         title: inpTitle.value,
         subtitle: inpSubtitle.value,
         info: inpInfo.value,
-        webview_url: inpWebview.value
+        webview_url: inpWebview.value,
+        hide_overlays: chkHideOverlays.checked
     };
 
     // Visual feedback
@@ -172,6 +183,7 @@ async function fetchOverlayData() {
         if (data.subtitle) inpSubtitle.value = data.subtitle;
         if (data.info) inpInfo.value = data.info;
         if (data.webview_url) inpWebview.value = data.webview_url;
+        if (data.hide_overlays !== undefined) chkHideOverlays.checked = data.hide_overlays;
     } catch (err) {
         console.error('Error fetching overlay data:', err);
     }
