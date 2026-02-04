@@ -147,6 +147,16 @@
 
 
 
+        .right-panel {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            background-color: var(--brand-dark);
+            padding-right: 20px;
+            white-space: nowrap;
+            z-index: 30;
+        }
+
         .panel-widget {
             padding: 20px;
             text-align: center;
@@ -157,16 +167,15 @@
         /* Branding */
         .brand-logo {
             margin-bottom: auto;
-            /* Push to top */
             padding-top: 20px;
         }
 
         .logo-img {
-            width: 150px;
-            height: auto;
+            height: 40px;
+            /* Fit in 60px ticker */
+            width: auto;
             display: block;
-            margin: 0 auto;
-            margin-bottom: 20px;
+            margin: 0 15px;
         }
 
         .live-box {
@@ -177,13 +186,12 @@
             font-size: 14px;
             font-weight: bold;
             border-radius: 4px;
-            margin-bottom: 10px;
             animation: blink 1.5s infinite;
         }
 
         .clock {
             font-family: 'Oswald', sans-serif;
-            font-size: 28px;
+            font-size: 24px;
             color: var(--brand-yellow);
         }
 
