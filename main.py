@@ -74,9 +74,28 @@ class StreamOverlayApp:
             f'videotestsrc pattern=ball ! video/x-raw,width={WIDTH},height={HEIGHT},framerate={FRAMERATE}/1 ! '
             'videoconvert ! cairooverlay name=overlay ! videoconvert ! '
             'x264enc bitrate=2500 tune=zerolatency speed-preset=veryfast key-int-max=60 ! mux. '
-            'audiotestsrc wave=ticks ! audio/x-raw,rate=44100,channels=2 ! '
-            'voaacenc bitrate=128000 ! mux.'
         )
+        
+        # Audio Pipeline Component
+        # If the news music file exists, loop it. Otherwise fallback to silence (or ticks).
+        music_file = "news-music-2025-335894.mp3"
+        if os.path.exists(music_file):
+            print(f"Found background music: {music_file}")
+            # multifilesrc loop=true allows looping the file
+            audio_pipeline = (
+                f'multifilesrc location="{music_file}" loop=true ! '
+                'decodebin ! audioconvert ! audioresample ! audio/x-raw,rate=44100,channels=2 ! '
+                'volume volume=0.3 ! ' # Lower volume for background
+                'voaacenc bitrate=128000 ! mux.'
+            )
+        else:
+            print("Music file not found, using silence.")
+            audio_pipeline = (
+                'audiotestsrc wave=silence ! audio/x-raw,rate=44100,channels=2 ! '
+                'voaacenc bitrate=128000 ! mux.'
+            )
+
+        pipeline_str += audio_pipeline
         
         print(f"Starting pipeline: {pipeline_str}")
         self.pipeline = Gst.parse_launch(pipeline_str)
