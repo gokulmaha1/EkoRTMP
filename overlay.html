@@ -456,6 +456,11 @@
         fetchNews();
         fetchConfig();
 
+        // TEST: Hardcoded Video
+        setTimeout(() => {
+            updateMedia("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4");
+        }, 2000); // Wait for page load
+
         // Poll for Webview/Media URL
         setInterval(async () => {
             try {
