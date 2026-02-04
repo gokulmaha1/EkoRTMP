@@ -1,5 +1,3 @@
-import shutil
-import re
 import os
 import subprocess
 import signal
@@ -11,51 +9,10 @@ import asyncio
 from typing import Optional, List
 from fastapi import FastAPI, UploadFile, Form, WebSocket, WebSocketDisconnect, Depends, HTTPException, File
 from fastapi.staticfiles import StaticFiles
-# ... (existing imports)
-from fastapi import Request, Response, status
-from fastapi.responses import RedirectResponse
-import secrets
-
-# ... (app init)
-
-# Simple Admin Auth
-ADMIN_USER = "admin"
-ADMIN_PASS = "admin123" # In prod usage env var
-SESSION_TOKEN = "ekosecret" # simplistic token for now
-
-@app.middleware("http")
-async def auth_middleware(request: Request, call_next):
-    # Protect /admin
-    if request.url.path.startswith("/admin") and request.url.path != "/admin/login":
-        token = request.cookies.get("session_token")
-        if token != SESSION_TOKEN:
-            return RedirectResponse(url="/login")
-    
-    response = await call_next(request)
-    return response
-
-@app.get("/login")
-def login_page():
-    return FileResponse("ui/login.html")
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-@app.post("/api/login")
-def login(creds: LoginRequest, response: Response):
-    if creds.username == ADMIN_USER and creds.password == ADMIN_PASS:
-        response.set_cookie(key="session_token", value=SESSION_TOKEN)
-        return {"status": "success"}
-    else:
-        return JSONResponse(status_code=401, content={"error": "Invalid credential"})
-
-@app.get("/api/logout")
-def logout(response: Response):
-    response.delete_cookie("session_token")
-    return {"status": "logged_out"}
-
-# ... (rest of code)
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
 # Import our new database module
 import database
@@ -153,81 +110,18 @@ app.add_middleware(
 
 # Global state
 stream_process = None
-# Helper to get/set config
-def get_system_config(db: Session, key: str, default: str = "") -> str:
-    item = db.query(SystemConfig).filter(SystemConfig.key == key).first()
-    if item:
-        return item.value
-    return default
+OVERLAY_FILE = "overlay_data.json"
 
-def set_system_config(db: Session, key: str, value: str):
-    item = db.query(SystemConfig).filter(SystemConfig.key == key).first()
-    if not item:
-        item = SystemConfig(key=key, value=value)
-        db.add(item)
-    else:
-        item.value = value
-    db.commit()
-
-# --- Stream Control API ---
-# ... (StreamConfig class)
-
-@app.post("/api/stream/start")
-def start_stream(config: StreamConfig, db: Session = Depends(get_db)):
-    global stream_process
-    
-    # Persist the stream key if provided
-    if config.stream_key:
-        set_system_config(db, "stream_key", config.stream_key)
-    
-    if stream_process and stream_process.poll() is None:
-        return {"status": "already_running"}
-    
-    env = os.environ.copy()
-    env["OVERLAY_URL"] = "http://127.0.0.1:8123/overlay"
-    
-    if config.rtmp_url:
-        env["RTMP_URL"] = config.rtmp_url
-    
-    try:
-        stream_process = subprocess.Popen(
-            [sys.executable, "-u", "main.py"], 
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            bufsize=1
-        )
-        # ... (threading logic)
-        t = threading.Thread(target=log_reader, args=(stream_process,), daemon=True)
-        t.start()
-        
-        return {"status": "started", "pid": stream_process.pid}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
-
-# ... (stop_stream, get_status)
-
-# Legacy Overlay Endpoint (Now powered by DB)
-@app.get("/overlay/data")
-def get_overlay_data(db: Session = Depends(get_db)):
-    return {
-        "webview_url": get_system_config(db, "webview_url"),
-        "title": get_system_config(db, "title", "Live Stream"),
-        "subtitle": get_system_config(db, "subtitle", "Welcome"),
-        "stream_key": get_system_config(db, "stream_key")
-    }
-
-@app.post("/api/overlay/update")
-def update_overlay(data: OverlayUpdate, db: Session = Depends(get_db)):
-    if data.webview_url is not None: 
-        set_system_config(db, "webview_url", data.webview_url)
-    if data.title is not None:
-        set_system_config(db, "title", data.title)
-    if data.subtitle is not None:
-        set_system_config(db, "subtitle", data.subtitle)
-        
-    # Notify via WebSocket for immediate update if needed (optional but good)
-    return {"status": "updated"}
+# Ensure overlay data file exists (Legacy support)
+if not os.path.exists(OVERLAY_FILE):
+    with open(OVERLAY_FILE, "w") as f:
+         json.dump({
+            "title": "Live Stream", 
+            "subtitle": "Welcome!", 
+            "info": "Starting soon...", 
+            "webview_url": "",
+            "stream_key": ""
+        }, f)
 
 # Mount static files for UI (and eventually Admin)
 if not os.path.exists("ui"):
@@ -239,24 +133,14 @@ if not os.path.exists("media"):
 app.mount("/media", StaticFiles(directory="media"), name="media")
 
 # --- Media API ---
-import shutil
-import re
-
-# ... (imports)
-
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):
     try:
-        # Sanitize filename (remove special chars, replace spaces with underscores)
-        clean_name = re.sub(r'[^\w\.-]', '_', file.filename)
-        file_location = f"media/{clean_name}"
-        
-        with open(file_location, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-            
-        return {"info": f"File saved", "url": f"/media/{clean_name}"}
+        file_location = f"media/{file.filename}"
+        with open(file_location, "wb+") as f:
+            f.write(file.file.read())
+        return {"info": f"file '{file.filename}' saved at '{file_location}'", "url": f"/media/{file.filename}"}
     except Exception as e:
-        print(f"Upload Error: {e}") # Print to console
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.get("/api/media")
@@ -274,7 +158,24 @@ class OverlayUpdate(BaseModel):
     info: Optional[str] = None
     hide_overlays: Optional[bool] = None
 
-
+@app.post("/api/overlay/update")
+def update_overlay(data: OverlayUpdate):
+    if os.path.exists(OVERLAY_FILE):
+        with open(OVERLAY_FILE, "r") as f:
+            try:
+                current_data = json.load(f)
+            except:
+                current_data = {}
+    else:
+        current_data = {}
+    
+    if data.webview_url is not None: current_data["webview_url"] = data.webview_url
+    # Only update what's passed
+    
+    with open(OVERLAY_FILE, "w") as f:
+        json.dump(current_data, f)
+    
+    return current_data
 
 # --- Pydantic Models for News API ---
 class NewsCreate(BaseModel):
