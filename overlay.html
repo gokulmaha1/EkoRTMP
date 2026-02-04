@@ -18,7 +18,6 @@
             /* Layout Dimensions */
             --header-height: 80px;
             --ticker-height: 60px;
-            --right-panel-width: 350px;
         }
 
         body {
@@ -37,7 +36,6 @@
             position: relative;
             display: grid;
             grid-template-rows: var(--header-height) 1fr var(--ticker-height);
-            grid-template-columns: 1fr var(--right-panel-width);
         }
 
         /* --- ZONE 0: Main Video Area --- */
@@ -147,16 +145,7 @@
             color: var(--brand-yellow);
         }
 
-        /* --- ZONE 3: Right Panel (Context/Ads) --- */
-        .right-panel {
-            grid-row: 2;
-            grid-column: 2;
-            background: linear-gradient(180deg, #2c3e50 0%, #000000 100%);
-            border-left: 2px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
+
 
         .panel-widget {
             padding: 20px;
@@ -296,11 +285,9 @@
                 </div>
             </div>
             <div class="right-panel">
-                <div class="panel-widget brand-logo">
-                    <div class="live-box">LIVE</div>
-                    <img src="/media/logo.gif" class="logo-img" alt="EKO TV">
-                    <div class="clock" id="clock">00:00</div>
-                </div>
+                <div class="live-box">LIVE</div>
+                <img src="/media/logo.gif" class="logo-img" alt="EKO TV">
+                <div class="clock" id="clock">00:00</div>
             </div>
         </div>
 
