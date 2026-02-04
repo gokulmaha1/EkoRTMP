@@ -49,10 +49,16 @@
             overflow: hidden;
         }
 
-        iframe#webview {
+        iframe#webview,
+        video#videoPlayer,
+        img#imagePlayer {
             width: 100%;
             height: 100%;
             border: none;
+            object-fit: contain;
+            /* OR cover, depending on preference */
+            display: none;
+            /* Hidden by default */
         }
 
         /* --- ZONE 1: Top Header --- */
