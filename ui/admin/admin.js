@@ -113,6 +113,172 @@ async function toggleActive(id, currentState) {
     }
 }
 
+// --- News Tabs & External Fetching ---
+function setNewsTab(tab) {
+    // Buttons
+    document.getElementById('tab-manual').className = tab === 'manual'
+        ? 'flex-1 py-3 bg-slate-800 text-white font-bold text-sm'
+        : 'flex-1 py-3 bg-gray-100 text-gray-500 font-bold text-sm hover:bg-gray-200';
+
+    document.getElementById('tab-external').className = tab === 'external'
+        ? 'flex-1 py-3 bg-slate-800 text-white font-bold text-sm'
+        : 'flex-1 py-3 bg-gray-100 text-gray-500 font-bold text-sm hover:bg-gray-200';
+
+    // Content
+    if (tab === 'manual') {
+        document.getElementById('content-manual').classList.remove('hidden');
+        document.getElementById('content-external').classList.add('hidden');
+    } else {
+        document.getElementById('content-manual').classList.add('hidden');
+        document.getElementById('content-external').classList.remove('hidden');
+        fetchFeeds(); // Load saved feeds
+    }
+}
+
+// --- Feed Management ---
+async function fetchFeeds() {
+    const el = document.getElementById('savedFeedsList');
+    el.innerHTML = '<div class="text-xs text-gray-400">Loading feeds...</div>';
+
+    try {
+        const res = await fetch(`${API_BASE}/feeds`);
+        const feeds = await res.json();
+
+        el.innerHTML = "";
+        if (feeds.length === 0) {
+            el.innerHTML = '<div class="text-xs text-gray-400 italic">No saved feeds.</div>';
+            return;
+        }
+
+        feeds.forEach(feed => {
+            const item = document.createElement('div');
+            item.className = "flex justify-between items-center bg-gray-50 p-2 rounded border hover:bg-blue-50 cursor-pointer group";
+            item.innerHTML = `
+                <div class="flex-1 overflow-hidden" onclick="loadFeed('${feed.url}')">
+                    <div class="font-bold text-xs text-slate-700">${feed.name}</div>
+                    <div class="text-[10px] text-gray-400 truncate">${feed.url}</div>
+                </div>
+                <button onclick="deleteFeed(${feed.id})" class="text-red-400 hover:text-red-600 px-2 hidden group-hover:block">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            el.appendChild(item);
+        });
+    } catch (e) {
+        console.error(e);
+        el.innerHTML = '<div class="text-xs text-red-400">Error loading feeds</div>';
+    }
+}
+
+async function addNewFeed() {
+    const name = prompt("Enter Feed Name (e.g. Google News):");
+    if (!name) return;
+    const url = prompt("Enter RSS Feed URL:");
+    if (!url) return;
+
+    try {
+        await fetch(`${API_BASE}/feeds`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, url, source_type: "RSS" })
+        });
+        fetchFeeds();
+    } catch (e) {
+        console.error(e);
+        alert("Failed to save feed");
+    }
+}
+
+async function deleteFeed(id) {
+    if (!confirm("Remove this feed?")) return;
+    try {
+        await fetch(`${API_BASE}/feeds/${id}`, { method: 'DELETE' });
+        fetchFeeds();
+    } catch (e) { console.error(e); }
+}
+
+function loadFeed(url) {
+    document.getElementById('inpExtUrl').value = url;
+    document.getElementById('inpSourceType').value = "RSS";
+    fetchExternalNews();
+}
+
+// --- Fetch & Insert Logic ---
+async function fetchExternalNews() {
+    const url = document.getElementById('inpExtUrl').value.trim();
+    if (!url) return alert("Please enter a URL");
+
+    const sourceType = document.getElementById('inpSourceType').value;
+    const previewArea = document.getElementById('extPreviewArea');
+
+    previewArea.innerHTML = '<div class="text-center text-gray-400">Fetching...</div>';
+    previewArea.classList.remove('hidden');
+
+    try {
+        const res = await fetch(`${API_BASE}/news/fetch-external`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, source_type: sourceType })
+        });
+        const data = await res.json();
+
+        previewArea.innerHTML = "";
+
+        if (data.status === 'success' && data.items.length > 0) {
+            data.items.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'bg-gray-50 border p-2 rounded flex justify-between items-start text-xs';
+                el.innerHTML = `
+                    <div class="flex-1 mr-2">
+                        <div class="font-bold mb-1">${item.title}</div>
+                        <div class="text-gray-500 truncate">${item.summary}</div>
+                    </div>
+                    <button class="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 font-bold">
+                        <i class="fas fa-plus"></i> Add
+                    </button>
+                `;
+                el.querySelector('button').onclick = () => insertExternalNews(item);
+                previewArea.appendChild(el);
+            });
+        } else {
+            previewArea.innerHTML = '<div class="text-center text-red-400">No items found</div>';
+        }
+    } catch (e) {
+        console.error(e);
+        previewArea.innerHTML = '<div class="text-center text-red-400">Error fetching content</div>';
+    }
+}
+
+async function insertExternalNews(item) {
+    // Pre-fill manual tab with data (or save directly? Let's save directly for speed)
+    const category = prompt("Select Category (GENERAL, POLITICS, ELECTION, DISTRICT):", "GENERAL");
+    if (!category) return;
+
+    const payload = {
+        title_tamil: item.title, // Assuming content handles lang or is acceptable
+        title_english: item.title,
+        type: "TICKER",
+        category: category.toUpperCase(),
+        is_active: true,
+        priority: 0,
+        source: item.source,
+        source_url: item.link,
+        media_url: item.image
+    };
+
+    try {
+        await fetch(`${API_BASE}/news`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        alert("News item added to queue!");
+    } catch (e) {
+        console.error(e);
+        alert("Failed to add news");
+    }
+}
+
 async function publishBreaking() {
     const title = prompt("Enter Breaking News Headline:");
     if (!title) return;

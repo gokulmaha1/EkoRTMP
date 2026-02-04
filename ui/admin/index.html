@@ -198,12 +198,20 @@
             <!-- VIEW: NEWS MANAGER -->
             <div id="view-news" class="view-section">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-                    <!-- NEWS ENTRY FORM -->
+
+                    <!-- LEFT PANEL: TABS & FORMS -->
                     <div class="bg-white rounded-lg shadow overflow-hidden h-fit">
-                        <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
-                            <h3 class="font-bold"><i class="fas fa-pen-nib mr-2"></i> Publish News</h3>
+                        <!-- Tabs -->
+                        <div class="flex border-b border-gray-200">
+                            <button onclick="setNewsTab('manual')" id="tab-manual"
+                                class="flex-1 py-3 bg-slate-800 text-white font-bold text-sm">Manual Entry</button>
+                            <button onclick="setNewsTab('external')" id="tab-external"
+                                class="flex-1 py-3 bg-gray-100 text-gray-500 font-bold text-sm hover:bg-gray-200">Import
+                                / RSS</button>
                         </div>
-                        <div class="p-6 space-y-4">
+
+                        <!-- TAB: MANUAL -->
+                        <div id="content-manual" class="p-6 space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Headline (Tamil)</label>
                                 <input type="text" id="inpTitleTamil"
@@ -217,6 +225,7 @@
                                         <option value="TICKER" selected>Scrolling Ticker</option>
                                         <option value="BREAKING">Breaking News (Top)</option>
                                         <option value="FLASH">Flash Alert (Yellow)</option>
+                                        <option value="HEADLINE">Main Story</option>
                                     </select>
                                 </div>
                                 <div>
@@ -226,14 +235,53 @@
                                         <option value="POLITICS">Politics</option>
                                         <option value="ELECTION">Election</option>
                                         <option value="DISTRICT">District</option>
+                                        <option value="SPORTS">Sports</option>
                                     </select>
                                 </div>
                             </div>
-                            <div class="flex space-x-3 pt-4">
-                                <button onclick="submitNews()"
-                                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold transition">
-                                    <i class="fas fa-paper-plane mr-2"></i> PUBLISH LIVE
+                            <button onclick="submitNews()"
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold transition mt-4">
+                                <i class="fas fa-paper-plane mr-2"></i> PUBLISH LIVE
+                            </button>
+                        </div>
+
+                        <!-- TAB: EXTERNAL -->
+                        <div id="content-external" class="p-6 space-y-4 hidden">
+
+                            <!-- Saved Feeds -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Saved Feeds</label>
+                                <div id="savedFeedsList" class="space-y-2 mb-4">
+                                    <!-- Feeds Injected Here -->
+                                </div>
+                                <button onclick="addNewFeed()"
+                                    class="text-xs text-blue-600 hover:text-blue-800 font-bold">
+                                    <i class="fas fa-plus mr-1"></i> Add New RSS Feed
                                 </button>
+                            </div>
+                            <hr class="border-gray-200">
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Detailed Fetch</label>
+                                <div class="flex space-x-2">
+                                    <input type="text" id="inpExtUrl"
+                                        class="flex-1 border border-gray-300 rounded p-2 text-sm"
+                                        placeholder="https://news.google.com/rss/...">
+                                    <select id="inpSourceType"
+                                        class="border border-gray-300 rounded p-2 text-sm bg-gray-50">
+                                        <option value="RSS">RSS Feed</option>
+                                        <option value="SCRAPER">Web Page</option>
+                                    </select>
+                                </div>
+                                <button onclick="fetchExternalNews()"
+                                    class="w-full mt-2 bg-slate-700 text-white py-2 rounded text-sm hover:bg-slate-600">
+                                    <i class="fas fa-cloud-download-alt mr-2"></i> Fetch Content
+                                </button>
+                            </div>
+
+                            <!-- Preview Area -->
+                            <div id="extPreviewArea" class="space-y-2 max-h-60 overflow-y-auto border-t pt-2 hidden">
+                                <!-- Injected Items -->
                             </div>
                         </div>
                     </div>

@@ -14,10 +14,10 @@ Base = declarative_base()
 
 # Enums
 class NewsType(str, enum.Enum):
-    BREAKING = "BREAKING" # Full screen / Top bar red
-    TICKER = "TICKER"     # Bottom scroll
-    HEADLINE = "HEADLINE" # Main story
-    FLASH = "FLASH"       # Yellow interrupt
+    BREAKING = "BREAKING"
+    TICKER = "TICKER"
+    HEADLINE = "HEADLINE"
+    FLASH = "FLASH"
 
 class NewsCategory(str, enum.Enum):
     POLITICS = "POLITICS"
@@ -26,25 +26,47 @@ class NewsCategory(str, enum.Enum):
     SPORTS = "SPORTS"
     GENERAL = "GENERAL"
 
+class NewsSource(str, enum.Enum):
+    MANUAL = "MANUAL"
+    RSS = "RSS"
+    API = "API"
+    SCRAPER = "SCRAPER"
+
 # Models
 class NewsItem(Base):
     __tablename__ = "news_items"
 
     id = Column(Integer, primary_key=True, index=True)
-    type = Column(String, default=NewsType.TICKER) # Stored as string for simplicity
+    type = Column(String, default=NewsType.TICKER)
     category = Column(String, default=NewsCategory.GENERAL)
     
-    title_tamil = Column(String, nullable=False) # Main content
-    title_english = Column(String, nullable=True) # Optional
+    title_tamil = Column(String, nullable=False)
+    title_english = Column(String, nullable=True)
     
-    location = Column(String, nullable=True) # e.g. "Chennai"
-    media_url = Column(String, nullable=True) # Image/Video path
+    # Source Tracking
+    source = Column(String, default=NewsSource.MANUAL)
+    source_url = Column(String, nullable=True)
+    external_id = Column(String, nullable=True) # For deduping RSS items
+    
+    location = Column(String, nullable=True)
+    media_url = Column(String, nullable=True)
     
     is_active = Column(Boolean, default=True)
     priority = Column(Integer, default=0) # Higher = Show first
     
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+class NewsFeed(Base):
+    __tablename__ = "news_feeds"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False) # e.g. "Polimer News"
+    url = Column(String, nullable=False)
+    source_type = Column(String, default=NewsSource.RSS) # RSS, SCRAPER
+    is_active = Column(Boolean, default=True)
+    
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 class SystemConfig(Base):
     __tablename__ = "system_config"

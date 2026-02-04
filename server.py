@@ -196,6 +196,11 @@ class NewsCreate(BaseModel):
     location: Optional[str] = None
     is_active: bool = True
     priority: int = 0
+    # Source Tracking
+    source: str = "MANUAL"
+    source_url: Optional[str] = None
+    external_id: Optional[str] = None
+    media_url: Optional[str] = None
 
 class NewsUpdate(BaseModel):
     title_tamil: Optional[str] = None
@@ -203,8 +208,36 @@ class NewsUpdate(BaseModel):
     type: Optional[str] = None
     category: Optional[str] = None
     is_active: Optional[bool] = None
+    # Source Tracking
+    source: Optional[str] = None
+    source_url: Optional[str] = None
+    media_url: Optional[str] = None
+
+class ExternalFetchRequest(BaseModel):
+    url: str
+    source_type: str = "RSS" # RSS or SCRAPER
+
+# --- Services ---
+import services.news_fetcher as news_fetcher
 
 # --- API Endpoints ---
+
+@app.post("/api/news/fetch-external")
+async def fetch_external_news(req: ExternalFetchRequest):
+    """
+    Fetches news from an external source (RSS or URL) and returns 
+    a list of items for the UI to preview/edit.
+    """
+    if req.source_type == "RSS":
+        items = news_fetcher.fetch_rss_feed(req.url)
+        return {"status": "success", "items": items}
+    elif req.source_type == "SCRAPER":
+        item = news_fetcher.scrape_url(req.url)
+        if "error" in item:
+            return JSONResponse(status_code=400, content=item)
+        return {"status": "success", "items": [item]}
+    else:
+        return JSONResponse(status_code=400, content={"error": "Invalid source type"})
 
 @app.get("/")
 def read_root():
@@ -232,6 +265,34 @@ def get_overlay_data():
             return {"webview_url": ""}
     return {"webview_url": ""}
 
+# --- News Feed Management API (RSS Sources) ---
+from database import NewsFeed
+
+class FeedCreate(BaseModel):
+    name: str
+    url: str
+    source_type: str = "RSS"
+
+@app.get("/api/feeds")
+def get_feeds(db: Session = Depends(get_db)):
+    return db.query(NewsFeed).filter(NewsFeed.is_active == True).all()
+
+@app.post("/api/feeds")
+def create_feed(feed: FeedCreate, db: Session = Depends(get_db)):
+    db_feed = NewsFeed(name=feed.name, url=feed.url, source_type=feed.source_type)
+    db.add(db_feed)
+    db.commit()
+    db.refresh(db_feed)
+    return db_feed
+
+@app.delete("/api/feeds/{feed_id}")
+def delete_feed(feed_id: int, db: Session = Depends(get_db)):
+    db_feed = db.query(NewsFeed).filter(NewsFeed.id == feed_id).first()
+    if db_feed:
+        db.delete(db_feed)
+        db.commit()
+    return {"status": "success"}
+
 # --- News Management API ---
 
 @app.get("/api/news")
@@ -249,7 +310,11 @@ async def create_news(item: NewsCreate, db: Session = Depends(get_db)):
         category=item.category,
         location=item.location,
         is_active=item.is_active,
-        priority=item.priority
+        priority=item.priority,
+        source=item.source,
+        source_url=item.source_url,
+        external_id=item.external_id,
+        media_url=item.media_url
     )
     db.add(db_item)
     db.commit()

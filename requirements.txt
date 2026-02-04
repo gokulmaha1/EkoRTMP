@@ -5,3 +5,7 @@ uvicorn
 python-multipart
 websockets
 sqlalchemy
+requests
+feedparser
+beautifulsoup4
+lxml
