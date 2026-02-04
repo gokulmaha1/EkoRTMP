@@ -401,6 +401,8 @@
         // State
         let newsItems = [];
         let currentMediaUrl = "";
+        let headlineIndex = 0;
+        let headlineInterval = null;
 
         // Clock & Date
         function updateClock() {
@@ -467,33 +469,14 @@
             }, 500);
         }
 
-        // DEBUG: Visual Console
-        const debugBox = document.createElement('div');
-        debugBox.style.position = 'absolute';
-        debugBox.style.top = '10px';
-        debugBox.style.right = '10px';
-        debugBox.style.background = 'rgba(0,0,0,0.8)';
-        debugBox.style.color = 'yellow';
-        debugBox.style.padding = '10px';
-        debugBox.style.fontSize = '20px';
-        debugBox.style.zIndex = '9999';
-        debugBox.id = 'debugBox';
-        document.body.appendChild(debugBox);
-
-        function log(msg) {
-            console.log(msg);
-            debugBox.innerText = msg;
-        }
-
         // Data Management
         async function fetchNews() {
             try {
-                log("Fetching /api/news...");
                 const res = await fetch('/api/news');
                 const data = await res.json();
 
                 newsItems = data;
-                log(`Fetched ${newsItems.length} items. Active: ${newsItems.filter(i => i.is_active).length}`);
+                console.log(`[Overlay] Fetched ${newsItems.length} news items.`);
 
                 updateUI();
 
@@ -501,7 +484,6 @@
 
             } catch (e) {
                 console.error("Fetch error", e);
-                log("Error: " + e.message);
             }
         }
 
