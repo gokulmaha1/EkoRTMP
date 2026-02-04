@@ -39,12 +39,33 @@
         }
 
         /* --- ZONE 0: Main Video Area --- */
-        .video-area {
+        .main-content-wrapper {
             grid-row: 2;
             grid-column: 1;
+            display: flex;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        .video-area {
+            flex-grow: 1;
             position: relative;
             background-color: #1a1a1a;
             overflow: hidden;
+            transition: width 0.5s ease;
+            /* Smooth Squeeze */
+        }
+
+        .l-bar-area {
+            width: 0;
+            /* Default 0 width (Hidden) */
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+            transition: width 0.5s ease;
+            position: relative;
         }
 
         iframe#webview,
@@ -284,12 +305,22 @@
             </div>
         </div>
 
-        <!-- Video Area -->
-        <div class="video-area">
-            <iframe id="webview" src=""></iframe>
-            <video id="videoPlayer" muted autoplay
-                style="display:none; width:100%; height:100%; object-fit:contain;"></video>
-            <img id="imagePlayer" src="" style="display:none; width:100%; height:100%; object-fit:contain;">
+        <!-- Main Content Wrapper (Video + L-Bar) -->
+        <div class="main-content-wrapper">
+
+            <!-- Video Area -->
+            <div class="video-area">
+                <iframe id="webview" src=""></iframe>
+                <video id="videoPlayer" muted autoplay
+                    style="display:none; width:100%; height:100%; object-fit:contain;"></video>
+                <img id="imagePlayer" src="" style="display:none; width:100%; height:100%; object-fit:contain;">
+            </div>
+
+            <!-- L-Bar Content Area -->
+            <div class="l-bar-area" id="lBarArea">
+                <div id="lBarContent" style="width:100%; height:100%;"></div>
+            </div>
+
         </div>
 
 
@@ -484,6 +515,53 @@
             if (conf.live_label) {
                 const el = document.querySelector('.live-box');
                 if (el) el.innerText = conf.live_label;
+            }
+
+            // --- L-Bar Logic ---
+            const lBar = document.getElementById('lBarArea');
+            const lBarContent = document.getElementById('lBarContent');
+            const wrapper = document.querySelector('.main-content-wrapper');
+
+            if (conf.layout_mode === 'L_BAR') {
+                const width = conf.lbar_width || 25; // Default 25%
+                lBar.style.width = width + "%";
+
+                // Position
+                if (conf.lbar_position === 'LEFT') {
+                    wrapper.style.flexDirection = 'row-reverse';
+                } else {
+                    wrapper.style.flexDirection = 'row';
+                }
+
+                // Background
+                lBar.style.backgroundColor = conf.lbar_bg_color || '#000000';
+                if (conf.lbar_bg_image) {
+                    lBar.style.backgroundImage = `url('${conf.lbar_bg_image}')`;
+                    lBar.style.backgroundSize = 'cover';
+                    lBar.style.backgroundPosition = 'center';
+                } else {
+                    lBar.style.backgroundImage = 'none';
+                }
+
+                // Content
+                const contentType = conf.lbar_content_type || 'IMAGE';
+                const contentData = conf.lbar_content_data || '';
+
+                if (contentType === 'IMAGE') {
+                    lBarContent.innerHTML = `<img src="${contentData}" style="width:100%; height:100%; object-fit:contain;">`;
+                } else if (contentType === 'URL') {
+                    lBarContent.innerHTML = `<iframe src="${contentData}" style="width:100%; height:100%; border:none;"></iframe>`;
+                } else if (contentType === 'HTML') {
+                    lBarContent.innerHTML = contentData;
+                } else {
+                    lBarContent.innerHTML = "";
+                }
+
+            } else {
+                // Full Screen
+                lBar.style.width = "0";
+                lBar.style.backgroundImage = 'none';
+                lBarContent.innerHTML = ""; // Clear content to save resources
             }
         }
 

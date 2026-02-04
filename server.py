@@ -198,7 +198,15 @@ class ConfigUpdate(BaseModel):
     default_headline: Optional[str] = None
     ticker_label: Optional[str] = None
     breaking_label: Optional[str] = None
-    live_label: Optional[str] = None # New
+    live_label: Optional[str] = None
+    # L-Bar Layout
+    layout_mode: Optional[str] = None # FULL, L_BAR
+    lbar_position: Optional[str] = None # LEFT, RIGHT
+    lbar_width: Optional[int] = None # Percentage 15-40
+    lbar_bg_color: Optional[str] = None
+    lbar_bg_image: Optional[str] = None
+    lbar_content_type: Optional[str] = None # IMAGE, URL, HTML
+    lbar_content_data: Optional[str] = None
 
 @app.get("/api/config")
 def get_config(db: Session = Depends(get_db)):
@@ -216,7 +224,15 @@ def get_config(db: Session = Depends(get_db)):
         "default_headline": get_val("default_headline", "Welcome to EKO Professional News System..."),
         "ticker_label": get_val("ticker_label", "NEWS UPDATES"),
         "breaking_label": get_val("breaking_label", "BREAKING"),
-        "live_label": get_val("live_label", "LIVE")
+        "live_label": get_val("live_label", "LIVE"),
+        # L-Bar Defaults
+        "layout_mode": get_val("layout_mode", "FULL"),
+        "lbar_position": get_val("lbar_position", "RIGHT"),
+        "lbar_width": int(get_val("lbar_width", "25")),
+        "lbar_bg_color": get_val("lbar_bg_color", "#000000"),
+        "lbar_bg_image": get_val("lbar_bg_image", ""),
+        "lbar_content_type": get_val("lbar_content_type", "IMAGE"),
+        "lbar_content_data": get_val("lbar_content_data", "")
     }
 
 @app.post("/api/config")
@@ -239,6 +255,15 @@ async def update_config(conf: ConfigUpdate, db: Session = Depends(get_db)):
     set_val("ticker_label", conf.ticker_label)
     set_val("breaking_label", conf.breaking_label)
     set_val("live_label", conf.live_label)
+
+    # L-Bar
+    set_val("layout_mode", conf.layout_mode)
+    set_val("lbar_position", conf.lbar_position)
+    set_val("lbar_width", conf.lbar_width)
+    set_val("lbar_bg_color", conf.lbar_bg_color)
+    set_val("lbar_bg_image", conf.lbar_bg_image)
+    set_val("lbar_content_type", conf.lbar_content_type)
+    set_val("lbar_content_data", conf.lbar_content_data)
 
     db.commit()
     

@@ -132,8 +132,48 @@ async function fetchConfig() {
         document.getElementById('inpTickerLabel').value = conf.ticker_label || "NEWS UPDATES";
         document.getElementById('inpBreakingLabel').value = conf.breaking_label || "BREAKING";
         document.getElementById('inpLiveLabel').value = conf.live_label || "LIVE";
+
+        // L-Bar Config
+        currentLayoutMode = conf.layout_mode || 'FULL';
+        setLayoutMode(currentLayoutMode);
+        document.getElementById('inpLBarPos').value = conf.lbar_position || 'RIGHT';
+        document.getElementById('inpLBarWidth').value = conf.lbar_width || 25;
+        document.getElementById('lblLBarWidth').innerText = (conf.lbar_width || 25) + '%';
+        document.getElementById('inpLBarBgColor').value = conf.lbar_bg_color || '#000000';
+        document.getElementById('inpLBarType').value = conf.lbar_content_type || 'IMAGE';
+        document.getElementById('inpLBarData').value = conf.lbar_content_data || '';
+
     } catch (e) { console.error(e); }
 }
+
+let currentLayoutMode = 'FULL';
+function setLayoutMode(mode) {
+    currentLayoutMode = mode;
+    const btnFull = document.getElementById('btnLayoutFULL');
+    const btnLBar = document.getElementById('btnLayoutL_BAR');
+    const configArea = document.getElementById('lbarConfigArea');
+
+    if (mode === 'FULL') {
+        btnFull.classList.add('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+        btnFull.classList.remove('border-gray-200');
+        btnLBar.classList.remove('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+        btnLBar.classList.add('border-gray-200');
+
+        configArea.classList.add('opacity-50', 'pointer-events-none');
+    } else {
+        btnLBar.classList.add('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+        btnLBar.classList.remove('border-gray-200');
+        btnFull.classList.remove('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+        btnFull.classList.add('border-gray-200');
+
+        configArea.classList.remove('opacity-50', 'pointer-events-none');
+    }
+}
+
+// L-Bar Width Listener
+document.getElementById('inpLBarWidth').addEventListener('input', (e) => {
+    document.getElementById('lblLBarWidth').innerText = e.target.value + '%';
+});
 
 async function saveConfig() {
     const payload = {
@@ -145,7 +185,15 @@ async function saveConfig() {
         default_headline: document.getElementById('inpDefaultHeadline').value,
         ticker_label: document.getElementById('inpTickerLabel').value,
         breaking_label: document.getElementById('inpBreakingLabel').value,
-        live_label: document.getElementById('inpLiveLabel').value
+        live_label: document.getElementById('inpLiveLabel').value,
+
+        // L-Bar
+        layout_mode: currentLayoutMode,
+        lbar_position: document.getElementById('inpLBarPos').value,
+        lbar_width: parseInt(document.getElementById('inpLBarWidth').value),
+        lbar_bg_color: document.getElementById('inpLBarBgColor').value,
+        lbar_content_type: document.getElementById('inpLBarType').value,
+        lbar_content_data: document.getElementById('inpLBarData').value
     };
 
     try {
