@@ -56,14 +56,15 @@ class StreamOverlayApp:
         # --- GStreamer Pipeline ---
         # Using videotestsrc as base. In production, this might be rtspsrc or filesrc.
         # We blend the cairooverlay on top.
+        # Updated pipeline with audio (YouTube requirement)
+        # We name flvmux 'mux' so we can link two sources to it.
         pipeline_str = (
+            f'flvmux name=mux streamable=true ! rtmpsink location="{RTMP_URL}" '
             f'videotestsrc pattern=ball ! video/x-raw,width={WIDTH},height={HEIGHT},framerate={FRAMERATE}/1 ! '
-            'videoconvert ! '
-            'cairooverlay name=overlay ! '
-            'videoconvert ! '
-            'x264enc bitrate=2000 tune=zerolatency speed-preset=veryfast ! '
-            'flvmux streamable=true ! '
-            f'rtmpsink location="{RTMP_URL}"'
+            'videoconvert ! cairooverlay name=overlay ! videoconvert ! '
+            'x264enc bitrate=2000 tune=zerolatency speed-preset=veryfast ! mux. '
+            'audiotestsrc wave=silence ! audio/x-raw,rate=44100,channels=2 ! '
+            'voaacenc bitrate=128000 ! mux.'
         )
         
         print(f"Starting pipeline: {pipeline_str}")
