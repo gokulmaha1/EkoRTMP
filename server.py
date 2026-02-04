@@ -229,20 +229,7 @@ def update_overlay(data: OverlayUpdate, db: Session = Depends(get_db)):
     # Notify via WebSocket for immediate update if needed (optional but good)
     return {"status": "updated"}
 
-# Mount static files for UI (and eventually Admin)
-if not os.path.exists("ui"):
-    os.makedirs("ui")
-app.mount("/static", StaticFiles(directory="ui"), name="static")
-
-if not os.path.exists("media"):
-    os.makedirs("media")
-app.mount("/media", StaticFiles(directory="media"), name="media")
-
 # --- Media API ---
-import shutil
-import re
-
-# ... (imports)
 
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):
@@ -274,9 +261,36 @@ class OverlayUpdate(BaseModel):
     info: Optional[str] = None
     hide_overlays: Optional[bool] = None
 
+# --- Stream Control API ---
+
+class StreamConfig(BaseModel):
+    rtmp_url: Optional[str] = None
+    stream_key: Optional[str] = None
+
+@app.post("/api/stream/stop")
+def stop_stream():
+    global stream_process
+    if stream_process:
+        if stream_process.poll() is None:
+            stream_process.terminate()
+            try:
+                stream_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                stream_process.kill()
+        
+        stream_process = None
+        return {"status": "stopped"}
+    return {"status": "not_running"}
+
+@app.get("/api/stream/status")
+def get_status():
+    global stream_process
+    is_running = stream_process is not None and stream_process.poll() is None
+    return {"running": is_running}
 
 
-# --- Pydantic Models for News API ---
+# --- News Management API ---
+
 class NewsCreate(BaseModel):
     title_tamil: str
     title_english: Optional[str] = None
@@ -292,33 +306,6 @@ class NewsUpdate(BaseModel):
     type: Optional[str] = None
     category: Optional[str] = None
     is_active: Optional[bool] = None
-
-# --- API Endpoints ---
-
-@app.get("/")
-def read_root():
-    return FileResponse("ui/index.html")
-
-@app.get("/admin")
-def read_admin():
-    # Ensure directory exists just in case
-    if not os.path.exists("ui/admin/index.html"):
-        return JSONResponse(status_code=404, content={"error": "Admin UI not found. Please create ui/admin/index.html"})
-    return FileResponse("ui/admin/index.html")
-
-@app.get("/overlay")
-def get_overlay_page():
-    return FileResponse("overlay.html")
-
-# Legacy Overlay Endpoint
-@app.get("/overlay/data")
-def get_overlay_data():
-    if os.path.exists(OVERLAY_FILE):
-        with open(OVERLAY_FILE, "r") as f:
-            return json.load(f)
-    return {}
-
-# --- News Management API ---
 
 @app.get("/api/news")
 def get_news(db: Session = Depends(get_db)):
@@ -374,71 +361,28 @@ async def delete_news(news_id: int, db: Session = Depends(get_db)):
     await broadcast_news_update("NEWS_DELETED", {"id": news_id})
     return {"status": "success"}
 
-# --- Stream Control API ---
-class StreamConfig(BaseModel):
-    rtmp_url: Optional[str] = None
-    stream_key: Optional[str] = None
+# --- Static Files & Routes ---
 
-@app.post("/api/stream/start")
-def start_stream(config: StreamConfig):
-    global stream_process
-    
-    # Persist the stream key if provided
-    if config.stream_key:
-        if os.path.exists(OVERLAY_FILE):
-            with open(OVERLAY_FILE, "r") as f:
-                try:
-                    data = json.load(f)
-                except:
-                    data = {}
-            
-            data["stream_key"] = config.stream_key
-            
-            with open(OVERLAY_FILE, "w") as f:
-                json.dump(data, f)
-    
-    if stream_process and stream_process.poll() is None:
-        return {"status": "already_running"}
-    
-    env = os.environ.copy()
-    env["OVERLAY_URL"] = "http://127.0.0.1:8123/overlay"
-    
-    if config.rtmp_url:
-        env["RTMP_URL"] = config.rtmp_url
-    
-    try:
-        stream_process = subprocess.Popen(
-            [sys.executable, "-u", "main.py"], 
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            bufsize=1
-        )
-        
-        t = threading.Thread(target=log_reader, args=(stream_process,), daemon=True)
-        t.start()
-        
-        return {"status": "started", "pid": stream_process.pid}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+@app.get("/")
+def read_root():
+    return FileResponse("ui/index.html")
 
-@app.post("/api/stream/stop")
-def stop_stream():
-    global stream_process
-    if stream_process:
-        if stream_process.poll() is None:
-            stream_process.terminate()
-            try:
-                stream_process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                stream_process.kill()
-        
-        stream_process = None
-        return {"status": "stopped"}
-    return {"status": "not_running"}
+@app.get("/admin")
+def read_admin():
+    # Ensure directory exists
+    if not os.path.exists("ui/admin/index.html"):
+        return JSONResponse(status_code=404, content={"error": "Admin UI not found."})
+    return FileResponse("ui/admin/index.html")
 
-@app.get("/api/stream/status")
-def get_status():
-    global stream_process
-    is_running = stream_process is not None and stream_process.poll() is None
-    return {"running": is_running}
+@app.get("/overlay")
+def get_overlay_page():
+    return FileResponse("overlay.html")
+
+# Mounts
+if not os.path.exists("ui"):
+    os.makedirs("ui")
+app.mount("/static", StaticFiles(directory="ui"), name="static")
+
+if not os.path.exists("media"):
+    os.makedirs("media")
+app.mount("/media", StaticFiles(directory="media"), name="media")
