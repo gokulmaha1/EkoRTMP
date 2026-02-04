@@ -62,7 +62,7 @@ class StreamOverlayApp:
             'cairooverlay name=overlay ! '
             'videoconvert ! '
             'x264enc bitrate=2000 tune=zerolatency speed-preset=veryfast ! '
-            'flvmux ! '
+            'flvmux streamable=true ! '
             f'rtmpsink location="{RTMP_URL}"'
         )
         
@@ -116,6 +116,13 @@ class StreamOverlayApp:
             err, debug = message.parse_error()
             print(f"Error: {err}, {debug}")
             self.mainloop.quit()
+        elif t == Gst.MessageType.WARNING:
+            err, debug = message.parse_warning()
+            print(f"Warning: {err}, {debug}")
+        elif t == Gst.MessageType.STATE_CHANGED:
+            if message.src == self.pipeline:
+                old_state, new_state, pending_state = message.parse_state_changed()
+                print(f"Pipeline state changed from {old_state.value_nick} to {new_state.value_nick}")
 
     def run(self):
         self.pipeline.set_state(Gst.State.PLAYING)
