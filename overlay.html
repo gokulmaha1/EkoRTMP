@@ -3,150 +3,106 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Stream Overlay</title>
-    <!-- Import Google Fonts for TV News Look -->
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto:wght@400;700&display=swap"
+    <title>EKO TV Overlay</title>
+    <!-- Import Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto:wght@400;500;700&family=Baloo+Thambi+2:wght@400;700&display=swap"
         rel="stylesheet">
     <style>
         :root {
-            --brand-red: #d63031;
-            --brand-dark: #2d3436;
+            --brand-red: #c0392b;
+            --brand-dark: #2c3e50;
             --brand-yellow: #f1c40f;
             --text-white: #ffffff;
+
+            /* Layout Dimensions */
+            --header-height: 80px;
+            --ticker-height: 60px;
+            --right-panel-width: 350px;
         }
 
         body {
             margin: 0;
             padding: 0;
-            background-color: transparent;
+            background-color: #000;
+            /* Black background for LED wall */
             overflow: hidden;
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Roboto', 'Baloo Thambi 2', sans-serif;
+            /* Baloo for Tamil */
         }
 
-        .overlay-container {
+        .container {
             width: 1280px;
             height: 720px;
             position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            display: grid;
+            grid-template-rows: var(--header-height) 1fr var(--ticker-height);
+            grid-template-columns: 1fr var(--right-panel-width);
         }
 
-        /* Webview Layer (Background) */
-        .webview-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            pointer-events: none;
+        /* --- ZONE 0: Main Video Area --- */
+        .video-area {
+            grid-row: 2;
+            grid-column: 1;
+            position: relative;
+            background-color: #1a1a1a;
+            overflow: hidden;
         }
 
-        .webview-layer iframe {
+        iframe#webview {
             width: 100%;
             height: 100%;
             border: none;
-            opacity: 0;
-            transition: opacity 0.5s ease;
         }
 
-        .webview-layer iframe.active {
-            opacity: 1;
-        }
-
-        /* TV Overlay Wrapper */
-        .tv-overlay {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
+        /* --- ZONE 1: Top Header --- */
+        .top-header {
+            grid-row: 1;
+            grid-column: 1 / span 2;
+            background: linear-gradient(90deg, var(--brand-red) 0%, #a90e0e 100%);
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            pointer-events: none;
-            /* Let clicks pass through */
-        }
-
-        /* --- Top Bar: Breaking News --- */
-        .top-bar-container {
-            margin-top: 40px;
-            margin-left: 50px;
-            margin-right: 50px;
-            display: flex;
-            align-items: stretch;
-            height: 70px;
-            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
-            animation: slideDown 0.8s ease-out;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            z-index: 20;
+            padding: 0 20px;
         }
 
         .breaking-badge {
-            background-color: var(--brand-red);
-            color: var(--text-white);
+            background-color: white;
+            color: var(--brand-red);
+            padding: 5px 20px;
             font-family: 'Oswald', sans-serif;
             font-weight: 700;
             font-size: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 25px;
             text-transform: uppercase;
-            clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%);
-            width: 220px;
-            box-shadow: inset -5px -5px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+            margin-right: 20px;
+            animation: pulse-red 2s infinite;
         }
 
-        .headline-container {
-            flex-grow: 1;
-            background: linear-gradient(90deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
-            color: var(--brand-dark);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding-left: 40px;
-            padding-right: 20px;
-            margin-left: -20px;
-            /* Overlap effect */
-            z-index: -1;
-            border-right: 5px solid var(--brand-red);
-        }
-
-        #title {
-            font-family: 'Oswald', sans-serif;
+        .breaking-text {
+            color: white;
             font-size: 32px;
             font-weight: 700;
-            color: var(--brand-dark);
-            text-transform: uppercase;
-            line-height: 1.1;
-            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        #subtitle {
-            font-family: 'Roboto', sans-serif;
-            font-size: 18px;
-            font-weight: 500;
-            color: #636e72;
-            margin: 0;
-        }
-
-        /* --- Bottom Ticker --- */
-        .bottom-ticker-container {
-            display: flex;
-            height: 50px;
-            width: 100%;
+        /* --- ZONE 2: Bottom Ticker --- */
+        .bottom-ticker {
+            grid-row: 3;
+            grid-column: 1 / span 2;
             background-color: var(--brand-dark);
-            color: var(--text-white);
+            display: flex;
             align-items: center;
-            position: absolute;
-            bottom: 60px;
-            /* Above the very bottom edge */
-            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.4);
-            animation: slideUp 0.8s ease-out;
+            z-index: 20;
+            border-top: 4px solid var(--brand-yellow);
         }
 
         .ticker-label {
             background-color: var(--brand-yellow);
-            color: var(--brand-dark);
+            color: black;
             font-family: 'Oswald', sans-serif;
             font-weight: 700;
             font-size: 24px;
@@ -155,86 +111,101 @@
             display: flex;
             align-items: center;
             text-transform: uppercase;
-            z-index: 2;
         }
 
         .ticker-wrapper {
             flex-grow: 1;
             overflow: hidden;
-            position: relative;
-            height: 100%;
+            white-space: nowrap;
             display: flex;
             align-items: center;
         }
 
         .ticker-content {
             display: inline-block;
-            white-space: nowrap;
             padding-left: 100%;
-            /* Start off-screen */
-            animation: ticker 20s linear infinite;
-            font-family: 'Roboto', sans-serif;
-            font-size: 22px;
+            animation: ticker 25s linear infinite;
+            font-size: 24px;
             font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            color: white;
         }
 
-        /* --- Corner Branding --- */
-        .corner-branding {
-            position: absolute;
-            bottom: 120px;
-            /* Above ticker */
-            right: 50px;
+        .ticker-item {
+            margin-right: 100px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .ticker-item i {
+            margin-right: 10px;
+            color: var(--brand-yellow);
+        }
+
+        /* --- ZONE 3: Right Panel (Context/Ads) --- */
+        .right-panel {
+            grid-row: 2;
+            grid-column: 2;
+            background: linear-gradient(180deg, #2c3e50 0%, #000000 100%);
+            border-left: 2px solid rgba(255, 255, 255, 0.1);
+            position: relative;
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
-            gap: 10px;
         }
 
+        .panel-widget {
+            padding: 20px;
+            text-align: center;
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Branding */
         .brand-logo {
-            background: linear-gradient(135deg, #2d3436 0%, #000000 100%);
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-family: 'Oswald', sans-serif;
-            font-size: 24px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            margin-bottom: auto;
+            /* Push to top */
+            padding-top: 20px;
         }
 
-        .live-dot {
-            width: 12px;
-            height: 12px;
+        .logo-text {
+            font-family: 'Oswald', sans-serif;
+            font-size: 40px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .live-box {
+            display: inline-block;
             background-color: red;
-            border-radius: 50%;
+            color: white;
+            padding: 2px 10px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            margin-bottom: 10px;
             animation: blink 1.5s infinite;
         }
 
-        .clock-box {
-            background-color: rgba(255, 255, 255, 0.9);
-            color: var(--brand-dark);
-            padding: 5px 15px;
-            border-radius: 4px;
+        .clock {
             font-family: 'Oswald', sans-serif;
-            font-weight: 700;
-            font-size: 20px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            border-left: 4px solid var(--brand-red);
+            font-size: 28px;
+            color: var(--brand-yellow);
         }
 
-        /* Audio Test Button (Hidden but accessible via DOM) */
-        #btnAudioTest {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            opacity: 0;
-            pointer-events: auto;
-            /* clickable */
+        /* Breaking Box in Right Panel */
+        .breaking-side-list {
+            flex-grow: 1;
+            padding: 10px;
+            overflow: hidden;
+        }
+
+        .side-item {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-left: 3px solid red;
+            font-size: 16px;
+            animation: fadeIn 0.5s ease;
         }
 
         /* Animations */
@@ -248,150 +219,180 @@
             }
         }
 
-        @keyframes slideDown {
-            from {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
         @keyframes blink {
-            0% {
+
+            0%,
+            100% {
                 opacity: 1;
             }
 
             50% {
-                opacity: 0.4;
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes pulse-red {
+            0% {
+                box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(192, 57, 43, 0);
             }
 
             100% {
+                box-shadow: 0 0 0 0 rgba(192, 57, 43, 0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
                 opacity: 1;
+                transform: translateY(0);
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="overlay-container">
-        <!-- Webview Background -->
-        <div class="webview-layer">
+
+    <div class="container">
+
+        <!-- Header -->
+        <div class="top-header">
+            <div class="breaking-badge">BREAKING</div>
+            <div class="breaking-text" id="topHeadline">
+                Welcome to EKO Professional News System...
+            </div>
+        </div>
+
+        <!-- Video Area -->
+        <div class="video-area">
             <iframe id="webview" src=""></iframe>
         </div>
 
-        <!-- TV Graphics Layer -->
-        <!-- Logic will hide this entire wrapper if "Hide Overlays" is checked -->
-        <div class="tv-overlay" id="overlayWrapper">
-
-            <!-- Top Bar -->
-            <div class="top-bar-container">
-                <div class="breaking-badge">
-                    <span>LIVE NEWS</span>
-                </div>
-                <div class="headline-container">
-                    <h1 id="title">HEADLINE GOES HERE</h1>
-                    <p id="subtitle">Subtitle or location context</p>
-                </div>
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <div class="panel-widget brand-logo">
+                <div class="live-box">LIVE</div>
+                <div class="logo-text">EKO TV</div>
+                <div class="clock" id="clock">00:00</div>
             </div>
 
-            <!-- Corner Branding (Logo + Clock) -->
-            <div class="corner-branding">
-                <div class="brand-logo">
-                    <div class="live-dot"></div>
-                    <span>EKO TV</span>
-                </div>
-                <div class="clock-box" id="clock">00:00:00 XX</div>
+            <div class="breaking-side-list" id="sidePanel">
+                <!-- Side items injected here -->
             </div>
-
-            <!-- Bottom Ticker -->
-            <div class="bottom-ticker-container">
-                <div class="ticker-label">LATEST</div>
-                <div class="ticker-wrapper">
-                    <div class="ticker-content" id="info">
-                        Waiting for updates...
-                    </div>
-                </div>
-            </div>
-
-            <!-- Hidden Audio Test Button -->
-            <button id="btnAudioTest">Test Audio</button>
         </div>
+
+        <!-- Ticker -->
+        <div class="bottom-ticker">
+            <div class="ticker-label">NEWS UPDATES</div>
+            <div class="ticker-wrapper">
+                <div class="ticker-content" id="tickerText">
+                    <!-- Ticker items injected here -->
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <script>
-        // Elements
-        const titleEl = document.getElementById('title');
-        const subtitleEl = document.getElementById('subtitle');
-        const infoEl = document.getElementById('info');
-        const webviewFrame = document.getElementById('webview');
-        const overlayWrapper = document.getElementById('overlayWrapper');
-        const clockEl = document.getElementById('clock');
-        const btnAudioTest = document.getElementById('btnAudioTest');
+    <!-- Hidden Audio (Legacy support) -->
+    <!-- Music is handled by backend GStreamer pipeline now -->
 
-        // Clock (IST)
+    <script>
+        const WS_URL = 'ws://' + window.location.host + '/ws/news';
+
+        // Elements
+        const elTopHeadline = document.getElementById('topHeadline');
+        const elTickerText = document.getElementById('tickerText');
+        const elSidePanel = document.getElementById('sidePanel');
+        const elWebview = document.getElementById('webview');
+
+        // State
+        let newsItems = [];
+
+        // Clock
         function updateClock() {
             const now = new Date();
-            clockEl.innerText = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' });
+            document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', {
+                timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit'
+            });
         }
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Data Polling
-        let currentUrl = "";
-
-        async function fetchOverlayData() {
+        // Data Management
+        async function fetchNews() {
             try {
-                const res = await fetch('/overlay/data');
-                const data = await res.json();
-
-                if (data.title) titleEl.innerText = data.title;
-                if (data.subtitle) subtitleEl.innerText = data.subtitle;
-                // Add some padding/separator for ticker if needed, or just raw text
-                if (data.info) infoEl.innerText = data.info + "  +++  " + data.info + "  +++  " + data.info;
-
-                // Webview Handling
-                if (data.webview_url && data.webview_url !== currentUrl) {
-                    currentUrl = data.webview_url;
-                    webviewFrame.src = currentUrl;
-                    webviewFrame.classList.add('active');
-                } else if (!data.webview_url) {
-                    currentUrl = "";
-                    webviewFrame.classList.remove('active');
-                    webviewFrame.src = "";
-                }
-
-                // Hide/Show Graphics
-                if (data.hide_overlays) {
-                    overlayWrapper.style.display = 'none';
-                } else {
-                    overlayWrapper.style.display = 'flex';
-                }
-
-            } catch (err) {
-                console.error("Failed to fetch data:", err);
+                const res = await fetch('/api/news');
+                newsItems = await res.json();
+                updateUI();
+            } catch (e) {
+                console.error("Fetch error", e);
             }
         }
 
-        setInterval(fetchOverlayData, 1000);
-        fetchOverlayData();
+        function updateUI() {
+            // 1. Top Headline (Priority BREAKING)
+            const breaking = newsItems.find(i => i.type === 'BREAKING');
+            if (breaking) {
+                elTopHeadline.innerText = breaking.title_tamil;
+                elTopHeadline.parentElement.style.display = 'flex';
+            } else {
+                elTopHeadline.innerText = "";
+                // Optional: Hide top bar if no breaking news?
+                // elTopHeadline.parentElement.style.display = 'none';
+            }
+
+            // 2. Ticker (All TICKER types)
+            const tickers = newsItems.filter(i => i.type === 'TICKER' || i.type === 'GENERAL');
+            const tickerHtml = tickers.map(t =>
+                `<span class="ticker-item"><i class="fas fa-circle" style="font-size:10px;"></i> ${t.title_tamil}</span>`
+            ).join("");
+            elTickerText.innerHTML = tickerHtml + tickerHtml; // Duplicate for smooth loop illusion
+
+            // 3. Side Panel (Latest 3 items usually, or FLASH)
+            const sidebarItems = newsItems.slice(0, 4);
+            elSidePanel.innerHTML = sidebarItems.map(i => `
+                <div class="side-item">
+                    <div style="font-size:10px; color:#f1c40f;">${i.category}</div>
+                    ${i.title_tamil}
+                </div>
+            `).join("");
+        }
+
+        // Connect WebSocket
+        const ws = new WebSocket(WS_URL);
+        ws.onopen = () => console.log("Connected to News Feed");
+        ws.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            if (msg.type.startsWith('NEWS')) {
+                fetchNews(); // Refresh logic
+            }
+        };
+
+        // Initial Load
+        fetchNews();
+
+        // Legacy Poll for Webview URL (kept for consistency)
+        setInterval(async () => {
+            try {
+                const res = await fetch('/overlay/data');
+                const d = await res.json();
+                if (d.webview_url && elWebview.src !== d.webview_url) {
+                    elWebview.src = d.webview_url;
+                }
+            } catch (e) { }
+        }, 2000);
 
     </script>
+    <!-- FontAwesome for Ticker icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </body>
 
 </html>
