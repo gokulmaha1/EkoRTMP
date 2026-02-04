@@ -85,7 +85,13 @@ OVERLAY_FILE = "overlay_data.json"
 # Ensure overlay data file exists
 if not os.path.exists(OVERLAY_FILE):
     with open(OVERLAY_FILE, "w") as f:
-        json.dump({"title": "Live Stream", "subtitle": "Welcome!", "info": "Starting soon...", "webview_url": ""}, f)
+        json.dump({
+            "title": "Live Stream", 
+            "subtitle": "Welcome!", 
+            "info": "Starting soon...", 
+            "webview_url": "",
+            "stream_key": ""
+        }, f)
 
 # Mount static files for UI
 # We will create a 'ui' directory for the frontend
@@ -141,10 +147,26 @@ def update_overlay(data: OverlayUpdate):
 
 class StreamConfig(BaseModel):
     rtmp_url: Optional[str] = None
+    stream_key: Optional[str] = None
 
 @app.post("/api/stream/start")
 def start_stream(config: StreamConfig):
     global stream_process
+    
+    # Persist the stream key if provided
+    if config.stream_key:
+        if os.path.exists(OVERLAY_FILE):
+            with open(OVERLAY_FILE, "r") as f:
+                try:
+                    data = json.load(f)
+                except:
+                    data = {}
+            
+            data["stream_key"] = config.stream_key
+            
+            with open(OVERLAY_FILE, "w") as f:
+                json.dump(data, f)
+
     if stream_process and stream_process.poll() is None:
         return {"status": "already_running"}
     

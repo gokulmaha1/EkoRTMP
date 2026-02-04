@@ -51,10 +51,10 @@ btnStart.addEventListener('click', async () => {
 
     setLoading(true);
     try {
-        const res = await fetch(`${API_BASE}/stream/start`, {
+        await fetch(`${API_BASE}/stream/start`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rtmp_url: rtmpUrl })
+            body: JSON.stringify({ rtmp_url: rtmpUrl, stream_key: streamKey })
         });
         const data = await res.json();
         console.log('Start stream:', data);
@@ -184,6 +184,10 @@ async function fetchOverlayData() {
         if (data.info) inpInfo.value = data.info;
         if (data.webview_url) inpWebview.value = data.webview_url;
         if (data.hide_overlays !== undefined) chkHideOverlays.checked = data.hide_overlays;
+        // Populate stream key if available and input is empty
+        if (data.stream_key && !document.getElementById('inpRtmpUrl').value) {
+            document.getElementById('inpRtmpUrl').value = data.stream_key;
+        }
     } catch (err) {
         console.error('Error fetching overlay data:', err);
     }

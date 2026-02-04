@@ -4,7 +4,113 @@
 <head>
     <meta charset="UTF-8">
     <title>Stream Overlay</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Stream Overlay</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: transparent;
+            /* Critical for overlay */
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .overlay-container {
+            width: 1280px;
+            height: 720px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .lower-third {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #ff4757;
+            animation: slideIn 1s ease-out;
+            z-index: 10;
+            /* Ensure it stays on top of webview */
+            max-width: 600px;
+        }
+
+        .lower-third h1 {
+            margin: 0;
+            font-size: 2em;
+            text-transform: uppercase;
+        }
+
+        .lower-third p {
+            margin: 5px 0 0;
+            font-size: 1.2em;
+            color: #dfe4ea;
+        }
+
+        .info-ticker {
+            font-size: 1em;
+            color: #ffda79;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .clock {
+            position: absolute;
+            top: 30px;
+            right: 50px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #2f3542;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.5em;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        /* Webview Layer */
+        .webview-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            /* Below other elements */
+            pointer-events: none;
+            /* Let clicks pass through if needed, though stream isn't interactive */
+        }
+
+        .webview-layer iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            opacity: 0;
+            /* Hidden by default */
+            transition: opacity 0.5s ease;
+        }
+
+        .webview-layer iframe.active {
+            opacity: 1;
+        }
+
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
 </head>
 
 <body>
