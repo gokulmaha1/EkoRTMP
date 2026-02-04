@@ -287,3 +287,105 @@ function updateStats() {
         statBreaking.classList.remove('text-red-600', 'animate-pulse');
     }
 }
+
+// --- Stream Control ---
+const btnStart = document.getElementById('btnStart');
+const btnStop = document.getElementById('btnStop');
+const inpStreamKey = document.getElementById('inpStreamKey');
+const previewBadge = document.getElementById('previewLiveBadge');
+
+async function startStream() {
+    const key = inpStreamKey.value.trim();
+
+    // UI Loading state
+    btnStart.innerText = "STARTING...";
+    btnStart.disabled = true;
+
+    try {
+        const res = await fetch(`${API_BASE}/stream/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stream_key: key })
+        });
+        const d = await res.json();
+
+        if (d.status === 'started' || d.status === 'already_running') {
+            setStreamState(true);
+        } else {
+            alert("Error: " + d.message);
+            setStreamState(false);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Failed to start stream");
+        setStreamState(false);
+    }
+}
+
+async function stopStream() {
+    if (!confirm("Stop the broadcast?")) return;
+
+    try {
+        await fetch(`${API_BASE}/stream/stop`, { method: 'POST' });
+        setStreamState(false);
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function setStreamState(isRunning) {
+    if (isRunning) {
+        btnStart.classList.add('opacity-50', 'cursor-not-allowed');
+        btnStart.disabled = true;
+        btnStart.innerHTML = '<i class="fas fa-check mr-2"></i> ON AIR';
+
+        btnStop.classList.remove('opacity-50', 'cursor-not-allowed');
+        btnStop.disabled = false;
+
+        previewBadge.style.display = 'block';
+        document.getElementById('streamStatus').innerHTML =
+            '<span class="w-3 h-3 rounded-full bg-red-600 animate-pulse"></span><span class="text-sm font-bold text-red-600">LIVE</span>';
+    } else {
+        btnStart.classList.remove('opacity-50', 'cursor-not-allowed');
+        btnStart.disabled = false;
+        btnStart.innerHTML = '<i class="fas fa-play mr-2"></i> START';
+
+        btnStop.classList.add('opacity-50', 'cursor-not-allowed');
+        btnStop.disabled = true;
+
+        previewBadge.style.display = 'none';
+        document.getElementById('streamStatus').innerHTML =
+            '<span class="w-3 h-3 rounded-full bg-gray-400"></span><span class="text-sm font-semibold text-gray-500">OFF AIR</span>';
+    }
+}
+
+// Poll Status
+setInterval(async () => {
+    try {
+        const res = await fetch(`${API_BASE}/stream/status`);
+        const d = await res.json();
+        setStreamState(d.running);
+    } catch (e) { }
+}, 2000);
+
+// Logs
+const logWindow = document.getElementById('logWindow');
+function clearLogs() {
+    logWindow.innerHTML = '<div>> Logs cleared...</div>';
+}
+
+// Log WebSocket (re-use existing WS logic simply or add separate channel)
+// For now, we mix logs into same WS or assuming separate. 
+// Server has /ws/logs. Let's process it.
+
+const wsLogs = new WebSocket('ws://' + window.location.host + '/ws/logs');
+wsLogs.onmessage = (e) => {
+    const d = JSON.parse(e.data);
+    if (d.log) {
+        const line = document.createElement('div');
+        line.innerText = `> ${d.log}`;
+        logWindow.prepend(line);
+        // prune
+        if (logWindow.children.length > 50) logWindow.lastChild.remove();
+    }
+};

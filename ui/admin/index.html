@@ -101,6 +101,58 @@
 
             <!-- VIEW: DASHBOARD -->
             <div id="view-dashboard" class="view-section active space-y-6">
+
+                <!-- TOP ROW: Stream Controls & Preview -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- 1. Live Preview -->
+                    <div
+                        class="lg:col-span-2 bg-black rounded-lg shadow overflow-hidden relative aspect-video border-4 border-slate-800">
+                        <div class="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs px-2 py-1 rounded font-bold animate-pulse"
+                            id="previewLiveBadge" style="display:none;">LIVE OUTPUT</div>
+                        <iframe src="/overlay" class="w-full h-full border-none" id="previewFrame"></iframe>
+                    </div>
+
+                    <!-- 2. Controls -->
+                    <div class="space-y-6">
+                        <div class="bg-white p-6 rounded-lg shadow">
+                            <h3 class="font-bold text-slate-700 mb-4 border-b pb-2">Broadcast Control</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Stream
+                                        Key</label>
+                                    <input type="password" id="inpStreamKey"
+                                        class="w-full bg-gray-100 border border-gray-300 rounded p-2 text-sm"
+                                        placeholder="Paste YouTube Key...">
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button onclick="startStream()" id="btnStart"
+                                        class="bg-green-600 hover:bg-green-700 text-white py-3 rounded font-bold transition flex items-center justify-center">
+                                        <i class="fas fa-play mr-2"></i> START
+                                    </button>
+                                    <button onclick="stopStream()" id="btnStop"
+                                        class="bg-red-600 hover:bg-red-700 text-white py-3 rounded font-bold transition flex items-center justify-center opacity-50 cursor-not-allowed"
+                                        disabled>
+                                        <i class="fas fa-stop mr-2"></i> STOP
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mini Console -->
+                        <div class="bg-slate-900 rounded-lg shadow overflow-hidden">
+                            <div class="bg-slate-800 p-2 border-b border-slate-700 flex justify-between items-center">
+                                <span class="text-xs text-gray-400">System Logs</span>
+                                <button onclick="clearLogs()"
+                                    class="text-xs text-gray-500 hover:text-white">Clear</button>
+                            </div>
+                            <div id="logWindow"
+                                class="h-32 overflow-y-auto p-2 font-mono text-[10px] text-green-400 space-y-1">
+                                <div>> System Ready...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Quick Stats -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
@@ -132,125 +184,119 @@
                     </div>
                 </div>
 
-                <!-- Recent Activity / Queue Preview -->
-                <div class="bg-white rounded-lg shadow">
-                    <div class="p-4 border-b">
-                        <h3 class="font-bold text-gray-700">Recent Activity</h3>
-                    </div>
-                    <div class="p-6 text-gray-500 text-sm">
-                        System started at <span id="startTime">...</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW: NEWS MANAGER -->
-            <div id="view-news" class="view-section">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-                    <!-- NEWS ENTRY FORM -->
-                    <div class="bg-white rounded-lg shadow overflow-hidden h-fit">
-                        <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
-                            <h3 class="font-bold"><i class="fas fa-pen-nib mr-2"></i> Publish News</h3>
-                        </div>
-                        <div class="p-6 space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Headline (Tamil)</label>
-                                <input type="text" id="inpTitleTamil"
-                                    class="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                    placeholder="Enter headline in Tamil...">
+                <!-- VIEW: NEWS MANAGER -->
+                <div id="view-news" class="view-section">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                        <!-- NEWS ENTRY FORM -->
+                        <div class="bg-white rounded-lg shadow overflow-hidden h-fit">
+                            <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
+                                <h3 class="font-bold"><i class="fas fa-pen-nib mr-2"></i> Publish News</h3>
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="p-6 space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                                    <select id="inpType" class="w-full border border-gray-300 rounded p-2">
-                                        <option value="TICKER" selected>Scrolling Ticker</option>
-                                        <option value="BREAKING">Breaking News (Top)</option>
-                                        <option value="FLASH">Flash Alert (Yellow)</option>
-                                    </select>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Headline (Tamil)</label>
+                                    <input type="text" id="inpTitleTamil"
+                                        class="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        placeholder="Enter headline in Tamil...">
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                                    <select id="inpCategory" class="w-full border border-gray-300 rounded p-2">
-                                        <option value="GENERAL" selected>General</option>
-                                        <option value="POLITICS">Politics</option>
-                                        <option value="ELECTION">Election</option>
-                                        <option value="DISTRICT">District</option>
-                                    </select>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                        <select id="inpType" class="w-full border border-gray-300 rounded p-2">
+                                            <option value="TICKER" selected>Scrolling Ticker</option>
+                                            <option value="BREAKING">Breaking News (Top)</option>
+                                            <option value="FLASH">Flash Alert (Yellow)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                        <select id="inpCategory" class="w-full border border-gray-300 rounded p-2">
+                                            <option value="GENERAL" selected>General</option>
+                                            <option value="POLITICS">Politics</option>
+                                            <option value="ELECTION">Election</option>
+                                            <option value="DISTRICT">District</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-3 pt-4">
+                                    <button onclick="submitNews()"
+                                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold transition">
+                                        <i class="fas fa-paper-plane mr-2"></i> PUBLISH LIVE
+                                    </button>
                                 </div>
                             </div>
-                            <div class="flex space-x-3 pt-4">
-                                <button onclick="submitNews()"
-                                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold transition">
-                                    <i class="fas fa-paper-plane mr-2"></i> PUBLISH LIVE
-                                </button>
+                        </div>
+
+                        <!-- LIVE QUEUE -->
+                        <div class="bg-white rounded-lg shadow overflow-hidden flex flex-col h-[600px]">
+                            <div class="bg-slate-100 p-4 border-b border-gray-200 flex justify-between items-center">
+                                <h3 class="font-bold text-slate-700"><i class="fas fa-stream mr-2"></i> On-Air Queue
+                                </h3>
+                                <button onclick="fetchNews()" class="text-blue-600 hover:text-blue-800"><i
+                                        class="fas fa-sync"></i> Refresh</button>
+                            </div>
+                            <div id="newsQueue" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+                                <!-- Items Injected Here -->
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- LIVE QUEUE -->
-                    <div class="bg-white rounded-lg shadow overflow-hidden flex flex-col h-[600px]">
-                        <div class="bg-slate-100 p-4 border-b border-gray-200 flex justify-between items-center">
-                            <h3 class="font-bold text-slate-700"><i class="fas fa-stream mr-2"></i> On-Air Queue</h3>
-                            <button onclick="fetchNews()" class="text-blue-600 hover:text-blue-800"><i
-                                    class="fas fa-sync"></i> Refresh</button>
+                <!-- VIEW: MEDIA LIBRARY -->
+                <div id="view-media" class="view-section space-y-6">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-cloud-upload-alt mr-2"></i> Upload
+                            New
+                            Media</h3>
+                        <div class="flex space-x-2 items-center">
+                            <input type="file" id="inpFile"
+                                class="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <button onclick="uploadMedia()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-bold">Upload</button>
                         </div>
-                        <div id="newsQueue" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-                            <!-- Items Injected Here -->
+                        <div id="uploadStatus" class="text-xs text-green-600 mt-2 font-bold hidden">Upload Complete!
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="font-bold text-slate-700 mb-4">Media Gallary</h3>
+                        <div id="mediaGallery" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <!-- Media Items -->
                         </div>
                     </div>
                 </div>
+
+                <!-- VIEW: CONFIG -->
+                <div id="view-config" class="view-section space-y-6">
+                    <!-- Main Screen Controller -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-tv mr-2"></i> Main Screen Content
+                        </h3>
+                        <div class="flex space-x-2">
+                            <input type="text" id="inpWebviewUrl" class="flex-1 border border-gray-300 rounded p-2"
+                                placeholder="Enter YouTube Embed / Video URL...">
+                            <button onclick="updateMainScreen()"
+                                class="bg-slate-800 text-white px-4 rounded hover:bg-slate-700">Set</button>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">Example:
+                            <code>https://www.youtube.com/embed/VIDEO_ID?autoplay=1</code>
+                        </p>
+                        <div class="mt-4">
+                            <h4 class="font-semibold text-sm mb-2">Preset Actions:</h4>
+                            <button onclick="setMainScreen('')"
+                                class="bg-red-100 text-red-600 px-3 py-1 rounded text-sm hover:bg-red-200">Clear
+                                Screen</button>
+                        </div>
+                    </div>
+
+                    <!-- Global Settings (Placeholder for now) -->
+                    <div class="bg-white rounded-lg shadow p-6 opacity-50 cursor-not-allowed">
+                        <h3 class="font-bold text-gray-500 mb-4">Branding Config (Coming Soon)</h3>
+                        <p>Control Logo, Colors, and Scrolling Speed here.</p>
+                    </div>
+                </div>
+
             </div>
-
-            <!-- VIEW: MEDIA LIBRARY -->
-            <div id="view-media" class="view-section space-y-6">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-cloud-upload-alt mr-2"></i> Upload New
-                        Media</h3>
-                    <div class="flex space-x-2 items-center">
-                        <input type="file" id="inpFile"
-                            class="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                        <button onclick="uploadMedia()"
-                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-bold">Upload</button>
-                    </div>
-                    <div id="uploadStatus" class="text-xs text-green-600 mt-2 font-bold hidden">Upload Complete!</div>
-                </div>
-
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="font-bold text-slate-700 mb-4">Media Gallary</h3>
-                    <div id="mediaGallery" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <!-- Media Items -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW: CONFIG -->
-            <div id="view-config" class="view-section space-y-6">
-                <!-- Main Screen Controller -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-tv mr-2"></i> Main Screen Content</h3>
-                    <div class="flex space-x-2">
-                        <input type="text" id="inpWebviewUrl" class="flex-1 border border-gray-300 rounded p-2"
-                            placeholder="Enter YouTube Embed / Video URL...">
-                        <button onclick="updateMainScreen()"
-                            class="bg-slate-800 text-white px-4 rounded hover:bg-slate-700">Set</button>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-2">Example:
-                        <code>https://www.youtube.com/embed/VIDEO_ID?autoplay=1</code></p>
-                    <div class="mt-4">
-                        <h4 class="font-semibold text-sm mb-2">Preset Actions:</h4>
-                        <button onclick="setMainScreen('')"
-                            class="bg-red-100 text-red-600 px-3 py-1 rounded text-sm hover:bg-red-200">Clear
-                            Screen</button>
-                    </div>
-                </div>
-
-                <!-- Global Settings (Placeholder for now) -->
-                <div class="bg-white rounded-lg shadow p-6 opacity-50 cursor-not-allowed">
-                    <h3 class="font-bold text-gray-500 mb-4">Branding Config (Coming Soon)</h3>
-                    <p>Control Logo, Colors, and Scrolling Speed here.</p>
-                </div>
-            </div>
-
-        </div>
     </main>
 
     <script src="/static/admin/admin.js"></script>

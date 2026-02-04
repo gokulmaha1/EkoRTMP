@@ -71,9 +71,9 @@ class StreamOverlayApp:
         # We name flvmux 'mux' so we can link two sources to it.
         pipeline_str = (
             f'flvmux name=mux streamable=true ! rtmpsink location="{RTMP_URL}" '
-            f'videotestsrc pattern=ball ! video/x-raw,width={WIDTH},height={HEIGHT},framerate={FRAMERATE}/1 ! '
-            'videoconvert ! cairooverlay name=overlay ! videoconvert ! '
-            'x264enc bitrate=2500 tune=zerolatency speed-preset=veryfast key-int-max=60 ! mux. '
+            f'videotestsrc pattern=black ! video/x-raw,width={WIDTH},height={HEIGHT},framerate={FRAMERATE}/1 ! '
+            'videoconvert ! cairooverlay name=overlay ! videoconvert ! queue ! '
+            'x264enc bitrate=4000 tune=zerolatency speed-preset=superfast key-int-max=60 threads=4 ! queue ! mux. '
         )
         
         # Audio Pipeline Component

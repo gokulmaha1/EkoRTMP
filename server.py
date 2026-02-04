@@ -109,19 +109,23 @@ app.add_middleware(
 )
 
 # Global state
+# Global state
 stream_process = None
-OVERLAY_FILE = "overlay_data.json"
+OVERLAY_FILE = os.path.abspath("overlay_data.json")
 
 # Ensure overlay data file exists (Legacy support)
-if not os.path.exists(OVERLAY_FILE):
-    with open(OVERLAY_FILE, "w") as f:
-         json.dump({
-            "title": "Live Stream", 
-            "subtitle": "Welcome!", 
-            "info": "Starting soon...", 
-            "webview_url": "",
-            "stream_key": ""
-        }, f)
+def init_overlay_file():
+    if not os.path.exists(OVERLAY_FILE):
+        with open(OVERLAY_FILE, "w") as f:
+             json.dump({
+                "title": "Live Stream", 
+                "subtitle": "Welcome!", 
+                "info": "Starting soon...", 
+                "webview_url": "",
+                "stream_key": ""
+            }, f)
+
+init_overlay_file()
 
 # Mount static files for UI (and eventually Admin)
 if not os.path.exists("ui"):
@@ -136,10 +140,14 @@ app.mount("/media", StaticFiles(directory="media"), name="media")
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):
     try:
-        file_location = f"media/{file.filename}"
+        # Sanitize filename
+        clean_name = re.sub(r'[^\w\.-]', '_', file.filename)
+        file_location = f"media/{clean_name}"
+        
         with open(file_location, "wb+") as f:
             f.write(file.file.read())
-        return {"info": f"file '{file.filename}' saved at '{file_location}'", "url": f"/media/{file.filename}"}
+            
+        return {"info": f"File saved", "url": f"/media/{clean_name}"}
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
@@ -160,22 +168,24 @@ class OverlayUpdate(BaseModel):
 
 @app.post("/api/overlay/update")
 def update_overlay(data: OverlayUpdate):
-    if os.path.exists(OVERLAY_FILE):
-        with open(OVERLAY_FILE, "r") as f:
-            try:
+    try:
+        if os.path.exists(OVERLAY_FILE):
+            with open(OVERLAY_FILE, "r") as f:
                 current_data = json.load(f)
-            except:
-                current_data = {}
-    else:
-        current_data = {}
-    
-    if data.webview_url is not None: current_data["webview_url"] = data.webview_url
-    # Only update what's passed
-    
-    with open(OVERLAY_FILE, "w") as f:
-        json.dump(current_data, f)
-    
-    return current_data
+        else:
+            current_data = {}
+        
+        if data.webview_url is not None: current_data["webview_url"] = data.webview_url
+        if data.title is not None: current_data["title"] = data.title
+        if data.subtitle is not None: current_data["subtitle"] = data.subtitle
+        
+        with open(OVERLAY_FILE, "w") as f:
+            json.dump(current_data, f)
+        
+        return current_data
+    except Exception as e:
+        print(f"Error updating overlay: {e}")
+        return {"status": "error"}
 
 # --- Pydantic Models for News API ---
 class NewsCreate(BaseModel):
@@ -215,9 +225,12 @@ def get_overlay_page():
 @app.get("/overlay/data")
 def get_overlay_data():
     if os.path.exists(OVERLAY_FILE):
-        with open(OVERLAY_FILE, "r") as f:
-            return json.load(f)
-    return {}
+        try:
+            with open(OVERLAY_FILE, "r") as f:
+                return json.load(f)
+        except:
+            return {"webview_url": ""}
+    return {"webview_url": ""}
 
 # --- News Management API ---
 
