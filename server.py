@@ -503,6 +503,7 @@ async def delete_news(news_id: int, db: Session = Depends(get_db)):
 # --- Stream Control API ---
 class StreamConfig(BaseModel):
     rtmp_url: Optional[str] = None
+    backup_rtmp_url: Optional[str] = None
     stream_key: Optional[str] = None
 
 @app.post("/api/stream/start")
@@ -531,6 +532,10 @@ def start_stream(config: StreamConfig):
     
     if config.rtmp_url:
         env["RTMP_URL"] = config.rtmp_url
+    
+    if config.backup_rtmp_url:
+        env["BACKUP_RTMP_URL"] = config.backup_rtmp_url
+        print(f"[System] Backup Stream Enabled: {config.backup_rtmp_url}")
     
     try:
         stream_process = subprocess.Popen(

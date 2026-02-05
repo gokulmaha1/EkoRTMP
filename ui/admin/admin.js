@@ -565,7 +565,55 @@ const inpStreamKey = document.getElementById('inpStreamKey');
 const previewBadge = document.getElementById('previewLiveBadge');
 
 async function startStream() {
-    const key = inpStreamKey.value.trim();
+    const streamKey = document.getElementById('inpStreamKey').value.trim();
+    if (!streamKey) return alert("Please enter a Stream Key");
+
+    // Construct Main RTMP URL (Assumption: YouTube default ingest)
+    // Or allow user to override the whole URL? 
+    // The previous code assumed passing stream key updates the persistent config or is just used.
+    // The Server uses RTMP_URL env var if set, or constructs it?
+    // Let's assume user wants to use standard YouTube ingest with this key.
+    const rtmpUrl = "rtmp://a.rtmp.youtube.com/live2/" + streamKey;
+
+    const backupUrlInput = document.getElementById('inpBackupUrl').value.trim();
+    // If backup URL is provided but doesn't have the key, user might need to append it.
+    // Usually Backup URL is rtmp://b.rtmp.youtube.com/live2?backup=1 and key is PART of it or sent as stream name.
+    // YouTube Backup URL convention: rtmp://b.rtmp.youtube.com/live2/STREAM_KEY?backup=1
+    // The user provided prompt "rtmp://b.rtmp.youtube.com/live2?backup=1" implies they might paste the WHOLE thing.
+    // Let's rely on the user pasting the FULL backup URL if they use the field, OR construct it if it looks like a base.
+
+    // Simplest: Send whatever they typed as backup_rtmp_url. 
+    // If they typed nothing, send null.
+    let backupUrl = null;
+    if (backupUrlInput) {
+        // If it looks like a base URL (no slash or key), append key?
+        // Let's trust the user to paste the full URL including Key or use the provided logic if needed.
+        // User Prompt: "rtmp://b.rtmp.youtube.com/live2?backup=1" -> This usually needs the key before ?backup=1
+        // Actually YouTube gives: rtmp://b.rtmp.youtube.com/live2
+        // And Stream Key: xxxx
+        // So we should construct it: rtmp://b.rtmp.youtube.com/live2/STREAM_KEY?backup=1
+
+        if (backupUrlInput.includes('youtube') && !backupUrlInput.includes(streamKey)) {
+            // Basic heuristic: if it doesn't contain the key, try to insert it?
+            // Safest is to just use what they type IF they type a full RTMP.
+            // BUT, if they paste "rtmp://b.rtmp.youtube.com/live2?backup=1", we need to insert key.
+            // Let's just pass it raw for now, assuming user knows, or update later if broken.
+            // BETTER: Construct it properly if it's the standard YT backup.
+            if (backupUrlInput === 'rtmp://b.rtmp.youtube.com/live2?backup=1') {
+                backupUrl = "rtmp://b.rtmp.youtube.com/live2/" + streamKey + "?backup=1";
+            } else {
+                backupUrl = backupUrlInput;
+            }
+        } else {
+            backupUrl = backupUrlInput;
+        }
+    }
+
+    const payload = {
+        rtmp_url: rtmpUrl,
+        stream_key: streamKey,
+        backup_rtmp_url: backupUrl
+    };
 
     // UI Loading state
     btnStart.innerText = "STARTING...";
@@ -575,7 +623,7 @@ async function startStream() {
         const res = await fetch(`${API_BASE}/stream/start`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ stream_key: key })
+            body: JSON.stringify(payload)
         });
         const d = await res.json();
 

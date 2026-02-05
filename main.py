@@ -65,16 +65,31 @@ class StreamOverlayApp:
         GLib.timeout_add(1000 // FRAMERATE, self.update_surface)
 
         # --- GStreamer Pipeline ---
-        # Using videotestsrc as base. In production, this might be rtspsrc or filesrc.
-        # We blend the cairooverlay on top.
-        # Updated pipeline with audio (YouTube requirement)
-        # We name flvmux 'mux' so we can link two sources to it.
-        pipeline_str = (
-            f'flvmux name=mux streamable=true ! rtmpsink location="{RTMP_URL}" '
+        BACKUP_RTMP_URL = os.environ.get('BACKUP_RTMP_URL')
+        
+        # We start with the Muxer and Sinks
+        # If backup is present, we Tee the output of the muxer to two sinks.
+        if BACKUP_RTMP_URL:
+            print(f"Configuring Dual Stream: Primary + Backup")
+            sink_pipeline = (
+                f'flvmux name=mux streamable=true ! tee name=t '
+                f't. ! queue ! rtmpsink location="{RTMP_URL}" '
+                f't. ! queue ! rtmpsink location="{BACKUP_RTMP_URL}" '
+            )
+        else:
+            sink_pipeline = (
+                f'flvmux name=mux streamable=true ! rtmpsink location="{RTMP_URL}" '
+            )
+
+        # Video Source & Encoding
+        # Changed speed-preset to 'ultrafast' for lowest CPU usage
+        video_pipeline = (
             f'videotestsrc pattern=black ! video/x-raw,width={WIDTH},height={HEIGHT},framerate={FRAMERATE}/1 ! '
             'videoconvert ! cairooverlay name=overlay ! videoconvert ! queue ! '
-            'x264enc bitrate=4000 tune=zerolatency speed-preset=superfast key-int-max=60 threads=4 ! queue ! mux. '
+            'x264enc bitrate=4000 tune=zerolatency speed-preset=ultrafast key-int-max=60 threads=4 ! queue ! mux. '
         )
+        
+        pipeline_str = sink_pipeline + video_pipeline
         
         # Audio Pipeline Component
         # If the news music file exists, loop it. Otherwise fallback to silence (or ticks).
