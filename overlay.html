@@ -35,7 +35,8 @@
             background-color: #000;
             /* Chroma Key or Video BG */
             overflow: hidden;
-            font-family: 'Roboto', 'Baloo Thambi 2', sans-serif;
+            /* Use System Fonts for maximum Tamil compatibility */
+            font-family: 'Roboto', 'Nirmala UI', 'Latha', 'Baloo Thambi 2', sans-serif;
             width: 1280px;
             height: 720px;
         }
@@ -142,7 +143,7 @@
 
         .breaking-text {
             color: white !important;
-            font-family: 'Mukta Malar', 'Roboto', sans-serif;
+            font-family: 'Mukta Malar', 'Nirmala UI', 'Latha', 'Roboto', sans-serif;
             /* Better Tamil Font support */
             font-size: 32px;
             /* Large TV Size */
@@ -271,7 +272,8 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            font-family: 'Roboto', sans-serif;
+            /* Robust Font Stack for Tamil */
+            font-family: 'Roboto', 'Nirmala UI', 'Latha', sans-serif;
         }
 
         .footer-right {
@@ -407,15 +409,13 @@
             </div>
 
             <div class="footer-right">
-                <div class="live-badge">LIVE <div class="blink-dot"></div>
+                <div class="live-badge">நேரலை <div class="blink-dot"></div>
                 </div>
                 <div class="datetime">
                     <div id="clock" class="time-display">12:00 PM</div>
                     <div id="dateDisplay" class="date-display">01/01/2026</div>
                 </div>
-                <!-- Optional Footer Logo
                 <img src="/media/logo.gif" class="logo-img" style="height: 40px; margin-left: 5px;">
-                -->
             </div>
         </div>
 
