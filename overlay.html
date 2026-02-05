@@ -8,341 +8,286 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto:wght@400;500;700&family=Baloo+Thambi+2:wght@400;700&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root {
-            /* Palette: Tamil News Style */
-            --header-bg-start: #b90909;
-            /* Deep Red */
-            --header-bg-mid: #e71d1d;
-            /* Bright Red */
-            --header-bg-end: #8a0606;
-            /* Darker Red */
+        /* --- RESET & VARIABLES --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
+        :root {
+            /* Palette */
+            --header-bg: #b90909;
+            /* Deep Red */
             --footer-bg: #ffffff;
             --text-black: #000000;
             --text-white: #ffffff;
             --accent-gold: #f1c40f;
 
+            /* Dimensions */
             --header-height: 90px;
             --ticker-height: 70px;
         }
 
         body {
-            margin: 0;
-            padding: 0;
             background-color: #000;
+            /* Chroma Key or Video BG */
             overflow: hidden;
             font-family: 'Roboto', 'Baloo Thambi 2', sans-serif;
-        }
-
-        .container {
             width: 1280px;
             height: 720px;
-            position: relative;
+        }
+
+        /* --- MAIN LAYOUT (GRID) --- */
+        .container {
+            width: 100%;
+            height: 100%;
             display: grid;
             grid-template-rows: var(--header-height) 1fr var(--ticker-height);
+            position: relative;
         }
 
-        /* --- HEADER --- */
+        /* --- HEADER SECTION --- */
         .top-header {
             grid-row: 1;
-            grid-column: 1 / span 2;
-            background: linear-gradient(90deg, var(--header-bg-start) 0%, var(--header-bg-mid) 50%, var(--header-bg-end) 100%);
+            background-color: var(--header-bg);
             display: flex;
+            /* Flexbox Layout */
             align-items: center;
+            /* Vertical Center */
             justify-content: space-between;
-            position: relative;
-            z-index: 20;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            padding: 0 15px;
             border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-            padding: 0 10px;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
 
-        /* Glossy Shine Overlay */
-        .header-shine {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 50%;
-            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.0) 100%);
-            pointer-events: none;
-        }
-
+        /* Header Columns */
         .header-left {
-            flex: 0 0 160px;
-            /* Fixed width */
+            flex: 0 0 200px;
+            /* Fixed Width */
             display: flex;
-            justify-content: center;
+            align-items: center;
             height: 100%;
-            align-items: center;
-            position: relative;
-            z-index: 30;
-        }
-
-        .location-tag {
-            background: linear-gradient(to bottom, #fff 0%, #eee 100%);
-            color: #b90909;
-            padding: 5px 15px;
-            border-radius: 4px;
-            font-weight: 800;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            border: 1px solid #ccc;
-            white-space: nowrap;
         }
 
         .header-center {
             flex: 1;
-            /* Take remaining space */
-            text-align: center;
-            overflow: hidden;
+            /* Grow to fill space */
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100%;
-            position: relative;
-            z-index: 20;
-        }
-
-        .breaking-text {
-            color: white;
-            font-size: 38px;
-            font-weight: 700;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis;
+            /* Prevent spill */
             padding: 0 20px;
-            letter-spacing: 0.5px;
-            position: relative !important;
-            /* OVERRIDE any user/browser absolute */
-            left: auto !important;
-            top: auto !important;
-            width: 100%;
         }
 
         .header-right {
-            flex: 0 0 160px;
-            /* Fixed width */
+            flex: 0 0 150px;
+            /* Fixed Width */
             display: flex;
+            align-items: center;
             justify-content: flex-end;
-            padding-right: 15px;
+            /* Align Logo Right */
             height: 100%;
-            align-items: center;
-            position: relative;
-            z-index: 30;
         }
 
-        .breaking-badge {
-            background: #fff;
-            color: #d60000;
-            font-family: 'Oswald', sans-serif;
-            font-weight: 700;
-            font-size: 20px;
-            padding: 2px 10px;
+        /* Header Elements */
+        .location-tag {
+            background: white;
+            color: #b90909;
+            padding: 5px 12px;
             border-radius: 4px;
+            font-weight: 800;
+            font-size: 18px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             display: flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            gap: 6px;
         }
 
-        .blink-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: #d60000;
-            animation: blink 1s infinite;
+        .breaking-text {
+            color: white !important;
+            font-size: 34px;
+            font-weight: 700;
+            white-space: nowrap;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+            /* Ensure Visibility */
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
         }
 
-        /* --- FOOTER --- */
-        .bottom-ticker {
+        .logo-img {
+            max-height: 70px;
+            /* Fit within 90px header */
+            max-width: 100%;
+            object-fit: contain;
+            /* Ensure Visibility */
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        /* --- MAIN CONTENT (Video + L-Bar) --- */
+        .main-content {
+            grid-row: 2;
+            position: relative;
+            background-color: transparent;
+            /* Show underlying video if needed */
+            display: flex;
+            overflow: hidden;
+        }
+
+        .video-wrapper {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        /* L-Bar (Side Panel) */
+        .l-bar {
+            width: 0;
+            /* Hidden by default */
+            background: #000;
+            transition: width 0.5s ease;
+            display: none;
+        }
+
+        /* Media Elements */
+        #videoPlayer,
+        #imagePlayer,
+        #webview {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: none;
+            border: none;
+        }
+
+        /* --- FOOTER SECTION --- */
+        .bottom-footer {
             grid-row: 3;
-            grid-column: 1 / span 2;
             background-color: var(--footer-bg);
             display: flex;
             align-items: center;
-            z-index: 20;
-            border-top: 4px solid var(--header-bg-mid);
-            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
+            border-top: 4px solid var(--header-bg);
+            z-index: 100;
         }
 
         .ticker-label {
-            background-color: var(--header-bg-mid);
+            flex: 0 0 auto;
+            background-color: var(--header-bg);
             color: white;
             font-family: 'Oswald', sans-serif;
+            font-size: 20px;
             font-weight: 700;
-            font-size: 22px;
-            padding: 0 25px;
+            padding: 0 20px;
             height: 100%;
             display: flex;
             align-items: center;
-            text-transform: uppercase;
-            box-shadow: 4px 0 5px rgba(0, 0, 0, 0.1);
-            position: relative;
-            z-index: 5;
-            flex-shrink: 0;
-            /* Prevent crushing */
+            z-index: 10;
         }
 
-        .ticker-wrapper {
-            flex-grow: 1;
+        .ticker-container {
+            flex: 1;
+            /* Fill remaining */
             overflow: hidden;
-            white-space: nowrap;
+            background: white;
+            height: 100%;
             display: flex;
             align-items: center;
-            background: #fff;
+            position: relative;
         }
 
         .ticker-content {
-            display: inline-block;
-            padding-left: 100%;
-            animation: ticker 30s linear infinite;
-            font-size: 28px;
-            /* Massive Text */
-            font-weight: 800;
-            color: var(--text-black);
-            line-height: var(--ticker-height);
+            display: flex;
+            white-space: nowrap;
+            animation: ticker-scroll 60s linear infinite;
+            /* Fixed readable speed */
         }
 
         .ticker-item {
-            margin-right: 80px;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        .ticker-item i {
-            margin-right: 12px;
-            color: var(--header-bg-mid);
-            font-size: 12px;
-        }
-
-        .right-panel {
+            font-size: 26px;
+            font-weight: 700;
+            color: black;
+            margin-right: 60px;
             display: flex;
             align-items: center;
-            height: 100%;
+            gap: 10px;
+        }
+
+        .footer-right {
+            flex: 0 0 220px;
+            /* Fixed Width for Clock/Live */
             background-color: #f1f2f6;
-            /* Very light grey */
-            padding: 0 15px;
+            height: 100%;
             border-left: 1px solid #ddd;
-            gap: 15px;
-            z-index: 50;
-            flex-shrink: 0;
-            min-width: 250px;
-            /* FORCE WIDTH */
-            /* Prevent crushing */
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 10px;
+            z-index: 20;
         }
 
         .live-badge {
             background: #d60000;
             color: white;
             font-family: 'Oswald', sans-serif;
-            font-weight: 700;
-            font-size: 16px;
-            padding: 4px 10px;
+            font-weight: bold;
+            padding: 2px 8px;
             border-radius: 4px;
+            font-size: 14px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
 
-        .blink-dot-white {
+        .datetime {
+            text-align: right;
+            line-height: 1.2;
+        }
+
+        .time-display {
+            font-family: 'Oswald';
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .date-display {
+            font-size: 11px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .blink-dot {
             width: 8px;
             height: 8px;
+            background: white;
             border-radius: 50%;
-            background-color: white;
             animation: blink 1s infinite;
         }
 
-        .datetime-box {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            justify-content: center;
-            line-height: 1.1;
-        }
-
-        .time-text {
-            font-family: 'Oswald', sans-serif;
-            font-size: 26px;
-            font-weight: 700;
-            color: #2c3e50;
-        }
-
-        .date-text {
-            font-family: 'Roboto', sans-serif;
-            font-size: 12px;
-            font-weight: 500;
-            color: #7f8c8d;
-            text-transform: uppercase;
-        }
-
-        /* --- CONTENT WRAPPER --- */
-        .main-content-wrapper {
-            grid-row: 2;
-            grid-column: 1;
-            display: flex;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #000;
-        }
-
-        .video-area {
-            flex-grow: 1;
-            position: relative;
-            background-color: #1a1a1a;
-            overflow: hidden;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .l-bar-area {
-            width: 0;
-            height: 100%;
-            background-color: #000;
-            overflow: hidden;
-            display: none;
-            transition: width 0.5s ease;
-            position: relative;
-        }
-
-        iframe#webview,
-        video#videoPlayer,
-        img#imagePlayer {
-            width: 100%;
-            height: 100%;
-            border: none;
-            object-fit: contain;
-            display: none;
-        }
-
-        /* Animations */
-        @keyframes ticker {
+        @keyframes ticker-scroll {
             0% {
-                transform: translate3d(0, 0, 0);
+                transform: translateX(0);
             }
 
             100% {
-                transform: translate3d(-100%, 0, 0);
+                transform: translateX(-100%);
             }
         }
 
         @keyframes blink {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
             50% {
-                opacity: 0.4;
+                opacity: 0.5;
             }
         }
     </style>
@@ -352,399 +297,225 @@
 
     <div class="container">
 
-        <!-- Header -->
+        <!-- ROW 1: HEADER -->
         <div class="top-header">
-            <div class="header-shine"></div> <!-- Glossy Effect -->
-
+            <!-- Left: Location -->
             <div class="header-left">
                 <div class="location-tag">
-                    <span class="loc-icon"><i class="fas fa-map-marker-alt"></i></span>
-                    <span id="locationText">CHENNAI</span>
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span id="locationText">LATEST NEWS</span>
                 </div>
             </div>
 
+            <!-- Center: Headline -->
             <div class="header-center">
-                <div class="breaking-text" id="topHeadline">
-                    Welcome to EKO Professional News System...
+                <div id="topHeadline" class="breaking-text">
+                    Initializing News System...
                 </div>
             </div>
 
+            <!-- Right: Logo -->
             <div class="header-right">
-                <img src="/media/logo.gif" class="logo-img" style="width: 100%; height: 100%; object-fit: contain;">
+                <!-- Direct Path with default fallback -->
+                <img id="headerLogo" src="/media/logo.gif" class="logo-img" alt="Logo">
             </div>
         </div>
 
-        <!-- Main Content Wrapper (Video + L-Bar) -->
-        <div class="main-content-wrapper">
-            <!-- Video Area -->
-            <div class="video-area">
+        <!-- ROW 2: MAIN CONTENT -->
+        <div class="main-content">
+            <div class="video-wrapper">
                 <iframe id="webview" src=""></iframe>
-                <video id="videoPlayer" muted playsinline
-                    style="display:none; width:100%; height:100%; object-fit:contain;"></video>
-                <img id="imagePlayer" src="" style="display:none; width:100%; height:100%; object-fit:contain;">
+                <video id="videoPlayer" muted playsinline></video>
+                <img id="imagePlayer" src="">
             </div>
-
-            <!-- L-Bar Content Area -->
-            <div class="l-bar-area" id="lBarArea">
+            <!-- Optional L-Bar -->
+            <div id="lBar" class="l-bar">
                 <div id="lBarContent" style="width:100%; height:100%;"></div>
             </div>
         </div>
 
-        <!-- Ticker -->
-        <div class="bottom-ticker">
+        <!-- ROW 3: FOOTER -->
+        <div class="bottom-footer">
             <div class="ticker-label">NEWS UPDATES</div>
-            <div class="ticker-wrapper">
-                <div class="ticker-content" id="tickerText">
-                    <!-- Ticker items injected here -->
+
+            <div class="ticker-container">
+                <div id="tickerText" class="ticker-content">
+                    <!-- JS will inject items here -->
+                    <span class="ticker-item">Waiting for news updates...</span>
                 </div>
             </div>
-            <div class="right-panel">
-                <div class="live-badge">
-                    LIVE <span class="blink-dot-white"></span>
+
+            <div class="footer-right">
+                <div class="live-badge">LIVE <div class="blink-dot"></div>
                 </div>
-                <div class="datetime-box">
-                    <div class="date-text" id="dateDisplay">01/01/2026</div>
-                    <div class="time-text" id="clock">12:00 PM</div>
+                <div class="datetime">
+                    <div id="clock" class="time-display">12:00 PM</div>
+                    <div id="dateDisplay" class="date-display">01/01/2026</div>
                 </div>
-                <!-- Optional: Enable logo if needed, currently using clean look -->
-                <img src="/media/logo.gif" class="logo-img" alt="EKO TV" style="height: 50px; object-fit: contain;">
+                <!-- Optional Footer Logo
+                <img src="/media/logo.gif" class="logo-img" style="height: 40px; margin-left: 5px;">
+                -->
             </div>
         </div>
 
     </div>
 
-    <!-- Hidden Audio (Legacy support) -->
-    <!-- Music is handled by backend GStreamer pipeline now -->
-
+    <!-- SCRIPT -->
     <script>
+        // CONFIG
+        const DEFAULT_LOGO = "/media/logo.gif";
+        const API_BASE = window.location.origin + '/api';
         const WS_URL = 'ws://' + window.location.host + '/ws/news';
 
-        // Elements
-        const elTopHeadline = document.getElementById('topHeadline');
-        const elTickerText = document.getElementById('tickerText');
-        const elWebview = document.getElementById('webview');
-        const elVideo = document.getElementById('videoPlayer');
-        const elImage = document.getElementById('imagePlayer');
-
-        // State
+        // STATE
         let newsItems = [];
-        let currentMediaUrl = "";
         let headlineIndex = 0;
         let headlineInterval = null;
 
-        // Clock & Date
-        function updateClock() {
+        // --- CLOCK ---
+        function updateTime() {
             const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            const dateStr = now.toLocaleDateString('en-GB'); // DD/MM/YYYY
 
-            // Time (e.g., 12:45 PM)
-            document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', {
-                timeZone: 'Asia/Kolkata',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            });
-
-            // Date (e.g., 25/12/2026) -> user asked for DD/MM/YY ??
-            // Let's do standard DD/MM/YYYY for clarity or DD/MM/YY
-            const day = String(now.getDate()).padStart(2, '0');
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const year = now.getFullYear();
-
-            const dateStr = `${day}/${month}/${year}`;
+            document.getElementById('clock').innerText = timeStr;
             document.getElementById('dateDisplay').innerText = dateStr;
         }
-        setInterval(updateClock, 1000);
-        updateClock();
+        setInterval(updateTime, 1000);
+        updateTime();
 
-        // Headline Rotator (Streams RSS/News one by one in Header)
-        function startHeadlineRotation() {
-            if (headlineInterval) clearInterval(headlineInterval);
-            headlineRotation(); // Run immediately
-            headlineInterval = setInterval(headlineRotation, 10000); // Change every 10s
-        }
-
-        function headlineRotation() {
-            if (!newsItems || newsItems.length === 0) return;
-
-            // Priority: Show BREAKING items first, then rotate all others
-            const breaking = newsItems.filter(i => i.type === 'BREAKING');
-            let candidates = [];
-
-            if (breaking.length > 0) {
-                // If there are breaking news, only cycle them
-                candidates = breaking;
-            } else {
-                // Otherwise cycle everything (TICKER, GENERAL, etc)
-                // Filter out items that are strictly for Ticker if needed, but user said "same content"
-                candidates = newsItems.filter(i => i.is_active);
-            }
-
-            if (candidates.length === 0) return;
-
-            // Wrap index
-            headlineIndex = (headlineIndex + 1) % candidates.length;
-            const item = candidates[headlineIndex];
-
-            // Update UI with Fade
-            elTopHeadline.style.opacity = '0';
-            setTimeout(() => {
-                elTopHeadline.innerText = item.title_tamil;
-                // Optional: Update Location tag if item has it
-                // Update Location Tag
-                if (item.source_url) {
-                    // Use source_url as location/source label if available, otherwise hide or default
-                    // Removing " - Source" was done in backend, so this might be just the source name or empty.
-                    // Let's assume for now we want to show the Feed Name if available? 
-                    // Or if item.location is set (requires DB update).
-                    // For now, let's just HIDE it if it's not relevant, or show "LIVE"
-                    // User complained about "CHENNAI" which is static.
-                    // Let's change it to "LIVE UPDATES" or simply hide the span content.
-
-                    // Better approach: If RSS, show "RCC" or "LATEST". 
-                    // Let's default to "LATEST NEWS"
-                    document.getElementById('locationText').innerText = "LATEST NEWS";
-                } else {
-                    document.getElementById('locationText').innerText = "LATEST NEWS";
-                }
-                elTopHeadline.style.opacity = '1';
-            }, 500);
-        }
-
-        // Data Management
-        async function fetchNews() {
-            try {
-                const res = await fetch('/api/news');
-                if (!res.ok) throw new Error("HTTP " + res.status);
-
-                const data = await res.json();
-                newsItems = data;
-
-                console.log(`[Overlay] Fetched ${newsItems.length} items.`);
-
-                updateUI();
-
-                if (!headlineInterval) startHeadlineRotation();
-
-            } catch (e) {
-                console.error("Fetch error", e);
-            }
-        }
-
-        // Poll News every 15 seconds (Fallback for WebSocket)
-        setInterval(fetchNews, 15000);
-
-        function updateUI() {
-            // Ticker (All Active Items)
-            // User said: "same content can be used in live ticker also"
-            const activeItems = newsItems.filter(i => i.is_active);
-            if (activeItems.length > 0) {
-                const tickerHtml = activeItems.map(t =>
-                    `<span class="ticker-item"><i class="fas fa-circle" style="font-size:10px;"></i> ${t.title_tamil}</span>`
-                ).join("");
-                elTickerText.innerHTML = tickerHtml + tickerHtml; // Duplicate for smooth loop
-            }
-        }
-
-        function updateMedia(url) {
-            if (url === currentMediaUrl) return;
-            currentMediaUrl = url;
-
-            // Reset all
-            elWebview.style.display = 'none';
-            elVideo.style.display = 'none';
-            elImage.style.display = 'none';
-            elVideo.pause();
-            elWebview.src = 'about:blank'; // Unload iframe
-
-            if (!url) return;
-
-            // Detect Type
-            const ext = url.split('.').pop().toLowerCase().split('?')[0];
-
-            if (['mp4', 'webm', 'ogg', 'mov'].includes(ext)) {
-                // Video
-                console.log("Attempting to play video:", url);
-                elVideo.src = url;
-                elVideo.style.display = 'block';
-                elVideo.muted = true; // FORCE MUTED for Autoplay to work
-
-                var playPromise = elVideo.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(_ => {
-                        console.log("Video started playing successfully");
-                        // Remove error msg if any
-                        const err = document.getElementById('videoError');
-                        if (err) err.remove();
-                    })
-                        .catch(error => {
-                            console.error("Autoplay Error:", error);
-                            showVideoError("Autoplay Blocked: " + error.message);
-                        });
-                }
-            } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-                // Image
-                elImage.src = url;
-                elImage.style.display = 'block';
-            } else {
-                // Iframe (YouTube, etc)
-                elWebview.src = url;
-                elWebview.style.display = 'block';
-            }
-        }
-
-        function showVideoError(msg) {
-            let err = document.getElementById('videoError');
-            if (!err) {
-                err = document.createElement('div');
-                err.id = 'videoError';
-                err.style.position = 'absolute';
-                err.style.top = '50%';
-                err.style.left = '50%';
-                err.style.transform = 'translate(-50%, -50%)';
-                err.style.color = 'red';
-                err.style.background = 'rgba(0,0,0,0.8)';
-                err.style.padding = '20px';
-                err.style.zIndex = '100';
-                err.innerText = msg;
-                document.querySelector('.video-area').appendChild(err);
-            } else {
-                err.innerText = msg;
-            }
-        }
-
-        // Connect WebSocket
-        const ws = new WebSocket(WS_URL);
-        ws.onopen = () => console.log("Connected to News Feed");
-        ws.onmessage = (event) => {
-            const msg = JSON.parse(event.data);
-            if (msg.type.startsWith('NEWS')) {
-                fetchNews();
-            } else if (msg.type === 'CONFIG_UPDATED') {
-                applyConfig(msg.payload);
-            }
-        };
-
-        // Initial Load
-        fetchNews();
-
-        // Load Config (will trigger ApplyConfig -> Layout Fix)
-        fetchConfig();
-
-
-        // Re-enable Polling
-        setInterval(async () => {
-            try {
-                // Uncomment to enable real polling again
-                // const res = await fetch('/overlay/data');
-                // const d = await res.json();
-                // if (d.webview_url !== undefined) updateMedia(d.webview_url);
-            } catch (e) { }
-        }, 3000);
-
-        // --- Config Management ---
+        // --- LOG DATA & CONFIG ---
         async function fetchConfig() {
             try {
-                const res = await fetch('/api/config');
+                const res = await fetch(API_BASE + '/config');
                 const conf = await res.json();
                 applyConfig(conf);
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error("Config Fetch Error:", e);
+                // Fallback already in HTML
+            }
         }
 
         function applyConfig(conf) {
             const root = document.documentElement;
-            if (conf.brand_color_primary) root.style.setProperty('--brand-red', conf.brand_color_primary);
-            if (conf.brand_color_secondary) root.style.setProperty('--brand-yellow', conf.brand_color_secondary);
-            if (conf.brand_color_dark) root.style.setProperty('--brand-dark', conf.brand_color_dark);
 
-            if (conf.logo_url) {
-                const imgs = document.querySelectorAll('.logo-img');
-                imgs.forEach(img => img.src = conf.logo_url);
-            }
+            // Colors
+            if (conf.brand_color_primary) root.style.setProperty('--header-bg', conf.brand_color_primary);
+            if (conf.brand_color_dark) document.body.style.backgroundColor = conf.brand_color_dark; // Debug bg
 
-            if (conf.ticker_speed) {
-                const content = document.querySelector('.ticker-content');
-                if (content) content.style.animationDuration = conf.ticker_speed + 's';
-            }
+            // Logo
+            const logoUrl = conf.logo_url || DEFAULT_LOGO;
+            const logoEl = document.getElementById('headerLogo');
+            if (logoEl) logoEl.src = logoUrl;
 
             // Text Labels
-            if (conf.default_headline) {
-                // Only update if not currently showing breaking news
-                const headlines = newsItems.filter(i => i.type === 'BREAKING');
-                if (headlines.length === 0) {
-                    const el = document.getElementById('topHeadline');
-                    if (el) el.innerText = conf.default_headline;
-                }
-            }
+            if (conf.location_label) document.getElementById('locationText').innerText = conf.location_label;
 
-            if (conf.ticker_label) {
-                const el = document.querySelector('.ticker-label');
-                if (el) el.innerText = conf.ticker_label;
-            }
-
-            if (conf.breaking_label) {
-                const el = document.querySelector('.breaking-badge');
-                if (el) el.innerText = conf.breaking_label;
-            }
-
-            if (conf.live_label) {
-                const el = document.querySelector('.live-box');
-                if (el) el.innerText = conf.live_label;
-            }
-
-            // --- L-Bar Logic ---
-            const lBar = document.getElementById('lBarArea');
-            const lBarContent = document.getElementById('lBarContent');
-            const wrapper = document.querySelector('.main-content-wrapper');
+            // L-Bar Logic
+            const lBar = document.getElementById('lBar');
+            const wrapper = document.querySelector('.main-content');
 
             if (conf.layout_mode === 'L_BAR') {
-                const width = conf.lbar_width || 25; // Default 25%
-                lBar.style.display = 'block'; // SHOW
-                // Slight delay to allow display:block to render before animating width
-                setTimeout(() => lBar.style.width = width + "%", 10);
+                const w = conf.lbar_width || 25;
+                lBar.style.display = 'block';
+                lBar.style.width = w + '%';
+                lBar.style.backgroundColor = conf.lbar_bg_color || '#000';
 
                 // Position
-                if (conf.lbar_position === 'LEFT') {
-                    wrapper.style.flexDirection = 'row-reverse';
-                } else {
-                    wrapper.style.flexDirection = 'row';
-                }
-
-                // Background
-                lBar.style.backgroundColor = conf.lbar_bg_color || '#000000';
-                if (conf.lbar_bg_image) {
-                    lBar.style.backgroundImage = `url('${conf.lbar_bg_image}')`;
-                    lBar.style.backgroundSize = 'cover';
-                    lBar.style.backgroundPosition = 'center';
-                } else {
-                    lBar.style.backgroundImage = 'none';
-                }
+                wrapper.style.flexDirection = (conf.lbar_position === 'LEFT') ? 'row-reverse' : 'row';
 
                 // Content
-                const contentType = conf.lbar_content_type || 'IMAGE';
-                const contentData = conf.lbar_content_data || '';
-
-                if (contentType === 'IMAGE') {
-                    lBarContent.innerHTML = `<img src="${contentData}" style="width:100%; height:100%; object-fit:contain;">`;
-                } else if (contentType === 'URL') {
-                    lBarContent.innerHTML = `<iframe src="${contentData}" style="width:100%; height:100%; border:none;"></iframe>`;
-                } else if (contentType === 'HTML') {
-                    lBarContent.innerHTML = contentData;
-                } else {
-                    lBarContent.innerHTML = "";
+                const contentDiv = document.getElementById('lBarContent');
+                if (conf.lbar_content_type === 'IMAGE' && conf.lbar_content_data) {
+                    contentDiv.innerHTML = `<img src="${conf.lbar_content_data}" style="width:100%;height:100%;object-fit:cover;">`;
+                } else if (conf.lbar_content_type === 'URL') {
+                    contentDiv.innerHTML = `<iframe src="${conf.lbar_content_data}" style="width:100%;height:100%;border:none;"></iframe>`;
                 }
-
             } else {
-                // Full Screen
-                lBar.style.width = "0";
-                lBar.style.backgroundImage = 'none';
-                setTimeout(() => lBar.style.display = 'none', 500); // Hide after transition
-                lBarContent.innerHTML = ""; // Clear content to save resources
+                lBar.style.width = '0';
+                setTimeout(() => lBar.style.display = 'none', 500);
             }
         }
 
+        // --- NEWS HANDLING ---
+        async function fetchNews() {
+            try {
+                const res = await fetch(API_BASE + '/news');
+                newsItems = await res.json();
+                console.log(`Loaded ${newsItems.length} news items.`);
+                updateTicker();
+                if (!headlineInterval) startHeadlines();
+            } catch (e) { console.error("News Fetch Error:", e); }
+        }
+
+        function updateTicker() {
+            const active = newsItems.filter(i => i.is_active);
+            const container = document.getElementById('tickerText');
+
+            if (active.length === 0) {
+                container.innerHTML = '<span class="ticker-item">No active news.</span>';
+                return;
+            }
+
+            // Create loop string
+            const html = active.map(i =>
+                `<span class="ticker-item"><i class="fas fa-circle" style="font-size:8px; color:#b90909;"></i> ${i.title_tamil}</span>`
+            ).join('');
+
+            // Repeat for smooth infinite scroll
+            container.innerHTML = html + html + html;
+        }
+
+        function startHeadlines() {
+            if (headlineInterval) clearInterval(headlineInterval);
+            rotateHeadline();
+            headlineInterval = setInterval(rotateHeadline, 10000); // 10s Rotation
+        }
+
+        function rotateHeadline() {
+            if (newsItems.length === 0) return;
+
+            // Prefer BREAKING, otherwise use all active
+            let pool = newsItems.filter(i => i.type === 'BREAKING');
+            if (pool.length === 0) pool = newsItems.filter(i => i.is_active);
+            if (pool.length === 0) return;
+
+            headlineIndex = (headlineIndex + 1) % pool.length;
+            const item = pool[headlineIndex];
+
+            const el = document.getElementById('topHeadline');
+            el.style.opacity = 0;
+
+            setTimeout(() => {
+                el.innerText = item.title_tamil;
+                el.style.opacity = 1;
+
+                // Optional: Update Location
+                if (item.source_url && item.source_url.length < 15) {
+                    document.getElementById('locationText').innerText = item.source_url;
+                } else {
+                    document.getElementById('locationText').innerText = "LATEST NEWS";
+                }
+            }, 500);
+        }
+
+        // --- WEBSOCKET ---
+        const ws = new WebSocket(WS_URL);
+        ws.onopen = () => console.log("WS Connected");
+        ws.onmessage = (e) => {
+            const msg = JSON.parse(e.data);
+            if (msg.type.includes('NEWS')) fetchNews();
+            if (msg.type === 'CONFIG_UPDATED') applyConfig(msg.payload);
+        };
+
+        // INIT
+        fetchConfig();
+        fetchNews();
+        // Fallback Poll
+        setInterval(fetchNews, 20000);
+        setInterval(fetchConfig, 10000);
+
     </script>
-    <!-- FontAwesome for Ticker icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </body>
 
 </html>

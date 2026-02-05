@@ -124,8 +124,7 @@ async function fetchConfig() {
         document.getElementById('inpColorSecondary').value = conf.brand_color_secondary || "#f1c40f";
         document.getElementById('inpColorDark').value = conf.brand_color_dark || "#2c3e50";
         document.getElementById('inpLogoUrl').value = conf.logo_url || "/media/logo.gif";
-        document.getElementById('inpTickerSpeed').value = conf.ticker_speed || 30;
-        document.getElementById('lblTickerSpeed').innerText = (conf.ticker_speed || 30) + 's';
+        // Speed Logic Removed
 
         // Text Labels
         document.getElementById('inpDefaultHeadline').value = conf.default_headline || "Welcome to EKO Professional News System...";
