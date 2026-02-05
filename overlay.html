@@ -465,41 +465,20 @@
                 if (item.source_url) {
                     // Update location/source tag logic here if wanted
                 }
+                elTopHeadline.style.opacity = '1';
             }, 500);
-        }
-
-        // DEBUG: Visual Console
-        const debugBox = document.createElement('div');
-        debugBox.style.position = 'absolute';
-        debugBox.style.bottom = '10px';
-        debugBox.style.left = '10px';
-        debugBox.style.background = 'rgba(0,0,0,0.8)';
-        debugBox.style.color = 'yellow';
-        debugBox.style.padding = '10px';
-        debugBox.style.fontSize = '16px';
-        debugBox.style.zIndex = '9999';
-        debugBox.style.maxWidth = '300px';
-        debugBox.style.wordWrap = 'break-word';
-        debugBox.id = 'debugBox';
-        document.body.appendChild(debugBox);
-
-        function log(msg) {
-            console.log(msg);
-            debugBox.innerText = msg;
         }
 
         // Data Management
         async function fetchNews() {
             try {
-                // log("Fetching...");
                 const res = await fetch('/api/news');
                 if (!res.ok) throw new Error("HTTP " + res.status);
 
                 const data = await res.json();
                 newsItems = data;
 
-                const activeCount = newsItems.filter(i => i.is_active).length;
-                log(`Fetched ${newsItems.length} items. Active: ${activeCount}`);
+                console.log(`[Overlay] Fetched ${newsItems.length} items.`);
 
                 updateUI();
 
@@ -507,7 +486,6 @@
 
             } catch (e) {
                 console.error("Fetch error", e);
-                log("Fetch Error: " + e.message);
             }
         }
 
