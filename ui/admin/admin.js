@@ -214,6 +214,7 @@ document.getElementById('inpTickerSpeed').addEventListener('input', (e) => {
 });
 
 // --- News Tabs & External Fetching ---
+// --- News Tabs & External Fetching ---
 function setNewsTab(tab) {
     // Buttons
     document.getElementById('tab-manual').className = tab === 'manual'
@@ -224,14 +225,54 @@ function setNewsTab(tab) {
         ? 'flex-1 py-3 bg-slate-800 text-white font-bold text-sm'
         : 'flex-1 py-3 bg-gray-100 text-gray-500 font-bold text-sm hover:bg-gray-200';
 
+    document.getElementById('tab-filters').className = tab === 'filters'
+        ? 'flex-1 py-3 bg-slate-800 text-white font-bold text-sm'
+        : 'flex-1 py-3 bg-gray-100 text-gray-500 font-bold text-sm hover:bg-gray-200';
+
     // Content
     if (tab === 'manual') {
         document.getElementById('content-manual').classList.remove('hidden');
         document.getElementById('content-external').classList.add('hidden');
-    } else {
+        document.getElementById('content-filters').classList.add('hidden');
+    } else if (tab === 'external') {
         document.getElementById('content-manual').classList.add('hidden');
         document.getElementById('content-external').classList.remove('hidden');
+        document.getElementById('content-filters').classList.add('hidden');
         fetchFeeds(); // Load saved feeds
+    } else {
+        document.getElementById('content-manual').classList.add('hidden');
+        document.getElementById('content-external').classList.add('hidden');
+        document.getElementById('content-filters').classList.remove('hidden');
+        loadFilters();
+    }
+}
+
+// --- Filter Management ---
+async function loadFilters() {
+    try {
+        const res = await fetch(`${API_BASE}/config/filters`);
+        const filters = await res.json();
+        const text = filters.join(', ');
+        document.getElementById('inpFilterList').value = text;
+    } catch (e) {
+        console.error("Failed to load filters", e);
+    }
+}
+
+async function saveFilters() {
+    const raw = document.getElementById('inpFilterList').value;
+    const filters = raw.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+    try {
+        await fetch(`${API_BASE}/config/filters`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filters: filters })
+        });
+        alert('Filters Saved!');
+    } catch (e) {
+        console.error("Failed to save filters", e);
+        alert('Error saving filters');
     }
 }
 
