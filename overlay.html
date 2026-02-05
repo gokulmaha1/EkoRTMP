@@ -404,7 +404,10 @@
             // Logo
             const logoUrl = conf.logo_url || DEFAULT_LOGO;
             const logoEl = document.getElementById('headerLogo');
-            if (logoEl) logoEl.src = logoUrl;
+            if (logoEl) {
+                logoEl.src = logoUrl;
+                logoEl.style.display = 'block'; // Force show
+            }
 
             // Text Labels
             if (conf.location_label) document.getElementById('locationText').innerText = conf.location_label;
