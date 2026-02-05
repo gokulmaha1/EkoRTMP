@@ -8,24 +8,41 @@ import threading
 import queue
 import asyncio
 from typing import Optional, List
-from fastapi import FastAPI, UploadFile, Form, WebSocket, WebSocketDisconnect, Depends, HTTPException, File
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from fastapi.requests import Request
 
 # ... (Previous imports)
 
 app = FastAPI()
 
-# Setup Templates
-templates = Jinja2Templates(directory="templates")
+# Manual Template Rendering (No Jinja2 dependency)
+def render_template(template_name: str):
+    base_path = os.path.join("templates", template_name)
+    if not os.path.exists(base_path):
+        return HTMLResponse(content="Template not found", status_code=500)
+    
+    with open(base_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    
+    # Simple Include Logic
+    # Looks for {% include 'components/header.html' %}
+    include_pattern = re.compile(r"\{\%\s*include\s*'([^']+)'\s*\%\}\}")
+    
+    def replace_include(match):
+        inc_path = os.path.join("templates", match.group(1))
+        if os.path.exists(inc_path):
+            with open(inc_path, "r", encoding="utf-8") as inc_f:
+                return inc_f.read()
+        return ""
+    
+    rendered = include_pattern.sub(replace_include, content)
+    return HTMLResponse(content=rendered)
 
 # ... (Log Management code remains)
 
 @app.get("/overlay")
-def get_overlay_page(request: Request):
-    return templates.TemplateResponse("overlay.html", {"request": request})
+def get_overlay_page():
+    return render_template("overlay.html")
 
 # Log Management
 log_queue = queue.Queue()
