@@ -8,4 +8,5 @@ sqlalchemy
 requests
 feedparser
 beautifulsoup4
+jinja2
 lxml
