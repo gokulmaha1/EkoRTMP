@@ -163,6 +163,8 @@
             box-shadow: 4px 0 5px rgba(0, 0, 0, 0.1);
             position: relative;
             z-index: 5;
+            flex-shrink: 0;
+            /* Prevent crushing */
         }
 
         .ticker-wrapper {
@@ -207,6 +209,8 @@
             border-left: 1px solid #ddd;
             gap: 15px;
             z-index: 10;
+            flex-shrink: 0;
+            /* Prevent crushing */
         }
 
         .live-badge {
@@ -379,7 +383,7 @@
                     <div class="time-text" id="clock">12:00 PM</div>
                 </div>
                 <!-- Optional: Enable logo if needed, currently using clean look -->
-                <!-- <img src="/media/logo.gif" class="logo-img" alt="EKO TV"> -->
+                <img src="/media/logo.gif" class="logo-img" alt="EKO TV" style="height: 50px; object-fit: contain;">
             </div>
         </div>
 
