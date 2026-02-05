@@ -50,14 +50,15 @@
         }
 
         /* --- HEADER SECTION --- */
+        /* --- HEADER SECTION --- */
         .top-header {
             grid-row: 1;
             background-color: var(--header-bg);
-            display: flex;
-            /* Flexbox Layout */
+            /* Remove Flex logic as requested */
+            display: grid;
+            grid-template-columns: 200px 1fr 200px;
+            /* Fixed Left, Fluid Center, Fixed Right */
             align-items: center;
-            /* Vertical Center */
-            justify-content: space-between;
             padding: 0 15px;
             border-bottom: 2px solid rgba(255, 255, 255, 0.2);
             z-index: 100;
@@ -66,32 +67,30 @@
 
         /* Header Columns */
         .header-left {
-            flex: 0 0 200px;
-            /* Fixed Width */
+            /* flex: 0 0 200px; REMOVED */
             display: flex;
             align-items: center;
             height: 100%;
+            justify-content: flex-start;
+            /* Align Left */
         }
 
         .header-center {
-            flex: 1;
-            /* Grow to fill space */
+            /* flex: 1; REMOVED */
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100%;
             overflow: hidden;
-            /* Prevent spill */
             padding: 0 20px;
         }
 
         .header-right {
-            flex: 0 0 150px;
-            /* Fixed Width */
+            /* flex: 0 0 150px; REMOVED */
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            /* Align Logo Right */
+            /* Align Right */
             height: 100%;
         }
 
