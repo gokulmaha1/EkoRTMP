@@ -462,8 +462,21 @@
             setTimeout(() => {
                 elTopHeadline.innerText = item.title_tamil;
                 // Optional: Update Location tag if item has it
+                // Update Location Tag
                 if (item.source_url) {
-                    // Update location/source tag logic here if wanted
+                    // Use source_url as location/source label if available, otherwise hide or default
+                    // Removing " - Source" was done in backend, so this might be just the source name or empty.
+                    // Let's assume for now we want to show the Feed Name if available? 
+                    // Or if item.location is set (requires DB update).
+                    // For now, let's just HIDE it if it's not relevant, or show "LIVE"
+                    // User complained about "CHENNAI" which is static.
+                    // Let's change it to "LIVE UPDATES" or simply hide the span content.
+
+                    // Better approach: If RSS, show "RCC" or "LATEST". 
+                    // Let's default to "LATEST NEWS"
+                    document.getElementById('locationText').innerText = "LATEST NEWS";
+                } else {
+                    document.getElementById('locationText').innerText = "LATEST NEWS";
                 }
                 elTopHeadline.style.opacity = '1';
             }, 500);
