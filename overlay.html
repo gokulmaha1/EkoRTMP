@@ -70,12 +70,14 @@
         }
 
         .header-left {
-            flex: 0 0 150px;
+            flex: 0 0 160px;
+            /* Fixed width */
             display: flex;
             justify-content: center;
             height: 100%;
-            /* Force Height */
             align-items: center;
+            position: relative;
+            z-index: 30;
         }
 
         .location-tag {
@@ -90,26 +92,25 @@
             gap: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             border: 1px solid #ccc;
+            white-space: nowrap;
         }
 
         .header-center {
             flex: 1;
+            /* Take remaining space */
             text-align: center;
             overflow: hidden;
             display: flex;
-            /* Flexbox */
             align-items: center;
-            /* Vertical Center */
             justify-content: center;
-            /* Horizontal Center */
             height: 100%;
-            /* Force Height */
+            position: relative;
+            z-index: 20;
         }
 
         .breaking-text {
             color: white;
             font-size: 38px;
-            /* Bigger font */
             font-weight: 700;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
             white-space: nowrap;
@@ -117,16 +118,23 @@
             text-overflow: ellipsis;
             padding: 0 20px;
             letter-spacing: 0.5px;
+            position: relative !important;
+            /* OVERRIDE any user/browser absolute */
+            left: auto !important;
+            top: auto !important;
+            width: 100%;
         }
 
         .header-right {
-            flex: 0 0 150px;
+            flex: 0 0 160px;
+            /* Fixed width */
             display: flex;
             justify-content: flex-end;
-            padding-right: 10px;
+            padding-right: 15px;
             height: 100%;
-            /* Force Height */
             align-items: center;
+            position: relative;
+            z-index: 30;
         }
 
         .breaking-badge {
