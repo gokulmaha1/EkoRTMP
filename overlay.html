@@ -172,14 +172,20 @@
         .bottom-footer {
             grid-row: 3;
             background-color: var(--footer-bg);
-            display: flex;
-            align-items: center;
+            /* TABLE LAYOUT: For Stability */
+            display: table;
+            width: 100%;
+            table-layout: fixed;
             border-top: 4px solid var(--header-bg);
             z-index: 100;
+            height: var(--ticker-height);
         }
 
         .ticker-label {
-            flex: 0 0 auto;
+            display: table-cell;
+            width: 180px;
+            /* Fixed Width */
+            vertical-align: middle;
             background-color: var(--header-bg);
             color: white;
             font-family: 'Oswald', sans-serif;
@@ -187,47 +193,33 @@
             font-weight: 700;
             padding: 0 20px;
             height: 100%;
-            display: flex;
-            align-items: center;
             z-index: 10;
         }
 
         .ticker-container {
-            flex: 1;
-            /* Fill remaining */
-            overflow: hidden;
+            display: table-cell;
+            vertical-align: middle;
+            /* Takes remaining space */
             background: white;
             height: 100%;
-            display: flex;
-            align-items: center;
+            overflow: hidden;
             position: relative;
         }
 
         .ticker-content {
-            display: flex;
-            white-space: nowrap;
-            /* Animation handled by Marquee tag */
-        }
-
-        .ticker-item {
-            font-size: 26px;
-            font-weight: 700;
-            color: black;
-            margin-right: 60px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            display: block;
+            /* Marquee is block */
+            width: 100%;
         }
 
         .footer-right {
-            flex: 0 0 220px;
-            /* Fixed Width for Clock/Live */
+            display: table-cell;
+            width: 220px;
+            /* Fixed Width */
+            vertical-align: middle;
             background-color: #f1f2f6;
             height: 100%;
             border-left: 1px solid #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
             padding: 0 10px;
             z-index: 20;
         }
