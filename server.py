@@ -2,6 +2,7 @@ import os
 import subprocess
 import signal
 import json
+import re
 import sys
 import threading
 import queue
@@ -93,6 +94,22 @@ async def news_websocket_endpoint(websocket: WebSocket):
         if websocket in news_websockets:
             news_websockets.remove(websocket)
 
+def apply_content_filters(text: str, filters: List[str]) -> str:
+    """Removes blocked words/symbols from text (case-insensitive)."""
+    if not text: return ""
+    if not filters: return text
+    
+    cleaned = text
+    for f in filters:
+        if not f.strip(): continue
+        # Escape special chars in filter word and use IGNORECASE
+        pattern = re.compile(re.escape(f.strip()), re.IGNORECASE)
+        cleaned = pattern.sub("", cleaned)
+    
+    # Collapse multiple spaces
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    return cleaned
+
 # --- RSS Background Sync ---
 async def sync_rss_feeds():
     """Background task to sync RSS feeds periodically."""
@@ -100,6 +117,17 @@ async def sync_rss_feeds():
         try:
             db = database.SessionLocal()
             feeds = db.query(NewsFeed).filter(NewsFeed.is_active == True).all()
+            
+            # Load Filters
+            filter_config = db.query(SystemConfig).filter(SystemConfig.key == "news_filters").first()
+            filter_list = []
+            if filter_config and filter_config.value:
+                try:
+                    # stored as JSON list ["bad", "word"]
+                    filter_list = json.loads(filter_config.value)
+                except:
+                    # Fallback to comma sep if JSON fails
+                    filter_list = [x.strip() for x in filter_config.value.split(',') if x.strip()]
             
             new_items_count = 0
             
@@ -111,9 +139,17 @@ async def sync_rss_feeds():
                     # Check if exists
                     exists = db.query(NewsItem).filter(NewsItem.external_id == item['id']).first()
                     if not exists:
+                        # Apply Filtering
+                        raw_title = item['title']
+                        clean_title = apply_content_filters(raw_title, filter_list)
+                        
+                        if not clean_title:
+                            print(f"[RSS] Skipped filtered item: {raw_title}")
+                            continue
+
                         # Create new item
                         new_news = NewsItem(
-                            title_tamil=item['title'], # Google News Tamil returns Tamil titles
+                            title_tamil=clean_title, # Filtered Title
                             title_english="",
                             type="TICKER", # Default to Ticker so it scrolls
                             category="GENERAL",
@@ -499,6 +535,36 @@ async def delete_news(news_id: int, db: Session = Depends(get_db)):
     
     await broadcast_news_update("NEWS_DELETED", {"id": news_id})
     return {"status": "success"}
+
+# --- Filter Management API ---
+
+class FilterConfig(BaseModel):
+    filters: List[str]
+
+@app.get("/api/config/filters")
+def get_filters(db: Session = Depends(get_db)):
+    config = db.query(SystemConfig).filter(SystemConfig.key == "news_filters").first()
+    if config and config.value:
+        try:
+            return json.loads(config.value)
+        except:
+            return []
+    return []
+
+@app.post("/api/config/filters")
+def set_filters(data: FilterConfig, db: Session = Depends(get_db)):
+    # Store as JSON string
+    json_val = json.dumps(data.filters)
+    
+    config = db.query(SystemConfig).filter(SystemConfig.key == "news_filters").first()
+    if config:
+        config.value = json_val
+    else:
+        config = SystemConfig(key="news_filters", value=json_val)
+        db.add(config)
+    
+    db.commit()
+    return {"status": "success", "filters": data.filters}
 
 # --- Stream Control API ---
 class StreamConfig(BaseModel):
