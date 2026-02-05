@@ -368,7 +368,7 @@
             <!-- Left: Location -->
             <div class="header-left">
                 <div class="location-tag">
-                    <i class="fas fa-map-marker-alt"></i>
+                    <!-- <i class="fas fa-map-marker-alt"></i> -->
                     <span id="locationText">அண்மை செய்திகள்</span>
                 </div>
             </div>
@@ -443,8 +443,16 @@
         // --- CLOCK ---
         function updateTime() {
             const now = new Date();
-            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-            const dateStr = now.toLocaleDateString('en-GB'); // DD/MM/YYYY
+            // Force IST Timezone
+            const timeStr = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'Asia/Kolkata'
+            });
+            const dateStr = now.toLocaleDateString('en-GB', {
+                timeZone: 'Asia/Kolkata'
+            }); // DD/MM/YYYY
 
             document.getElementById('clock').innerText = timeStr;
             document.getElementById('dateDisplay').innerText = dateStr;
@@ -574,7 +582,7 @@
                 if (item.source_url && item.source_url.length < 15) {
                     document.getElementById('locationText').innerText = item.source_url;
                 } else {
-                    document.getElementById('locationText').innerText = "LATEST NEWS";
+                    document.getElementById('locationText').innerText = "அண்மை செய்திகள்";
                 }
             }, 500);
         }
