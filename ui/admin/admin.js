@@ -707,3 +707,15 @@ wsLogs.onmessage = (e) => {
         if (logWindow.children.length > 50) logWindow.lastChild.remove();
     }
 };
+
+// --- Utilities ---
+function toggleFullscreen(elemId) {
+    const elem = document.getElementById(elemId);
+    if (!document.fullscreenElement) {
+        elem.requestFullscreen().catch(err => {
+            alert(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+    } else {
+        document.exitFullscreen();
+    }
+}

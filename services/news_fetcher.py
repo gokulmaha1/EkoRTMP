@@ -2,6 +2,7 @@ import feedparser
 import requests
 from bs4 import BeautifulSoup
 from typing import List, Dict, Optional
+import re
 import ssl
 
 # Fix legacy SSL issues if any
@@ -37,8 +38,12 @@ def fetch_rss_feed(url: str, limit: int = 10) -> List[Dict]:
                         image_url = enc.href
                         break
             
+            # Clean Title (Remove " - SourceName" suffix common in Google News)
+            # Regex removes the last " - Something" from the end of the string
+            clean_title = re.sub(r' - [^-]+$', '', entry.title)
+
             items.append({
-                "title": entry.title,
+                "title": clean_title,
                 "summary": clean_summary[:200] + "..." if len(clean_summary) > 200 else clean_summary,
                 "link": entry.link,
                 "id": entry.get('id', entry.link),

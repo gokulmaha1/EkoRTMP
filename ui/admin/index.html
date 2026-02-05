@@ -105,10 +105,14 @@
                 <!-- TOP ROW: Stream Controls & Preview -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- 1. Live Preview -->
-                    <div
+                    <div id="previewContainer"
                         class="lg:col-span-2 bg-black rounded-lg shadow overflow-hidden relative aspect-video border-4 border-slate-800">
                         <div class="absolute top-2 left-2 z-10 bg-red-600 text-white text-xs px-2 py-1 rounded font-bold animate-pulse"
                             id="previewLiveBadge" style="display:none;">LIVE OUTPUT</div>
+                        <button onclick="toggleFullscreen('previewContainer')"
+                            class="absolute top-2 right-2 z-10 bg-black bg-opacity-50 hover:bg-opacity-80 text-white p-2 rounded transition">
+                            <i class="fas fa-expand"></i>
+                        </button>
                         <iframe src="/overlay" class="w-full h-full border-none" id="previewFrame"></iframe>
                     </div>
 
