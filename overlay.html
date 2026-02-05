@@ -390,6 +390,33 @@
         .animate-in {
             animation: slideInDown 0.5s forwards;
         }
+
+        /* --- SMOOTH TICKER --- */
+        .ticker-wrapper {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .ticker-track {
+            display: flex;
+            white-space: nowrap;
+            will-change: transform;
+            /* Animation applied via JS for dynamic speed */
+        }
+
+        @keyframes scroll-linear {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
     </style>
 </head>
 
@@ -440,10 +467,10 @@
 
             <div class="ticker-container">
                 <div class="ticker-container">
-                    <!-- User requested Marquee for ticker -->
-                    <marquee id="tickerText" class="ticker-content" scrollamount="12" scrolldelay="100">
-                        <!-- JS will inject items here -->
-                    </marquee>
+                    <!-- Smooth CSS Ticker -->
+                    <div class="ticker-wrapper">
+                        <div id="tickerTrack" class="ticker-track"></div>
+                    </div>
                 </div>
             </div>
 
@@ -563,15 +590,40 @@
 
         function updateTicker() {
             const active = newsItems.filter(i => i.is_active);
-            const container = document.getElementById('tickerText');
+            const track = document.getElementById('tickerTrack');
 
-            // Create loop string
-            const html = active.map(i =>
+            if (active.length === 0) {
+                track.innerHTML = "";
+                return;
+            }
+
+            // Create single pass string
+            const singlePassHtml = active.map(i =>
                 `<span class="ticker-item"><i class="fas fa-circle" style="font-size:15px; color:#b90909;"></i> ${i.title_tamil}</span>`
             ).join('');
 
-            // Marquee loops automatically, no need to duplicate
-            container.innerHTML = html;
+            // DUPLICATE CONTENT for seamless loop (A + A)
+            // When we scroll to -50% (end of first A), we are visually at the start of second A,
+            // which is identical to start of first A. Resetting to 0% is invisible.
+            track.innerHTML = singlePassHtml + singlePassHtml;
+
+            // Calculate Speed (Pixels Per Second)
+            // We want constant speed regardless of content width
+            const PIXELS_PER_SECOND = 150; // Adjust for speed
+
+            // Measure clear width (approximate or wait for render)
+            // Ideally we wait, but estimation is safe here for updates
+            // We can use a short timeout to let DOM render width
+            setTimeout(() => {
+                const totalWidth = track.scrollWidth;
+                const halfWidth = totalWidth / 2; // The width of one set of items
+
+                const duration = halfWidth / PIXELS_PER_SECOND;
+
+                track.style.animation = 'none';
+                track.offsetHeight; /* trigger reflow */
+                track.style.animation = `scroll-linear ${duration}s linear infinite`;
+            }, 50);
         }
 
         function startHeadlines() {
