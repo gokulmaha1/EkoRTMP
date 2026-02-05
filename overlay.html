@@ -342,7 +342,6 @@
                     <!-- User requested Marquee for ticker -->
                     <marquee id="tickerText" class="ticker-content" scrollamount="12" scrolldelay="100">
                         <!-- JS will inject items here -->
-                        <span class="ticker-item">Waiting for news updates...</span>
                     </marquee>
                 </div>
             </div>
@@ -454,14 +453,9 @@
             const active = newsItems.filter(i => i.is_active);
             const container = document.getElementById('tickerText');
 
-            if (active.length === 0) {
-                container.innerHTML = '<span class="ticker-item">No active news.</span>';
-                return;
-            }
-
             // Create loop string
             const html = active.map(i =>
-                `<span class="ticker-item"><i class="fas fa-circle" style="font-size:8px; color:#b90909;"></i> ${i.title_tamil}</span>`
+                `<span class="ticker-item"><i class="fas fa-circle" style="font-size:15px; color:#b90909;"></i> ${i.title_tamil}</span>`
             ).join('');
 
             // Marquee loops automatically, no need to duplicate
