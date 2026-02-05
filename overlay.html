@@ -357,6 +357,39 @@
                 opacity: 0.5;
             }
         }
+
+        /* --- ANIMATIONS --- */
+        @keyframes slideOutDown {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+        }
+
+        @keyframes slideInDown {
+            0% {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-out {
+            animation: slideOutDown 0.5s forwards;
+        }
+
+        .animate-in {
+            animation: slideInDown 0.5s forwards;
+        }
     </style>
 </head>
 
@@ -559,7 +592,10 @@
             const item = pool[headlineIndex];
 
             const el = document.getElementById('topHeadline');
-            el.style.opacity = 0;
+
+            // 1. Start Slide Out
+            el.classList.remove('animate-in');
+            el.classList.add('animate-out');
 
             setTimeout(() => {
                 const text = item.title_tamil || "";
@@ -577,15 +613,17 @@
                     el.style.lineHeight = "1.2";
                 }
 
-                el.style.opacity = 1;
-
                 // Optional: Update Location
                 if (item.source_url && item.source_url.length < 15) {
                     document.getElementById('locationText').innerText = item.source_url;
                 } else {
                     document.getElementById('locationText').innerText = "அண்மை செய்திகள்";
                 }
-            }, 500);
+
+                // 2. Start Slide In (from top)
+                el.classList.remove('animate-out');
+                el.classList.add('animate-in');
+            }, 500); // Wait for slide-out (0.5s)
         }
 
         // --- WEBSOCKET ---
