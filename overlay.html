@@ -201,6 +201,14 @@
             border: none;
         }
 
+        /* --- FONT LOADING --- */
+        @font-face {
+            font-family: 'Noto Sans Tamil';
+            src: url('/media/NotoSansTamil-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+        }
+
         /* --- FOOTER SECTION --- */
         .bottom-footer {
             grid-row: 3;
@@ -273,21 +281,24 @@
             align-items: center;
             gap: 10px;
             /* Robust Font Stack for Tamil */
-            font-family: 'Roboto', 'Nirmala UI', 'Latha', sans-serif;
+            font-family: 'Noto Sans Tamil', 'Nirmala UI', 'Latha', sans-serif;
         }
 
         .footer-right {
             display: table-cell;
-            width: 240px;
-            /* Slightly wider */
+            width: 260px;
+            /* WIDENED from 240px */
             vertical-align: middle;
             background: linear-gradient(to bottom, #f8f9fa 0%, #e9ecef 100%);
             height: 100%;
             border-left: 2px solid #ddd;
-            padding: 0 15px;
+            padding: 0 10px;
+            /* REDUCED Padding */
             z-index: 20;
             box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1);
         }
+
+
 
         .live-badge {
             background: #d60000;
