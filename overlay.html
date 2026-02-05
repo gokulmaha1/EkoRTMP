@@ -348,7 +348,7 @@
             </div>
 
             <div class="header-right">
-                <img src="./media/logo.gif" style="width: 100%; height: 100%; object-fit: contain;">
+                <img src="/media/logo.gif" class="logo-img" style="width: 100%; height: 100%; object-fit: contain;">
             </div>
         </div>
 
@@ -635,8 +635,8 @@
             if (conf.brand_color_dark) root.style.setProperty('--brand-dark', conf.brand_color_dark);
 
             if (conf.logo_url) {
-                const img = document.querySelector('.logo-img');
-                if (img) img.src = conf.logo_url;
+                const imgs = document.querySelectorAll('.logo-img');
+                imgs.forEach(img => img.src = conf.logo_url);
             }
 
             if (conf.ticker_speed) {
