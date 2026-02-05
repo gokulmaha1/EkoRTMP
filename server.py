@@ -11,21 +11,15 @@ from typing import Optional, List
 from fastapi import FastAPI, UploadFile, Form, WebSocket, WebSocketDisconnect, Depends, HTTPException, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-from fastapi.requests import Request
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
-# ... (Previous imports)
+# Import our new database module
+import database
+from database import NewsItem, SystemConfig, NewsType, NewsCategory, get_db
 
 app = FastAPI()
-
-# Setup Templates
-templates = Jinja2Templates(directory="templates")
-
-# ... (Log Management code remains)
-
-@app.get("/overlay")
-def get_overlay_page(request: Request):
-    return templates.TemplateResponse("overlay.html", {"request": request})
 
 # Log Management
 log_queue = queue.Queue()
@@ -440,8 +434,8 @@ def read_admin():
     return FileResponse("ui/admin/index.html")
 
 @app.get("/overlay")
-def get_overlay_page(request: Request):
-    return templates.TemplateResponse("overlay.html", {"request": request})
+def get_overlay_page():
+    return FileResponse("overlay.html")
 
 # Legacy Overlay Endpoint
 @app.get("/overlay/data")
