@@ -8,16 +8,10 @@ import threading
 import queue
 import asyncio
 from typing import Optional, List
-from fastapi import FastAPI, UploadFile, Form, WebSocket, WebSocketDisconnect, Depends, HTTPException, File
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from fastapi.requests import Request
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
 
-# Import our new database module
-import database
-from database import NewsItem, SystemConfig, NewsType, NewsCategory, get_db
+# ... (Previous imports)
 
 app = FastAPI()
 
