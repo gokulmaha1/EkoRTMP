@@ -381,8 +381,12 @@ def update_overlay(data: OverlayUpdate):
         if data.title is not None: current_data["title"] = data.title
         if data.subtitle is not None: current_data["subtitle"] = data.subtitle
         
+        
         with open(OVERLAY_FILE, "w") as f:
             json.dump(current_data, f)
+        
+        # Broadcast to Overlay (FIX: Added broadcast)
+        asyncio.create_task(broadcast_news_update("OVERLAY_UPDATED", current_data))
         
         return current_data
     except Exception as e:
@@ -638,6 +642,25 @@ async def delete_news(news_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     await broadcast_news_update("NEWS_DELETED", {"id": news_id})
+    return {"status": "success"}
+
+@app.post("/api/news/{news_id}/show")
+async def show_news_on_screen(news_id: int, db: Session = Depends(get_db)):
+    db_item = db.query(NewsItem).filter(NewsItem.id == news_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="News item not found")
+    
+    # Payload for overlay
+    payload = {
+        "id": db_item.id,
+        "title": db_item.title_tamil,
+        "category": db_item.category,
+        "media_url": db_item.media_url,
+        "source": db_item.source,
+        "description": db_item.title_english or "" # Use english title as description fallback? Or just Title.
+    }
+    
+    await broadcast_news_update("SHOW_NEWS_MAIN", payload)
     return {"status": "success"}
 
 # --- Filter Management API ---

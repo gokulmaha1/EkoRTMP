@@ -417,6 +417,101 @@
                 transform: translateX(-50%);
             }
         }
+
+        /* --- NEWS PRESENTATION (SPLIT VIEW) --- */
+        .news-presentation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            z-index: 50;
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+            }
+
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .np-media {
+            flex: 6;
+            /* 60% width */
+            background: #000;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-right: 4px solid #cc0000;
+        }
+
+        .np-media img,
+        .np-media video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .placeholder-icon {
+            font-size: 80px;
+            color: #555;
+        }
+
+        .np-content {
+            flex: 4;
+            /* 40% width */
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: white;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .np-tag {
+            background: #b90909;
+            color: white;
+            align-self: flex-start;
+            padding: 5px 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 18px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .np-content h1 {
+            font-size: 36px;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-family: 'Baloo Thambi 2', sans-serif;
+        }
+
+        .np-content p {
+            font-size: 22px;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 30px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .np-meta {
+            margin-top: auto;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+            color: #888;
+            font-size: 16px;
+            font-weight: 600;
+        }
     </style>
 </head>
 
@@ -455,6 +550,28 @@
                 <video id="videoPlayer" muted playsinline></video>
                 <img id="imagePlayer" src="">
             </div>
+
+            <!-- NEWS PRESENTATION (Split View) -->
+            <div id="newsPresentation" class="news-presentation" style="display: none;">
+                <div class="np-media">
+                    <!-- Media Content (Image or Video) -->
+                    <img id="npImage" src="" style="display: none;">
+                    <video id="npVideo" muted playsinline loop style="display: none;"></video>
+                    <div id="npPlaceholder" class="placeholder-icon">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                </div>
+                <div class="np-content">
+                    <div class="np-tag" id="npCategory">TAMIL NADU</div>
+                    <h1 id="npTitle">News Headline Goes Here</h1>
+                    <p id="npDescription">Detailed description of the news item will appear here. It can be multi-line
+                        and provide more context to the viewers.</p>
+                    <div class="np-meta">
+                        <span id="npSource"><i class="fas fa-link"></i> Source Name</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Optional L-Bar -->
             <div id="lBar" class="l-bar" style="display: none;">
                 <div id="lBarContent" style="width:100%; height:100%;"></div>
@@ -702,7 +819,79 @@
             const msg = JSON.parse(e.data);
             if (msg.type.includes('NEWS')) fetchNews();
             if (msg.type === 'CONFIG_UPDATED') applyConfig(msg.payload);
+            if (msg.type === 'OVERLAY_UPDATED') updateMainScreen(msg.payload);
+            if (msg.type === 'SHOW_NEWS_MAIN') showNewsLayout(msg.payload);
         };
+
+        // --- MAIN SCREEN LOGIC ---
+        function updateMainScreen(data) {
+            // Hide News Layout if active
+            document.getElementById('newsPresentation').style.display = 'none';
+
+            const webview = document.getElementById('webview');
+            const video = document.getElementById('videoPlayer');
+            const image = document.getElementById('imagePlayer');
+
+            // Reset
+            webview.style.display = 'none'; webview.src = "";
+            video.style.display = 'none'; video.pause();
+            image.style.display = 'none'; image.src = "";
+
+            const url = data.webview_url;
+            if (!url) return;
+
+            // Simple Extension Check
+            if (url.match(/\.(mp4|webm|ogg)$/i)) {
+                video.src = url;
+                video.style.display = 'block';
+                video.play().catch(e => console.error("Autoplay failed", e));
+            } else if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+                image.src = url;
+                image.style.display = 'block';
+            } else {
+                // Assume Web/Iframe
+                webview.src = url;
+                webview.style.display = 'block';
+            }
+        }
+
+        function showNewsLayout(item) {
+            // Hide standard players
+            document.getElementById('webview').style.display = 'none';
+            document.getElementById('videoPlayer').style.display = 'none';
+            document.getElementById('imagePlayer').style.display = 'none';
+
+            // Populate Data
+            document.getElementById('npCategory').innerText = item.category || 'NEWS';
+            document.getElementById('npTitle').innerText = item.title;
+            document.getElementById('npDescription').innerText = item.description || item.title; // Fallback
+            document.getElementById('npSource').innerHTML = `<i class="fas fa-link"></i> ${item.source}`;
+
+            // Handle Media
+            const img = document.getElementById('npImage');
+            const vid = document.getElementById('npVideo');
+            const placeholder = document.getElementById('npPlaceholder');
+
+            img.style.display = 'none';
+            vid.style.display = 'none';
+            placeholder.style.display = 'none';
+
+            if (item.media_url) {
+                if (item.media_url.match(/\.(mp4|webm)$/i)) {
+                    vid.src = item.media_url;
+                    vid.style.display = 'block';
+                    vid.play();
+                } else {
+                    img.src = item.media_url;
+                    img.style.display = 'block';
+                }
+            } else {
+                placeholder.style.display = 'block';
+            }
+
+            // Show Container
+            document.getElementById('newsPresentation').style.display = 'flex';
+        }
 
         // INIT
         fetchConfig();

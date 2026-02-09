@@ -568,6 +568,9 @@ function renderQueue() {
                     <p class="text-[10px] text-gray-400 mt-1">ID: ${item.id} • ${new Date(item.created_at).toLocaleTimeString()}</p>
                 </div>
                 <div class="flex space-x-2 ml-4">
+                    <button onclick="showNewsOnScreen(${item.id})" class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center justify-center transition" title="Show on Main Screen">
+                        <i class="fas fa-tv"></i>
+                    </button>
                     <button onclick="toggleActive(${item.id}, ${item.is_active})" class="w-8 h-8 rounded-full flex items-center justify-center transition ${item.is_active ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-200 text-gray-400 hover:bg-gray-300'}">
                         <i class="fas fa-power-off"></i>
                     </button>
@@ -579,6 +582,13 @@ function renderQueue() {
         `;
         elQueue.innerHTML += html;
     });
+}
+
+async function showNewsOnScreen(id) {
+    try {
+        await fetch(`${API_BASE}/news/${id}/show`, { method: 'POST' });
+        // Don't alert, just subtle
+    } catch (e) { console.error(e); }
 }
 
 function updateStats() {
