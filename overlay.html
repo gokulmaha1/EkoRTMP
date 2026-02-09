@@ -1096,55 +1096,146 @@
             return activeAds.filter(a => a.type === type);
         }
 
-        // --- TICKER ADS ---
-        // Enhanced updateTicker to inject ads
-        function updateTicker() {
-            const activeNews = newsItems.filter(i => i.is_active);
-            const adTickerItems = getAdsByType('TICKER');
+        // --- FULLSCREEN ADS & INTERRUPTIONS ---
+        let adIntervalHandle = null;
+        const AD_CHECK_INTERVAL = 60000; // Check every minute
 
-            const track = document.getElementById('tickerTrack');
+        function startAdScheduler() {
+            if (adIntervalHandle) clearInterval(adIntervalHandle);
 
-            if (activeNews.length === 0 && adTickerItems.length === 0) {
-                track.innerHTML = "";
-                return;
-            }
+            // Check less frequently to avoid constant interruption, but enough to catch schedule
+            adIntervalHandle = setInterval(() => {
+                const fsAds = getAdsByType('FULLSCREEN');
+                if (fsAds.length > 0 && Math.random() > 0.5) { // 50% chance to play if available, or use strict interval
+                    // Pick one
+                    const ad = fsAds[Math.floor(Math.random() * fsAds.length)];
+                    playFullscreenAd(ad);
+                }
+            }, 5 * 60 * 1000); // 5 Minutes
+        }
 
-            // Mix News and Ads
-            // Simple Strategy: Append Ads at the end of the news loop
-            // Better Strategy: Interleave? For now, append is safer for loop logic.
+        function playFullscreenAd(ad) {
+            console.log("Playing Ad:", ad);
 
-            let combinedHtml = activeNews.map(i =>
-                `<span class="ticker-item"><i class="fas fa-circle" style="font-size:15px; color:#b90909;"></i> ${i.title_tamil}</span>`
-            ).join('');
+            // 1. Stop News Rotation
+            if (headlineInterval) clearInterval(headlineInterval);
 
-            if (adTickerItems.length > 0) {
-                const adsHtml = adTickerItems.map(ad =>
-                    `<span class="ticker-item" style="color: #0044cc; font-weight:900;">
-                        <i class="fas fa-ad" style="font-size:18px; color:#ffcc00; margin-right:5px;"></i> ${ad.content}
-                     </span>`
-                ).join('');
-                combinedHtml += adsHtml;
-            }
+            // 2. Show Ad
+            updateMainScreen({
+                webview_url: ad.content,
+                type: 'AD'
+            });
 
-            // CHECK DIFFERENT HASH
-            const currentHash = combinedHtml; // Simplified hash
-
-            if (currentHash === lastTickerHash) return;
-            lastTickerHash = currentHash;
-
-            track.innerHTML = combinedHtml + combinedHtml; // Duplicate for smooth scroll
-
-            // Calculate Speed
-            const PIXELS_PER_SECOND = 150;
+            // 3. Resume after Duration
             setTimeout(() => {
-                const totalWidth = track.scrollWidth;
-                const halfWidth = totalWidth / 2;
-                const duration = halfWidth / PIXELS_PER_SECOND;
+                // Determine what to do next?
+                // Ideally, go back to News Loop
+                startHeadlines();
+            }, ad.duration * 1000);
+        }
 
-                track.style.animation = 'none';
-                track.offsetHeight;
-                track.style.animation = `scroll-linear ${duration}s linear infinite`;
-            }, 50);
+        // --- CORE LOOP ---
+        function startHeadlines() {
+            if (headlineInterval) clearInterval(headlineInterval);
+            // Immediate trigger
+            rotateHeadline();
+            // Loop
+            headlineInterval = setInterval(rotateHeadline, 15000); // 15s per item
+        }
+
+        function rotateHeadline() {
+            // Priority:
+            // 1. If Ad is playing, do nothing? (Handled by clearing interval)
+
+            if (newsItems.length === 0) return;
+
+            // Use all active items for loop
+            let pool = newsItems.filter(i => i.is_active);
+            if (pool.length === 0) return;
+
+            headlineIndex = (headlineIndex + 1) % pool.length;
+            const item = pool[headlineIndex];
+
+            // --- HEADER UPDATE ---
+            const el = document.getElementById('topHeadline');
+            el.classList.remove('animate-in');
+            el.classList.add('animate-out');
+
+            setTimeout(() => {
+                const text = item.title_tamil || "";
+                el.innerText = text;
+                // Sizing text
+                if (text.length > 50) {
+                    el.style.fontSize = "22px";
+                    el.style.whiteSpace = "normal";
+                    el.style.lineHeight = "1.3";
+                } else {
+                    el.style.fontSize = "32px";
+                    el.style.whiteSpace = "nowrap";
+                    el.style.lineHeight = "1.2";
+                }
+
+                // Location
+                if (item.source_url && item.source_url.length < 15) {
+                    document.getElementById('locationText').innerText = item.source_url;
+                } else {
+                    document.getElementById('locationText').innerText = "அண்மை செய்திகள்";
+                }
+
+                el.classList.remove('animate-out');
+                el.classList.add('animate-in');
+            }, 500);
+
+
+            // --- MAIN SCREEN AUTOMATION ---
+            // Logic: 
+            // 1. If item has media -> Show split layout
+            // 2. If item has NO media -> Show default/webview OR keep previous? 
+            //    For now, let's behave like a TV channel. If no media, maybe show logo or just keep text?
+            //    Current implementation: Only interrupts if media exists. 
+            //    FIX: If we want a continuous loop, we should explicitly "clear" or show something else if no media?
+
+            const MAX_AGE_MS = 24 * 60 * 60 * 1000;
+            const itemDate = new Date(item.created_at || new Date());
+            const now = new Date();
+            const isRecent = (now - itemDate) < MAX_AGE_MS;
+
+            if (item.media_url && getMediaType(item.media_url) !== 'NONE' && isRecent) {
+                const displayItem = {
+                    id: item.id,
+                    title: item.title_tamil,
+                    category: item.category,
+                    media_url: item.media_url,
+                    source: item.source,
+                    description: item.title_english || item.title_tamil
+                };
+                showNewsLayout(displayItem);
+            } else {
+                // If it's just text, maybe we hide the split view and show the Video Feed (Camera)?
+                // Or we just leave the previous image? 
+                // "Sticking" happens if we don't clear the previous state.
+
+                // OPTION A: Hide News Layout (Show Live Stream)
+                // document.getElementById('newsPresentation').style.display = 'none';
+
+                // OPTION B: Keep showing previous? (User might think it's stuck)
+
+                // Let's go with OPTION A for "Live" feel.
+                // document.getElementById('newsPresentation').style.display = 'none'; 
+                // However, this might be jarring. 
+
+                // Better: If we have many text-only news, we should show them in the L-Bar or Ticker, 
+                // not main screen. Main screen should prioritize visuals.
+
+                // Fix for "Stuck": If the current item is NOT visual, but the previous one WAS, 
+                // we should probably close the news layout to show the anchor/stream.
+
+                document.getElementById('newsPresentation').classList.add('page-exit');
+                setTimeout(() => {
+                    document.getElementById('newsPresentation').style.display = 'none';
+                    document.getElementById('newsPresentation').classList.remove('page-exit');
+                }, 500);
+            }
         }
 
 
