@@ -823,6 +823,17 @@
             if (msg.type === 'SHOW_NEWS_MAIN') showNewsLayout(msg.payload);
         };
 
+        // --- HELPER: Detect Media Type ---
+        function getMediaType(url) {
+            if (!url) return 'NONE';
+            // Remove query params for extension check
+            const cleanUrl = url.split('?')[0].toLowerCase();
+
+            if (cleanUrl.match(/\.(mp4|webm|ogg|mov)$/)) return 'VIDEO';
+            if (cleanUrl.match(/\.(jpeg|jpg|gif|png|webp|bmp|svg)$/)) return 'IMAGE';
+            return 'WEB';
+        }
+
         // --- MAIN SCREEN LOGIC ---
         function updateMainScreen(data) {
             // Hide News Layout if active
@@ -840,12 +851,13 @@
             const url = data.webview_url;
             if (!url) return;
 
-            // Simple Extension Check
-            if (url.match(/\.(mp4|webm|ogg)$/i)) {
+            const type = getMediaType(url);
+
+            if (type === 'VIDEO') {
                 video.src = url;
                 video.style.display = 'block';
                 video.play().catch(e => console.error("Autoplay failed", e));
-            } else if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+            } else if (type === 'IMAGE') {
                 image.src = url;
                 image.style.display = 'block';
             } else {
@@ -877,11 +889,14 @@
             placeholder.style.display = 'none';
 
             if (item.media_url) {
-                if (item.media_url.match(/\.(mp4|webm)$/i)) {
+                const type = getMediaType(item.media_url);
+
+                if (type === 'VIDEO') {
                     vid.src = item.media_url;
                     vid.style.display = 'block';
-                    vid.play();
+                    vid.play().catch(e => console.error("News AutoPlay Error:", e));
                 } else {
+                    // Default to Image if not explicitly video (covers images and uncertain types)
                     img.src = item.media_url;
                     img.style.display = 'block';
                 }
