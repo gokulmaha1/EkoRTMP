@@ -1227,46 +1227,18 @@
             const now = new Date();
             const isRecent = (now - itemDate) < MAX_AGE_MS;
 
-            if (item.media_url && getMediaType(item.media_url) !== 'NONE' && isRecent) {
+            if (true) { // Always show layout, even for text-only (using placeholder)
                 const displayItem = {
                     id: item.id,
                     title: item.title_tamil,
                     category: item.category,
-                    media_url: item.media_url,
+                    media_url: item.media_url, // Might be null
                     source: item.source,
                     description: item.title_english || item.title_tamil
                 };
                 showNewsLayout(displayItem);
-            } else {
-                // If it's just text, maybe we hide the split view and show the Video Feed (Camera)?
-                // Or we just leave the previous image? 
-                // "Sticking" happens if we don't clear the previous state.
-
-                // OPTION A: Hide News Layout (Show Live Stream)
-                // document.getElementById('newsPresentation').style.display = 'none';
-
-                // OPTION B: Keep showing previous? (User might think it's stuck)
-
-                // Let's go with OPTION A for "Live" feel.
-                // document.getElementById('newsPresentation').style.display = 'none'; 
-                // However, this might be jarring. 
-
-                // Better: If we have many text-only news, we should show them in the L-Bar or Ticker, 
-                // not main screen. Main screen should prioritize visuals.
-
-                // Fix for "Stuck": If the current item is NOT visual, but the previous one WAS, 
-                // we should probably close the news layout to show the anchor/stream.
-
-                document.getElementById('newsPresentation').classList.add('page-exit');
-                setTimeout(() => {
-                    document.getElementById('newsPresentation').style.display = 'none';
-                    document.getElementById('newsPresentation').classList.remove('page-exit');
-
-                    // RESTORE BACKGROUND
-                    restoreBackground();
-
-                }, 500);
             }
+
         }
 
 
