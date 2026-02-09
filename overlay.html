@@ -872,9 +872,12 @@
         function rotateHeadline() {
             if (newsItems.length === 0) return;
 
-            // Prefer BREAKING, otherwise use all active
-            let pool = newsItems.filter(i => i.type === 'BREAKING');
-            if (pool.length === 0) pool = newsItems.filter(i => i.is_active);
+            // Use all active items for loop
+            let pool = newsItems.filter(i => i.is_active);
+
+            // Optional: You could sort by priority/type if needed, but for a loop, just filtering is enough.
+            // pool.sort((a,b) => (b.type === 'BREAKING') - (a.type === 'BREAKING')); 
+
             if (pool.length === 0) return;
 
             headlineIndex = (headlineIndex + 1) % pool.length;
