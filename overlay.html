@@ -645,13 +645,13 @@
                     </div>
                 </div>
                 <div class="np-content">
-                    <div class="np-tag" id="npCategory">TAMIL NADU</div>
+                    <!-- <div class="np-tag" id="npCategory">TAMIL NADU</div> -->
                     <h1 id="npTitle">News Headline Goes Here</h1>
                     <p id="npDescription">Detailed description of the news item will appear here. It can be multi-line
                         and provide more context to the viewers.</p>
-                    <div class="np-meta">
+                    <!-- <div class="np-meta">
                         <span id="npSource"><i class="fas fa-link"></i> Source Name</span>
-                    </div>
+                    </div> -->
                 </div>
             </div>
 
@@ -1001,25 +1001,25 @@
             const cat = document.getElementById('npCategory');
             const tit = document.getElementById('npTitle');
             const desc = document.getElementById('npDescription');
-            const meta = document.getElementById('npSource');
+            //const meta = document.getElementById('npSource');
 
             cat.innerText = item.category || 'NEWS';
             tit.innerText = item.title;
             desc.innerText = item.description || item.title; // Fallback
-            meta.innerHTML = `<i class="fas fa-link"></i> ${item.source}`;
+            //meta.innerHTML = `<i class="fas fa-link"></i> ${item.source}`;
 
             // --- RESET TEXT ANIMATIONS ---
             cat.classList.remove('anim-tag-in');
             tit.classList.remove('anim-title');
             desc.classList.remove('anim-desc');
-            meta.classList.remove('anim-meta');
+            //meta.classList.remove('anim-meta');
 
             void tit.offsetWidth; // Reflow
 
             cat.classList.add('anim-tag-in');
             tit.classList.add('anim-title');
             desc.classList.add('anim-desc');
-            meta.classList.add('anim-meta');
+            //meta.classList.add('anim-meta');
 
             // Handle Media
             const img = document.getElementById('npImage');

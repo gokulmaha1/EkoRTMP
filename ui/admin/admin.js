@@ -340,7 +340,7 @@ async function deleteFeed(id) {
 
 function loadFeed(url) {
     document.getElementById('inpExtUrl').value = url;
-    document.getElementById('inpSourceType').value = "RSS";
+    //document.getElementById('inpSourceType').value = "RSS";
     fetchExternalNews();
 }
 
