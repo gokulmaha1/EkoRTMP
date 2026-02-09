@@ -588,6 +588,8 @@
             } catch (e) { console.error("News Fetch Error:", e); }
         }
 
+        let lastTickerHash = "";
+
         function updateTicker() {
             const active = newsItems.filter(i => i.is_active);
             const track = document.getElementById('tickerTrack');
@@ -601,6 +603,18 @@
             const singlePassHtml = active.map(i =>
                 `<span class="ticker-item"><i class="fas fa-circle" style="font-size:15px; color:#b90909;"></i> ${i.title_tamil}</span>`
             ).join('');
+
+            // CHECK IF CONTENT CHANGED
+            // If the content is identical to what we last rendered, DO NOT reset the animation
+            if (singlePassHtml === lastTickerHash) {
+                // Determine if we need to restart animation if it stopped? 
+                // Usually no, CSS infinite loop handles it.
+                // However, if the duration needs to change due to container resize?
+                // For now, assume fixed container size.
+                return;
+            }
+
+            lastTickerHash = singlePassHtml;
 
             // DUPLICATE CONTENT for seamless loop (A + A)
             // When we scroll to -50% (end of first A), we are visually at the start of second A,
@@ -617,6 +631,9 @@
             setTimeout(() => {
                 const totalWidth = track.scrollWidth;
                 const halfWidth = totalWidth / 2; // The width of one set of items
+
+                // If content is too short to scroll (less than screen width), maybe just center it or duplicate more?
+                // For now, standard behavior.
 
                 const duration = halfWidth / PIXELS_PER_SECOND;
 
