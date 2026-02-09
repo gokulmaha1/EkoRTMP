@@ -7,6 +7,8 @@ import sys
 import threading
 import queue
 import asyncio
+import time
+import datetime
 from typing import Optional, List
 from fastapi import FastAPI, UploadFile, Form, WebSocket, WebSocketDisconnect, Depends, HTTPException, File
 from fastapi.staticfiles import StaticFiles
@@ -26,14 +28,118 @@ log_queue = queue.Queue()
 connected_websockets: List[WebSocket] = []
 news_websockets: List[WebSocket] = [] # New list for news updates
 
-def log_reader(proc):
-    """Reads stdout from the subprocess and pushes to the log queue."""
-    for line in iter(proc.stdout.readline, b''):
-        decoded_line = line.decode('utf-8').strip()
-        if decoded_line:
-            print(f"[STREAM] {decoded_line}")  # Also print to server console
-            log_queue.put(decoded_line)
-    proc.stdout.close()
+
+
+class StreamManager:
+    def __init__(self):
+        self.process = None
+        self.should_run = False
+        self.rtmp_url = None
+        self.backup_rtmp_url = None
+        self.stream_key = None
+        self.lock = threading.Lock()
+        self.monitor_thread = None
+        self.log_file = "stream_log.txt"
+
+    def start(self, rtmp_url, backup_rtmp_url=None, stream_key=None):
+        with self.lock:
+            self.rtmp_url = rtmp_url
+            self.backup_rtmp_url = backup_rtmp_url
+            self.stream_key = stream_key
+            self.should_run = True
+            
+            if self.monitor_thread is None or not self.monitor_thread.is_alive():
+                self.monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
+                self.monitor_thread.start()
+                print("[StreamManager] Monitor loop started.")
+
+    def stop(self):
+        with self.lock:
+            self.should_run = False
+        self._kill_process()
+
+    def is_running(self):
+        return self.process is not None and self.process.poll() is None
+
+    def _monitor_loop(self):
+        while True:
+            # Check if we should stop monitoring (only if main thread exits, but daemon handles that)
+            # Actually we busy-wait check should_run
+            if not self.should_run:
+                if self.process:
+                    self._kill_process()
+                time.sleep(1)
+                continue
+
+            if self.process is None or self.process.poll() is not None:
+                print(f"[StreamManager] Stream process not running. Restarting...")
+                self._start_process()
+            
+            time.sleep(5)
+
+    def _start_process(self):
+        env = os.environ.copy()
+        env["OVERLAY_URL"] = "http://127.0.0.1:8123/overlay"
+        
+        if self.rtmp_url:
+            env["RTMP_URL"] = self.rtmp_url
+        if self.backup_rtmp_url:
+            env["BACKUP_RTMP_URL"] = self.backup_rtmp_url
+            
+        self._log_to_file(f"Starting stream process... RTMP={self.rtmp_url}")
+
+        try:
+            self.process = subprocess.Popen(
+                [sys.executable, "-u", "main.py"], 
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                bufsize=1
+            )
+            
+            # Start Log Reader for this process
+            t = threading.Thread(target=self._read_logs, args=(self.process,), daemon=True)
+            t.start()
+            
+        except Exception as e:
+            self._log_to_file(f"Failed to start process: {e}")
+            print(f"[StreamManager] Start failed: {e}")
+
+    def _read_logs(self, proc):
+        try:
+            for line in iter(proc.stdout.readline, b''):
+                decoded_line = line.decode('utf-8').strip()
+                if decoded_line:
+                    # Console
+                    print(f"[STREAM] {decoded_line}")
+                    # WebSocket Queue
+                    log_queue.put(decoded_line)
+                    # File
+                    self._log_to_file(decoded_line)
+        except Exception as e:
+            print(f"[StreamManager] Log reader error: {e}")
+        finally:
+            proc.stdout.close()
+
+    def _kill_process(self):
+        if self.process:
+            print("[StreamManager] Stopping stream process...")
+            self.process.terminate()
+            try:
+                self.process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+            self.process = None
+
+    def _log_to_file(self, message):
+        try:
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            with open(self.log_file, "a", encoding="utf-8") as f:
+                f.write(f"[{timestamp}] {message}\n")
+        except Exception as e:
+            print(f"Failed to write to log file: {e}")
+
+stream_manager = StreamManager()
 
 async def broadcast_logs():
     """Background task to broadcast logs to all connected websockets."""
@@ -207,8 +313,6 @@ app.add_middleware(
 )
 
 # Global state
-# Global state
-stream_process = None
 OVERLAY_FILE = os.path.abspath("overlay_data.json")
 
 # Ensure overlay data file exists (Legacy support)
@@ -574,68 +678,39 @@ class StreamConfig(BaseModel):
 
 @app.post("/api/stream/start")
 def start_stream(config: StreamConfig):
-    global stream_process
-    
     # Persist the stream key if provided
     if config.stream_key:
         if os.path.exists(OVERLAY_FILE):
-            with open(OVERLAY_FILE, "r") as f:
-                try:
+            try:
+                with open(OVERLAY_FILE, "r") as f:
                     data = json.load(f)
-                except:
-                    data = {}
+            except:
+                data = {}
+        else:
+            data = {}
             
-            data["stream_key"] = config.stream_key
-            
-            with open(OVERLAY_FILE, "w") as f:
-                json.dump(data, f)
+        data["stream_key"] = config.stream_key
+        
+        with open(OVERLAY_FILE, "w") as f:
+            json.dump(data, f)
     
-    if stream_process and stream_process.poll() is None:
+    if stream_manager.is_running():
         return {"status": "already_running"}
     
-    env = os.environ.copy()
-    env["OVERLAY_URL"] = "http://127.0.0.1:8123/overlay"
+    # Start Manager
+    stream_manager.start(
+        rtmp_url=config.rtmp_url, 
+        backup_rtmp_url=config.backup_rtmp_url,
+        stream_key=config.stream_key
+    )
     
-    if config.rtmp_url:
-        env["RTMP_URL"] = config.rtmp_url
-    
-    if config.backup_rtmp_url:
-        env["BACKUP_RTMP_URL"] = config.backup_rtmp_url
-        print(f"[System] Backup Stream Enabled: {config.backup_rtmp_url}")
-    
-    try:
-        stream_process = subprocess.Popen(
-            [sys.executable, "-u", "main.py"], 
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            bufsize=1
-        )
-        
-        t = threading.Thread(target=log_reader, args=(stream_process,), daemon=True)
-        t.start()
-        
-        return {"status": "started", "pid": stream_process.pid}
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+    return {"status": "started"}
 
 @app.post("/api/stream/stop")
 def stop_stream():
-    global stream_process
-    if stream_process:
-        if stream_process.poll() is None:
-            stream_process.terminate()
-            try:
-                stream_process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                stream_process.kill()
-        
-        stream_process = None
-        return {"status": "stopped"}
-    return {"status": "not_running"}
+    stream_manager.stop()
+    return {"status": "stopped"}
 
 @app.get("/api/stream/status")
 def get_status():
-    global stream_process
-    is_running = stream_process is not None and stream_process.poll() is None
-    return {"running": is_running}
+    return {"running": stream_manager.is_running()}
