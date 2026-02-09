@@ -514,6 +514,20 @@
             /* Slow 15s zoom */
         }
 
+        @keyframes newsWipe {
+            0% {
+                clip-path: polygon(0 0, 0 0, 0 100%, 0% 100%);
+                transform: translateX(-30px);
+                opacity: 0;
+            }
+
+            100% {
+                clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
         .anim-title {
             opacity: 0;
             animation: fadeInUp 0.8s ease-out 0.2s forwards;
@@ -521,7 +535,14 @@
 
         .anim-desc {
             opacity: 0;
-            animation: fadeInUp 0.8s ease-out 0.4s forwards;
+            /* Tamil TV Style: Sharp wipe from left with slight slide */
+            animation: newsWipe 1.0s cubic-bezier(0.19, 1, 0.22, 1) 0.4s forwards;
+            background: rgba(0, 0, 0, 0.03);
+            /* Subtle backdrop */
+            padding: 15px;
+            border-left: 4px solid #b90909;
+            /* Red accent line */
+            border-radius: 0 8px 8px 0;
         }
 
         .anim-meta {
@@ -1005,7 +1026,7 @@
 
             if (cat) cat.innerText = item.category || 'NEWS';
             if (tit) tit.innerText = item.title;
-            //if (desc) desc.innerText = item.description || item.title; // Fallback
+            if (desc) desc.innerText = item.description || item.title; // Fallback
             if (meta) meta.innerHTML = `<i class="fas fa-link"></i> ${item.source}`;
 
             // --- RESET TEXT ANIMATIONS ---
