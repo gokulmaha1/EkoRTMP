@@ -376,6 +376,64 @@
                 </div>
             </div>
 
+            <!-- AD ITEM MODAL -->
+            <div id="adItemModal"
+                class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Add Ad Item</h3>
+                    <input type="hidden" id="adModalCampaignId">
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700">Ad Type</label>
+                            <select id="adModalType" class="w-full border p-2 rounded" onchange="toggleAdFields()">
+                                <option value="TICKER">Ticker (Text)</option>
+                                <option value="FULLSCREEN">Fullscreen (Image/Video)</option>
+                                <option value="L_BAR">L-Bar (Side Image)</option>
+                            </select>
+                        </div>
+
+                        <!-- Ticker Content -->
+                        <div id="field-ticker">
+                            <label class="block text-sm font-bold text-gray-700">Ticker Text</label>
+                            <input type="text" id="adModalText" class="w-full border p-2 rounded"
+                                placeholder="Enter ad text...">
+                        </div>
+
+                        <!-- Media Content -->
+                        <div id="field-media" class="hidden">
+                            <label class="block text-sm font-bold text-gray-700">Media File (Image/Video)</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="file" id="adModalFile" accept="image/*,video/*"
+                                    class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Or enter URL manually:</p>
+                            <input type="text" id="adModalUrl" class="w-full border p-2 rounded text-sm"
+                                placeholder="/media/example.mp4">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700">Duration (Sec)</label>
+                                <input type="number" id="adModalDuration" class="w-full border p-2 rounded" value="10">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700">Interval (Mins)</label>
+                                <input type="number" id="adModalInterval" class="w-full border p-2 rounded" value="5">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button onclick="closeAdModal()"
+                            class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
+                        <button onclick="submitAdItem()"
+                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-bold">Save
+                            Ad</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- VIEW: CONFIG -->
             <div id="view-config" class="view-section hidden space-y-6">
 
