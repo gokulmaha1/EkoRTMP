@@ -298,6 +298,19 @@ async def startup_event():
         db.add(default_feed)
         db.commit()
         print("[System] Added default Google News Feed.")
+    
+    # Add Daily Thanthi Feed (Requested by User)
+    dt_feed = db.query(NewsFeed).filter(NewsFeed.name == "Daily Thanthi").first()
+    if not dt_feed:
+        new_feed = NewsFeed(
+            name="Daily Thanthi",
+            url="https://rss.app/feeds/Vr3sF7zb27kFP49l.xml",
+            source_type="RSS",
+            is_active=True
+        )
+        db.add(new_feed)
+        db.commit()
+        print("[System] Added Daily Thanthi Feed.")
     db.close()
 
     asyncio.create_task(broadcast_logs())
