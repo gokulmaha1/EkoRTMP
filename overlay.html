@@ -476,6 +476,59 @@
             box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
         }
 
+        /* --- ANIMATIONS: Text & Media --- */
+        @keyframes kenBurns {
+            0% {
+                transform: scale(1.0);
+            }
+
+            100% {
+                transform: scale(1.15);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .ken-burns-active {
+            animation: kenBurns 15s linear forwards;
+            /* Slow 15s zoom */
+        }
+
+        .anim-title {
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out 0.2s forwards;
+        }
+
+        .anim-desc {
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out 0.4s forwards;
+        }
+
+        .anim-meta {
+            opacity: 0;
+            animation: fadeIn 1s ease-out 0.8s forwards;
+        }
+
         .np-tag {
             background: #b90909;
             color: white;
@@ -486,6 +539,9 @@
             font-size: 18px;
             margin-bottom: 20px;
             border-radius: 4px;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
+            /* Immediate fade in */
         }
 
         .np-content h1 {
@@ -494,6 +550,7 @@
             margin-bottom: 20px;
             color: #2c3e50;
             font-family: 'Baloo Thambi 2', sans-serif;
+            /* Animation handled by class .anim-title */
         }
 
         .np-content p {
@@ -502,6 +559,7 @@
             line-height: 1.5;
             margin-bottom: 30px;
             font-family: 'Roboto', sans-serif;
+            /* Animation handled by class .anim-desc */
         }
 
         .np-meta {
@@ -511,6 +569,7 @@
             color: #888;
             font-size: 16px;
             font-weight: 600;
+            /* Animation handled by class .anim-meta */
         }
     </style>
 </head>
@@ -776,6 +835,21 @@
 
             headlineIndex = (headlineIndex + 1) % pool.length;
             const item = pool[headlineIndex];
+
+            // --- AUTOMATION: Show Main Screen if Media Exists ---
+            if (item.media_url && getMediaType(item.media_url) !== 'NONE') {
+                // Construct a display item similar to what the API would send
+                const displayItem = {
+                    id: item.id,
+                    title: item.title_tamil,
+                    category: item.category,
+                    media_url: item.media_url,
+                    source: item.source,
+                    description: item.title_english || item.title_tamil
+                };
+                showNewsLayout(displayItem);
+            }
+            // ----------------------------------------------------
 
             const el = document.getElementById('topHeadline');
 
