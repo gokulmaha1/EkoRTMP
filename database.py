@@ -57,6 +57,42 @@ class NewsItem(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
+# --- Ad Management Models ---
+class AdType(str, enum.Enum):
+    TICKER = "TICKER"
+    L_BAR = "L_BAR"
+    FULLSCREEN = "FULLSCREEN"
+    POPUP = "POPUP"
+
+class AdCampaign(Base):
+    __tablename__ = "ad_campaigns"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    client = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
+    start_date = Column(DateTime, default=datetime.datetime.utcnow)
+    end_date = Column(DateTime, nullable=True)
+    priority = Column(Integer, default=1)
+    
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class AdItem(Base):
+    __tablename__ = "ad_items"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    campaign_id = Column(Integer, nullable=False) # ForeignKey logic handled manually or via simple ID for simplicity in SQLite
+    type = Column(String, default=AdType.TICKER)
+    
+    content = Column(String, nullable=False) # Text for Ticker, Media URL for others
+    duration = Column(Integer, default=10) # Seconds (for L-Bar/Fullscreen)
+    interval = Column(Integer, default=5) # Minutes (Frequency)
+    
+    last_played_at = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=True)
+    
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
 class NewsFeed(Base):
     __tablename__ = "news_feeds"
 
@@ -66,6 +102,14 @@ class NewsFeed(Base):
     source_type = Column(String, default=NewsSource.RSS) # RSS, SCRAPER
     is_active = Column(Boolean, default=True)
     
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class BlockedNews(Base):
+    __tablename__ = "blocked_news"
+
+    id = Column(Integer, primary_key=True, index=True)
+    external_id = Column(String, unique=True, index=True) # The ID/URL to block
+    reason = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 class SystemConfig(Base):

@@ -41,12 +41,14 @@ function switchView(viewName) {
         'dashboard': 'Live Overview',
         'news': 'News Manager',
         'media': 'Media Library',
+        'ads': 'Ad Manager',
         'config': 'Layout Configuration'
     };
     pageTitle.innerText = titles[viewName] || 'Control Room';
 
     // Lazy Load
     if (viewName === 'media') fetchMedia();
+    if (viewName === 'ads') fetchAds();
 }
 
 // --- API Interactions ---
@@ -768,4 +770,113 @@ function toggleFullscreen(elemId) {
     } else {
         document.exitFullscreen();
     }
+}
+// --- Ad Management ---
+
+async function fetchAds() {
+    try {
+        const resCamps = await fetch(`${API_BASE}/ads/campaigns`);
+        const camps = await resCamps.json();
+        const resItems = await fetch(`${API_BASE}/ads/items`);
+        const items = await resItems.json();
+
+        renderAdManager(camps, items);
+    } catch (err) {
+        console.error("Failed to fetch ads:", err);
+    }
+}
+
+function renderAdManager(camps, items) {
+    const list = document.getElementById('adCampaignList');
+    if (!list) return; // Guard clause if element doesn't exist yet
+
+    list.innerHTML = "";
+
+    camps.forEach(camp => {
+        const campItems = items.filter(i => i.campaign_id === camp.id);
+
+        const div = document.createElement('div');
+        div.className = "ad-campaign-card";
+        div.innerHTML = `
+            <div class="campaign-header">
+                <h3>${camp.name} <span class="badge badge-secondary">${camp.client || 'Internal'}</span></h3>
+                <span class="badge ${camp.is_active ? 'badge-success' : 'badge-danger'}">
+                    ${camp.is_active ? 'Active' : 'Paused'}
+                </span>
+            </div>
+            <div class="campaign-items">
+                ${campItems.map(item => `
+                    <div class="ad-item-row">
+                        <span class="badge badge-info">${item.type}</span>
+                        <span class="ad-content-preview">${item.content}</span>
+                        <button class="btn btn-sm btn-danger" onclick="deleteAdItem(${item.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `).join('')}
+                <div class="add-item-row">
+                    <button class="btn btn-sm btn-outline-primary" onclick="showAddItemModal(${camp.id})">
+                        <i class="fas fa-plus"></i> Add Item
+                    </button>
+                </div>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+
+async function createCampaign() {
+    const name = prompt("Enter Campaign Name:");
+    if (!name) return;
+    const client = prompt("Enter Client Name (Optional):");
+
+    try {
+        await fetch(`${API_BASE}/ads/campaigns`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, client, is_active: true })
+        });
+        fetchAds();
+    } catch (e) { alert("Failed to create campaign"); }
+}
+
+async function createAdItem(campId, type, content) {
+    try {
+        await fetch(`${API_BASE}/ads/items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                campaign_id: campId,
+                type: type,
+                content: content,
+                is_active: true
+            })
+        });
+        fetchAds();
+    } catch (e) { alert("Failed to create ad item"); }
+}
+
+async function deleteAdItem(id) {
+    if (!confirm("Delete this ad?")) return;
+    try {
+        await fetch(`${API_BASE}/ads/items/${id}`, { method: 'DELETE' });
+        fetchAds();
+    } catch (e) { console.error(e); }
+}
+
+
+function showAddItemModal(campId) {
+    // Simple prompt for now, or dedicated modal
+    const type = prompt("Enter Type (TICKER, L_BAR, FULLSCREEN):", "TICKER");
+    if (!type) return;
+
+    let content = "";
+    if (type === 'TICKER') {
+        content = prompt("Enter Ad Text:");
+    } else {
+        content = prompt("Enter Media URL (or upload first and paste /media/...):");
+    }
+
+    if (content) createAdItem(campId, type, content);
 }

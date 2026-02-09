@@ -216,7 +216,7 @@ def apply_content_filters(text: str, filters: List[str]) -> str:
     cleaned = re.sub(r'\s+', ' ', cleaned).strip()
     return cleaned
 
-# --- RSS Background Sync ---
+from database import NewsFeed, NewsItem, SystemConfig, BlockedNews, SessionLocal
 async def sync_rss_feeds():
     """Background task to sync RSS feeds periodically."""
     while True:
@@ -242,6 +242,11 @@ async def sync_rss_feeds():
                 items = news_fetcher.fetch_rss_feed(feed.url)
                 
                 for item in items:
+                    # Check if blocked
+                    blocked = db.query(BlockedNews).filter(BlockedNews.external_id == item['id']).first()
+                    if blocked:
+                        continue # Skip blocked items
+
                     # Check if exists
                     exists = db.query(NewsItem).filter(NewsItem.external_id == item['id']).first()
                     if not exists:
@@ -570,7 +575,7 @@ def get_overlay_data():
     return {"webview_url": ""}
 
 # --- News Feed Management API (RSS Sources) ---
-from database import NewsFeed
+from database import NewsFeed, BlockedNews
 
 class FeedCreate(BaseModel):
     name: str
@@ -596,6 +601,104 @@ def delete_feed(feed_id: int, db: Session = Depends(get_db)):
         db.delete(db_feed)
         db.commit()
     return {"status": "success"}
+
+# --- News Management API ---
+from database import AdCampaign, AdItem
+
+class CampaignCreate(BaseModel):
+    name: str
+    client: Optional[str] = None
+    priority: int = 1
+    start_date: Optional[datetime.datetime] = None
+    end_date: Optional[datetime.datetime] = None
+
+class AdItemCreate(BaseModel):
+    campaign_id: int
+    type: str # TICKER, L_BAR, FULLSCREEN, POPUP
+    content: str
+    duration: int = 10
+    interval: int = 5
+    is_active: bool = True
+
+@app.post("/api/ads/campaigns")
+def create_campaign(camp: CampaignCreate, db: Session = Depends(get_db)):
+    db_camp = AdCampaign(
+        name=camp.name, 
+        client=camp.client, 
+        priority=camp.priority,
+        start_date=camp.start_date or datetime.datetime.utcnow(),
+        end_date=camp.end_date
+    )
+    db.add(db_camp)
+    db.commit()
+    db.refresh(db_camp)
+    return db_camp
+
+@app.get("/api/ads/campaigns")
+def get_campaigns(db: Session = Depends(get_db)):
+    return db.query(AdCampaign).filter(AdCampaign.is_active == True).all()
+
+@app.post("/api/ads/items")
+def create_ad_item(item: AdItemCreate, db: Session = Depends(get_db)):
+    # Verify campaign exists
+    camp = db.query(AdCampaign).filter(AdCampaign.id == item.campaign_id).first()
+    if not camp:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+        
+    db_item = AdItem(
+        campaign_id=item.campaign_id,
+        type=item.type,
+        content=item.content,
+        duration=item.duration,
+        interval=item.interval,
+        is_active=item.is_active
+    )
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+@app.get("/api/ads/items")
+def get_ad_items(db: Session = Depends(get_db)):
+    return db.query(AdItem).filter(AdItem.is_active == True).all()
+
+@app.delete("/api/ads/items/{item_id}")
+def delete_ad_item(item_id: int, db: Session = Depends(get_db)):
+    item = db.query(AdItem).filter(AdItem.id == item_id).first()
+    if item:
+        db.delete(item)
+        db.commit()
+    return {"status": "success"}
+
+@app.get("/api/ads/active")
+def get_active_ads(db: Session = Depends(get_db)):
+    """
+    Returns a list of ads that should be playing right now on the overlay.
+    Logic: 
+    1. Campaign must be active and within date range.
+    2. Ad Item must be active.
+    """
+    now = datetime.datetime.utcnow()
+    
+    # Get active campaigns
+    active_camps = db.query(AdCampaign).filter(
+        AdCampaign.is_active == True,
+        AdCampaign.start_date <= now,
+        (AdCampaign.end_date == None) | (AdCampaign.end_date >= now)
+    ).all()
+    
+    camp_ids = [c.id for c in active_camps]
+    
+    if not camp_ids:
+        return []
+        
+    # Get items for these campaigns
+    items = db.query(AdItem).filter(
+        AdItem.campaign_id.in_(camp_ids),
+        AdItem.is_active == True
+    ).all()
+    
+    return items
 
 # --- News Management API ---
 
@@ -651,6 +754,14 @@ async def delete_news(news_id: int, db: Session = Depends(get_db)):
     if not db_item:
         raise HTTPException(status_code=404, detail="News item not found")
     
+    # Block future imports if it has an external ID
+    if db_item.external_id:
+        # Check if already blocked (paranoid check)
+        exists = db.query(BlockedNews).filter(BlockedNews.external_id == db_item.external_id).first()
+        if not exists:
+            blocked = BlockedNews(external_id=db_item.external_id, reason="Deleted by User")
+            db.add(blocked)
+
     db.delete(db_item)
     db.commit()
     

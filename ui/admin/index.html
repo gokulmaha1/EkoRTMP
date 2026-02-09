@@ -61,6 +61,10 @@
                 class="nav-link w-full text-left block p-3 rounded hover:bg-slate-800 text-gray-300 transition">
                 <i class="fas fa-photo-video mr-2"></i> Media Library
             </button>
+            <button onclick="switchView('ads')" id="nav-ads"
+                class="nav-link w-full text-left block p-3 rounded hover:bg-slate-800 text-gray-300 transition">
+                <i class="fas fa-ad mr-2"></i> Ad Manager
+            </button>
             <button onclick="switchView('config')" id="nav-config"
                 class="nav-link w-full text-left block p-3 rounded hover:bg-slate-800 text-gray-300 transition">
                 <i class="fas fa-sliders-h mr-2"></i> Layout Config
@@ -333,9 +337,9 @@
 
             <!-- VIEW: MEDIA LIBRARY -->
             <div id="view-media" class="view-section space-y-6">
+                <!-- ... existing media content ... -->
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-cloud-upload-alt mr-2"></i> Upload
-                        New
+                    <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-cloud-upload-alt mr-2"></i> Upload New
                         Media</h3>
                     <div class="flex space-x-2 items-center">
                         <input type="file" id="inpFile"
@@ -343,14 +347,31 @@
                         <button onclick="uploadMedia()"
                             class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-bold">Upload</button>
                     </div>
-                    <div id="uploadStatus" class="text-xs text-green-600 mt-2 font-bold hidden">Upload Complete!
-                    </div>
+                    <div id="uploadStatus" class="text-xs text-green-600 mt-2 font-bold hidden">Upload Complete!</div>
                 </div>
 
                 <div class="bg-white rounded-lg shadow p-6">
                     <h3 class="font-bold text-slate-700 mb-4">Media Gallary</h3>
                     <div id="mediaGallery" class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <!-- Media Items -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: ADS MANAGER -->
+            <div id="view-ads" class="view-section space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-slate-700 text-lg"><i class="fas fa-bullhorn mr-2"></i> Ad Campaigns
+                        </h3>
+                        <button onclick="createCampaign()"
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold shadow">
+                            <i class="fas fa-plus mr-2"></i> New Campaign
+                        </button>
+                    </div>
+                    <div id="adCampaignList" class="space-y-4">
+                        <!-- Campaigns Injected Here -->
+                        <div class="text-center text-gray-400 py-10">Loading Campaigns...</div>
                     </div>
                 </div>
             </div>

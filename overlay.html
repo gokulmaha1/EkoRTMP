@@ -1081,12 +1081,132 @@
             container.classList.add('page-enter');
         }
 
+        // --- ADVERTISEMENT LOGIC ---
+        let activeAds = [];
+
+        async function fetchAds() {
+            try {
+                const res = await fetch(API_BASE + '/ads/active');
+                activeAds = await res.json();
+                console.log(`Loaded ${activeAds.length} active ads.`);
+            } catch (e) { console.error("Ad Fetch Error:", e); }
+        }
+
+        function getAdsByType(type) {
+            return activeAds.filter(a => a.type === type);
+        }
+
+        // --- TICKER ADS ---
+        // Enhanced updateTicker to inject ads
+        function updateTicker() {
+            const activeNews = newsItems.filter(i => i.is_active);
+            const adTickerItems = getAdsByType('TICKER');
+
+            const track = document.getElementById('tickerTrack');
+
+            if (activeNews.length === 0 && adTickerItems.length === 0) {
+                track.innerHTML = "";
+                return;
+            }
+
+            // Mix News and Ads
+            // Simple Strategy: Append Ads at the end of the news loop
+            // Better Strategy: Interleave? For now, append is safer for loop logic.
+
+            let combinedHtml = activeNews.map(i =>
+                `<span class="ticker-item"><i class="fas fa-circle" style="font-size:15px; color:#b90909;"></i> ${i.title_tamil}</span>`
+            ).join('');
+
+            if (adTickerItems.length > 0) {
+                const adsHtml = adTickerItems.map(ad =>
+                    `<span class="ticker-item" style="color: #0044cc; font-weight:900;">
+                        <i class="fas fa-ad" style="font-size:18px; color:#ffcc00; margin-right:5px;"></i> ${ad.content}
+                     </span>`
+                ).join('');
+                combinedHtml += adsHtml;
+            }
+
+            // CHECK DIFFERENT HASH
+            const currentHash = combinedHtml; // Simplified hash
+
+            if (currentHash === lastTickerHash) return;
+            lastTickerHash = currentHash;
+
+            track.innerHTML = combinedHtml + combinedHtml; // Duplicate for smooth scroll
+
+            // Calculate Speed
+            const PIXELS_PER_SECOND = 150;
+            setTimeout(() => {
+                const totalWidth = track.scrollWidth;
+                const halfWidth = totalWidth / 2;
+                const duration = halfWidth / PIXELS_PER_SECOND;
+
+                track.style.animation = 'none';
+                track.offsetHeight;
+                track.style.animation = `scroll-linear ${duration}s linear infinite`;
+            }, 50);
+        }
+
+
+        // --- FULLSCREEN ADS & INTERRUPTIONS ---
+        let adIntervalHandle = null;
+        const AD_CHECK_INTERVAL = 60000; // Check every minute
+
+        function startAdScheduler() {
+            // Check for fullscreen ads that need to play "Intermittently"
+            // For simplicity in this v1, we will just pick a random fullscreen ad every X minutes if available
+            if (adIntervalHandle) clearInterval(adIntervalHandle);
+
+            adIntervalHandle = setInterval(() => {
+                const fsAds = getAdsByType('FULLSCREEN');
+                if (fsAds.length > 0) {
+                    // Pick one
+                    const ad = fsAds[Math.floor(Math.random() * fsAds.length)];
+                    playFullscreenAd(ad);
+                }
+            }, 5 * 60 * 1000); // Every 5 minutes try to play an ad? 
+            // Better: Use ad.interval property? 
+            // For MVP: Simple Loop is fine.
+        }
+
+        function playFullscreenAd(ad) {
+            console.log("Playing Ad:", ad);
+
+            // Override Main Screen
+            const data = {
+                webview_url: ad.content, // Video URL or Image
+                type: 'AD'
+            };
+
+            // 1. Stop News Rotation temporarily
+            if (headlineInterval) clearInterval(headlineInterval);
+
+            // 2. Show Ad
+            updateMainScreen(data);
+
+            // 3. Resume after Duration
+            setTimeout(() => {
+                // Restore Config / News
+                startHeadlines();
+                // We typically want to go back to the previous state or "Next" news
+                // updateMainScreen({webview_url: ''}); // Clear or let rotateHeadline fill it
+                rotateHeadline(); // Force next news
+            }, ad.duration * 1000);
+        }
+
+
         // INIT
         fetchConfig();
         fetchNews();
+        fetchAds();
+
         // Fallback Poll
         setInterval(fetchNews, 20000);
+        setInterval(fetchAds, 30000); // Refresh ads every 30s
         setInterval(fetchConfig, 10000);
+
+        // Start Scheduler
+        setTimeout(startAdScheduler, 5000); // Delay start
 
     </script>
 </body>
