@@ -570,7 +570,7 @@ def get_feeds(db: Session = Depends(get_db)):
 
 @app.post("/api/feeds")
 def create_feed(feed: FeedCreate, db: Session = Depends(get_db)):
-    db_feed = NewsFeed(name=feed.name, url=feed.url, source_type=feed.source_type)
+    db_feed = NewsFeed(name=feed.name, url=feed.url, source_type=feed.source_type, is_active=True)
     db.add(db_feed)
     db.commit()
     db.refresh(db_feed)

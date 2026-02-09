@@ -836,8 +836,13 @@
             headlineIndex = (headlineIndex + 1) % pool.length;
             const item = pool[headlineIndex];
 
-            // --- AUTOMATION: Show Main Screen if Media Exists ---
-            if (item.media_url && getMediaType(item.media_url) !== 'NONE') {
+            // --- AUTOMATION: Show Main Screen if Media Exists AND Recent (< 24h) ---
+            const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 Hours
+            const itemDate = new Date(item.created_at || new Date());
+            const now = new Date();
+            const isRecent = (now - itemDate) < MAX_AGE_MS;
+
+            if (item.media_url && getMediaType(item.media_url) !== 'NONE' && isRecent) {
                 // Construct a display item similar to what the API would send
                 const displayItem = {
                     id: item.id,
