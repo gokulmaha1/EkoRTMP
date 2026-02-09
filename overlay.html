@@ -1270,51 +1270,7 @@
         }
 
 
-        // --- FULLSCREEN ADS & INTERRUPTIONS ---
-        let adIntervalHandle = null;
-        const AD_CHECK_INTERVAL = 60000; // Check every minute
 
-        function startAdScheduler() {
-            // Check for fullscreen ads that need to play "Intermittently"
-            // For simplicity in this v1, we will just pick a random fullscreen ad every X minutes if available
-            if (adIntervalHandle) clearInterval(adIntervalHandle);
-
-            adIntervalHandle = setInterval(() => {
-                const fsAds = getAdsByType('FULLSCREEN');
-                if (fsAds.length > 0) {
-                    // Pick one
-                    const ad = fsAds[Math.floor(Math.random() * fsAds.length)];
-                    playFullscreenAd(ad);
-                }
-            }, 5 * 60 * 1000); // Every 5 minutes try to play an ad? 
-            // Better: Use ad.interval property? 
-            // For MVP: Simple Loop is fine.
-        }
-
-        function playFullscreenAd(ad) {
-            console.log("Playing Ad:", ad);
-
-            // Override Main Screen
-            const data = {
-                webview_url: ad.content, // Video URL or Image
-                type: 'AD'
-            };
-
-            // 1. Stop News Rotation temporarily
-            if (headlineInterval) clearInterval(headlineInterval);
-
-            // 2. Show Ad
-            updateMainScreen(data);
-
-            // 3. Resume after Duration
-            setTimeout(() => {
-                // Restore Config / News
-                startHeadlines();
-                // We typically want to go back to the previous state or "Next" news
-                // updateMainScreen({webview_url: ''}); // Clear or let rotateHeadline fill it
-                rotateHeadline(); // Force next news
-            }, ad.duration * 1000);
-        }
 
 
         // INIT
