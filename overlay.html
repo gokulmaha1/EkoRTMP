@@ -529,6 +529,27 @@
             animation: fadeIn 1s ease-out 0.8s forwards;
         }
 
+        /* --- TRANSITIONS --- */
+        .page-exit {
+            animation: slideOutLeft 0.5s ease-in forwards;
+        }
+
+        .page-enter {
+            animation: slideInRight 0.5s ease-out forwards;
+        }
+
+        @keyframes slideOutLeft {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+        }
+
         .np-tag {
             background: #b90909;
             color: white;
@@ -540,8 +561,11 @@
             margin-bottom: 20px;
             border-radius: 4px;
             opacity: 0;
+            /* Animation handled by JS adding classes */
+        }
+
+        .anim-tag-in {
             animation: fadeIn 0.5s ease-out forwards;
-            /* Immediate fade in */
         }
 
         .np-content h1 {
@@ -946,17 +970,56 @@
             }
         }
 
-        function showNewsLayout(item) {
-            // Hide standard players
+        // --- TRANSITION LOGIC ---
+        let isTransitioning = false;
+
+        async function showNewsLayout(item) {
+            // Check if already showing this item to avoid redundant anims? 
+            // Actually, for loop, we might want to re-show.
+
+            const container = document.getElementById('newsPresentation');
+
+            // If already visible, transition OUT first
+            if (container.style.display === 'flex' && !isTransitioning) {
+                isTransitioning = true;
+                container.classList.add('page-exit');
+
+                // Wait for animation
+                await new Promise(r => setTimeout(r, 500));
+
+                container.classList.remove('page-exit');
+                // Reset scroll/state if needed
+                isTransitioning = false;
+            }
+
+            // Hide standard players (just in case)
             document.getElementById('webview').style.display = 'none';
             document.getElementById('videoPlayer').style.display = 'none';
             document.getElementById('imagePlayer').style.display = 'none';
 
             // Populate Data
-            document.getElementById('npCategory').innerText = item.category || 'NEWS';
-            document.getElementById('npTitle').innerText = item.title;
-            document.getElementById('npDescription').innerText = item.description || item.title; // Fallback
-            document.getElementById('npSource').innerHTML = `<i class="fas fa-link"></i> ${item.source}`;
+            const cat = document.getElementById('npCategory');
+            const tit = document.getElementById('npTitle');
+            const desc = document.getElementById('npDescription');
+            const meta = document.getElementById('npSource');
+
+            cat.innerText = item.category || 'NEWS';
+            tit.innerText = item.title;
+            desc.innerText = item.description || item.title; // Fallback
+            meta.innerHTML = `<i class="fas fa-link"></i> ${item.source}`;
+
+            // --- RESET TEXT ANIMATIONS ---
+            cat.classList.remove('anim-tag-in');
+            tit.classList.remove('anim-title');
+            desc.classList.remove('anim-desc');
+            meta.classList.remove('anim-meta');
+
+            void tit.offsetWidth; // Reflow
+
+            cat.classList.add('anim-tag-in');
+            tit.classList.add('anim-title');
+            desc.classList.add('anim-desc');
+            meta.classList.add('anim-meta');
 
             // Handle Media
             const img = document.getElementById('npImage');
@@ -966,6 +1029,7 @@
             img.style.display = 'none';
             vid.style.display = 'none';
             placeholder.style.display = 'none';
+            img.classList.remove('ken-burns-active'); // Reset Ken Burns
 
             if (item.media_url) {
                 const type = getMediaType(item.media_url);
@@ -975,16 +1039,22 @@
                     vid.style.display = 'block';
                     vid.play().catch(e => console.error("News AutoPlay Error:", e));
                 } else {
-                    // Default to Image if not explicitly video (covers images and uncertain types)
                     img.src = item.media_url;
                     img.style.display = 'block';
+
+                    // Trigger Ken Burns Reflow
+                    void img.offsetWidth;
+                    img.classList.add('ken-burns-active');
                 }
             } else {
                 placeholder.style.display = 'block';
             }
 
-            // Show Container
-            document.getElementById('newsPresentation').style.display = 'flex';
+            // Show Container with ENTER animation
+            container.style.display = 'flex';
+            container.classList.remove('page-enter');
+            void container.offsetWidth;
+            container.classList.add('page-enter');
         }
 
         // INIT
