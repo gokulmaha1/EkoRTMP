@@ -961,10 +961,27 @@
         }
 
         // --- MAIN SCREEN LOGIC ---
-        function updateMainScreen(data) {
-            // Hide News Layout if active
-            document.getElementById('newsPresentation').style.display = 'none';
+        // Persistence
+        let lastMainScreenData = { webview_url: "" };
 
+        function updateMainScreen(data) {
+            // If this is NOT an Ad, save it as the "Default" state
+            if (data.type !== 'AD') {
+                lastMainScreenData = { ...data };
+            }
+
+            // Hide News Layout if active (unless we are just updating background behind it?)
+            // If ad, force hide. If config update, maybe not? 
+            // generally updateMainScreen implies "Show this now".
+
+            if (data.type === 'AD') {
+                document.getElementById('newsPresentation').style.display = 'none';
+            }
+
+            renderMainScreen(data);
+        }
+
+        function renderMainScreen(data) {
             const webview = document.getElementById('webview');
             const video = document.getElementById('videoPlayer');
             const image = document.getElementById('imagePlayer');
@@ -993,6 +1010,11 @@
             }
         }
 
+        function restoreBackground() {
+            // Called when News Layout hides
+            renderMainScreen(lastMainScreenData);
+        }
+
         // --- TRANSITION LOGIC ---
         let isTransitioning = false;
 
@@ -1015,10 +1037,15 @@
                 isTransitioning = false;
             }
 
-            // Hide standard players (just in case)
-            document.getElementById('webview').style.display = 'none';
-            document.getElementById('videoPlayer').style.display = 'none';
-            document.getElementById('imagePlayer').style.display = 'none';
+            // Hide standard players? 
+            // If we hide them, we save resources, but we might have a black gap during transition.
+            // Since newsPresentation is z-index 50 and transparent? No, it has background.
+            // Let's NOT hide them immediately, but maybe pause video if it's heavy?
+            // For smooth transition, keep them.
+
+            // document.getElementById('webview').style.display = 'none';
+            // document.getElementById('videoPlayer').style.display = 'none';
+            // document.getElementById('imagePlayer').style.display = 'none';
 
             // Populate Data
             // Populate Data
@@ -1234,6 +1261,10 @@
                 setTimeout(() => {
                     document.getElementById('newsPresentation').style.display = 'none';
                     document.getElementById('newsPresentation').classList.remove('page-exit');
+
+                    // RESTORE BACKGROUND
+                    restoreBackground();
+
                 }, 500);
             }
         }
