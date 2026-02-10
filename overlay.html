@@ -863,80 +863,7 @@
             }, 50);
         }
 
-        function startHeadlines() {
-            if (headlineInterval) clearInterval(headlineInterval);
-            rotateHeadline();
-            headlineInterval = setInterval(rotateHeadline, 10000); // 10s Rotation
-        }
 
-        function rotateHeadline() {
-            if (newsItems.length === 0) return;
-
-            // Use all active items for loop
-            let pool = newsItems.filter(i => i.is_active);
-
-            // Optional: You could sort by priority/type if needed, but for a loop, just filtering is enough.
-            // pool.sort((a,b) => (b.type === 'BREAKING') - (a.type === 'BREAKING')); 
-
-            if (pool.length === 0) return;
-
-            headlineIndex = (headlineIndex + 1) % pool.length;
-            const item = pool[headlineIndex];
-
-            // --- AUTOMATION: Show Main Screen if Media Exists AND Recent (< 24h) ---
-            const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 Hours
-            const itemDate = new Date(item.created_at || new Date());
-            const now = new Date();
-            const isRecent = (now - itemDate) < MAX_AGE_MS;
-
-            if (item.media_url && getMediaType(item.media_url) !== 'NONE' && isRecent) {
-                // Construct a display item similar to what the API would send
-                const displayItem = {
-                    id: item.id,
-                    title: item.title_tamil,
-                    category: item.category,
-                    media_url: item.media_url,
-                    source: item.source,
-                    description: item.title_english || item.title_tamil
-                };
-                showNewsLayout(displayItem);
-            }
-            // ----------------------------------------------------
-
-            const el = document.getElementById('topHeadline');
-
-            // 1. Start Slide Out
-            el.classList.remove('animate-in');
-            el.classList.add('animate-out');
-
-            setTimeout(() => {
-                const text = item.title_tamil || "";
-                el.innerText = text;
-
-                // --- DYNAMIC SIZING LOGIC ---
-                // Threshold for "Long Text" - approx 50 chars for Tamil
-                if (text.length > 50) {
-                    el.style.fontSize = "22px";
-                    el.style.whiteSpace = "normal"; // Allow wrap
-                    el.style.lineHeight = "1.3";
-                } else {
-                    el.style.fontSize = "32px";
-                    el.style.whiteSpace = "nowrap"; // Single line
-                    el.style.lineHeight = "1.2";
-                }
-
-                // Optional: Update Location
-                if (item.source_url && item.source_url.length < 15) {
-                    document.getElementById('locationText').innerText = item.source_url;
-                } else {
-                    document.getElementById('locationText').innerText = "அண்மை செய்திகள்";
-                }
-
-                // 2. Start Slide In (from top)
-                el.classList.remove('animate-out');
-                el.classList.add('animate-in');
-            }, 500); // Wait for slide-out (0.5s)
-        }
 
         // --- WEBSOCKET ---
         const ws = new WebSocket(WS_URL);
@@ -1227,20 +1154,17 @@
             const now = new Date();
             const isRecent = (now - itemDate) < MAX_AGE_MS;
 
-            if (item.media_url && getMediaType(item.media_url) !== 'NONE') {
-                const displayItem = {
-                    id: item.id,
-                    title: item.title_tamil,
-                    category: item.category,
-                    media_url: item.media_url, // Might be null
-                    source: item.source,
-                    description: item.title_english || item.title_tamil
-                };
-                showNewsLayout(displayItem);
-            } else {
-                // If no media, hide the news presentation to show the main video feed
-                document.getElementById('newsPresentation').style.display = 'none';
-            }
+            // --- MAIN SCREEN AUTOMATION ---
+            // Fix: Always show layout even if no media (use placeholder) to avoid blank screen
+            const displayItem = {
+                id: item.id,
+                title: item.title_tamil,
+                category: item.category,
+                media_url: item.media_url, // Might be null, showNewsLayout handles it
+                source: item.source,
+                description: item.title_english || item.title_tamil
+            };
+            showNewsLayout(displayItem);
 
         }
 
