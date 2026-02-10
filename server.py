@@ -851,22 +851,7 @@ def send_ntfy_approval_request(item):
         print(f"[NTFY] Failed to send notification: {e}")
 
 
-    if not db_item:
-        raise HTTPException(status_code=404, detail="News item not found")
-    
-    # Block future imports if it has an external ID
-    if db_item.external_id:
-        # Check if already blocked (paranoid check)
-        exists = db.query(BlockedNews).filter(BlockedNews.external_id == db_item.external_id).first()
-        if not exists:
-            blocked = BlockedNews(external_id=db_item.external_id, reason="Deleted by User")
-            db.add(blocked)
 
-    db.delete(db_item)
-    db.commit()
-    
-    await broadcast_news_update("NEWS_DELETED", {"id": news_id})
-    return {"status": "success"}
 
 @app.post("/api/news/{news_id}/show")
 async def show_news_on_screen(news_id: int, db: Session = Depends(get_db)):
