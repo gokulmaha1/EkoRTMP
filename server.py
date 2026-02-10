@@ -40,6 +40,8 @@ class StreamManager:
         self.lock = threading.Lock()
         self.monitor_thread = None
         self.log_file = "stream_log.txt"
+        self.last_heartbeat = 0
+
 
     def start(self, rtmp_url, backup_rtmp_url=None, stream_key=None):
         with self.lock:
@@ -47,6 +49,8 @@ class StreamManager:
             self.backup_rtmp_url = backup_rtmp_url
             self.stream_key = stream_key
             self.should_run = True
+            self.last_heartbeat = time.time() # Reset on start
+
             
             if self.monitor_thread is None or not self.monitor_thread.is_alive():
                 self.monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
@@ -74,6 +78,16 @@ class StreamManager:
             if self.process is None or self.process.poll() is not None:
                 print(f"[StreamManager] Stream process not running. Restarting...")
                 self._start_process()
+            
+            # Watchdog Check
+            now = time.time()
+            if self.process and self.process.poll() is None:
+                # If no heartbeat/log for 30 seconds, restart
+                if now - self.last_heartbeat > 30:
+                    print(f"[StreamManager] Watchdog: No heartbeat for {now - self.last_heartbeat:.1f}s. Restarting stream...")
+                    self._log_to_file("Watchdog triggered: Stream stuck.")
+                    self._kill_process()
+                    # Loop will restart it in next iteration
             
             time.sleep(5)
 
@@ -109,9 +123,12 @@ class StreamManager:
         try:
             for line in iter(proc.stdout.readline, b''):
                 decoded_line = line.decode('utf-8').strip()
-                if decoded_line:
-                    # Console
-                    print(f"[STREAM] {decoded_line}")
+                    if decoded_line:
+                        # Update Heartbeat
+                        self.last_heartbeat = time.time()
+                        
+                        # Console
+                        print(f"[STREAM] {decoded_line}")
                     # WebSocket Queue
                     log_queue.put(decoded_line)
                     # File
