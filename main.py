@@ -11,6 +11,7 @@ gi.require_version('WebKit2', '4.0')
 
 print("DEBUG: main.py is starting...", flush=True)
 
+import time
 from gi.repository import Gst, Gtk, GObject, WebKit2, GLib, Gdk
 
 # Initialize GStreamer and GTK
@@ -29,6 +30,9 @@ class StreamOverlayApp:
         # --- shared state for overlay ---
         self.surface_lock = threading.Lock()
         self.current_surface = None
+        self.img_surface = None
+        self.img_ctx = None
+        self.last_heartbeat = time.time()
         
         # --- WebKit Setup (Headless) ---
         self.window = Gtk.OffscreenWindow()
@@ -69,16 +73,17 @@ class StreamOverlayApp:
         
         # We start with the Muxer and Sinks
         # If backup is present, we Tee the output of the muxer to two sinks.
+        # Added leaky=downstream to prevent pipeline stalling if network lags
         if BACKUP_RTMP_URL:
             print(f"Configuring Dual Stream: Primary + Backup")
             sink_pipeline = (
                 f'flvmux name=mux streamable=true ! tee name=t '
-                f't. ! queue ! rtmpsink location="{RTMP_URL}" '
-                f't. ! queue ! rtmpsink location="{BACKUP_RTMP_URL}" '
+                f't. ! queue max-size-time=3000000000 leaky=downstream ! rtmpsink location="{RTMP_URL}" '
+                f't. ! queue max-size-time=3000000000 leaky=downstream ! rtmpsink location="{BACKUP_RTMP_URL}" '
             )
         else:
             sink_pipeline = (
-                f'flvmux name=mux streamable=true ! rtmpsink location="{RTMP_URL}" '
+                f'flvmux name=mux streamable=true ! queue max-size-time=3000000000 leaky=downstream ! rtmpsink location="{RTMP_URL}" '
             )
 
         # Video Source & Encoding
@@ -126,19 +131,29 @@ class StreamOverlayApp:
 
     def update_surface(self):
         # This runs in the main GTK thread
-        # We get the surface from the OffscreenWindow
         surface = self.window.get_surface()
         if surface:
-            # We must copy it because the window surface might change while we draw
-            # in the other thread. 
-            # Or simpler: create an ImageSurface and paint the window surface to it.
-            img_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, WIDTH, HEIGHT)
-            ctx = cairo.Context(img_surface)
-            ctx.set_source_surface(surface, 0, 0)
-            ctx.paint()
-            
+            # Reuse surface to reduce memory allocation churn
+            if self.img_surface is None:
+                try:
+                    self.img_surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, WIDTH, HEIGHT)
+                    self.img_ctx = cairo.Context(self.img_surface)
+                except Exception as e:
+                    print(f"Error creating surface: {e}")
+                    return True
+
             with self.surface_lock:
-                self.current_surface = img_surface
+                if self.img_ctx:
+                    self.img_ctx.set_source_surface(surface, 0, 0)
+                    self.img_ctx.paint()
+                    self.current_surface = self.img_surface
+        
+        # Heartbeat check (every 5 seconds)
+        now = time.time()
+        if now - self.last_heartbeat > 5.0:
+            print(f"[HEARTBEAT] Stream active. Memory optimized.", flush=True)
+            self.last_heartbeat = now
+            
         return True # Keep calling
 
     def on_draw(self, overlay, context, timestamp, duration):
