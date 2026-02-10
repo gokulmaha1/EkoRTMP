@@ -257,10 +257,16 @@
                                     </select>
                                 </div>
                             </div>
-                            <button onclick="submitNews()"
-                                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold transition mt-4">
-                                <i class="fas fa-paper-plane mr-2"></i> PUBLISH LIVE
-                            </button>
+                            <div class="grid grid-cols-2 gap-4 mt-4">
+                                <button onclick="submitNews(true)"
+                                    class="w-full bg-slate-600 hover:bg-slate-700 text-white py-2 rounded font-bold transition">
+                                    <i class="fas fa-save mr-2"></i> SAVE DRAFT
+                                </button>
+                                <button onclick="submitNews(false)"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold transition">
+                                    <i class="fas fa-paper-plane mr-2"></i> PUBLISH LIVE
+                                </button>
+                            </div>
                         </div>
 
                         <!-- TAB: EXTERNAL -->

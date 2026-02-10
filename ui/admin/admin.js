@@ -55,7 +55,8 @@ function switchView(viewName) {
 
 async function fetchNews() {
     try {
-        const res = await fetch(`${API_BASE}/news`);
+        // Use Admin Endpoint to get ALL items (Active + Pending)
+        const res = await fetch(`${API_BASE}/admin/news`);
         newsQueue = await res.json();
         renderQueue();
         updateStats();
@@ -64,7 +65,7 @@ async function fetchNews() {
     }
 }
 
-async function submitNews() {
+async function submitNews(asDraft = false) {
     const title = inpTitleTamil.value.trim();
     if (!title) return alert("Please enter a headline");
 
@@ -72,7 +73,7 @@ async function submitNews() {
         title_tamil: title,
         type: inpType.value,
         category: inpCategory.value,
-        is_active: true, // Default to active
+        is_active: !asDraft, // Active if not draft
         priority: 0
     };
 
@@ -402,7 +403,7 @@ async function insertExternalNews(item) {
         title_english: item.title,
         type: "TICKER",
         category: category.toUpperCase(),
-        is_active: true,
+        is_active: false, // Default to Draft/Pending
         priority: 0,
         source: item.source,
         source_url: item.link,
@@ -549,41 +550,94 @@ function renderQueue() {
     elQueue.innerHTML = "";
 
     if (newsQueue.length === 0) {
-        elQueue.innerHTML = '<div class="text-center text-gray-400 italic p-4">No active news</div>';
+        elQueue.innerHTML = '<div class="text-center text-gray-400 italic p-4">No news items</div>';
         return;
     }
 
-    newsQueue.forEach(item => {
-        const isBreaking = item.type === 'BREAKING';
-        const cardClass = isBreaking ? 'border-l-4 border-red-500 bg-red-50' : 'bg-white border-l-4 border-gray-300';
+    // Split into Pending and Active
+    const pendingItems = newsQueue.filter(i => !i.is_active);
+    const activeItems = newsQueue.filter(i => i.is_active);
 
-        const html = `
-            <div class="p-3 rounded shadow-sm flex justify-between items-center ${cardClass}">
-                <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] font-bold uppercase tracking-wider ${isBreaking ? 'text-red-600 bg-red-100 px-1 rounded' : 'text-gray-500'}">
-                            ${item.type} • ${item.category}
-                        </span>
-                        ${item.source === 'RSS' ? `<span class="bg-blue-100 text-blue-600 text-[9px] font-bold px-1 rounded uppercase"><i class="fas fa-rss"></i> RSS</span>` : ''}
-                    </div>
-                    <h4 class="font-bold text-lg text-slate-800 leading-tight mt-1">${item.title_tamil}</h4>
-                    <p class="text-[10px] text-gray-400 mt-1">ID: ${item.id} • ${new Date(item.created_at).toLocaleTimeString()}</p>
-                </div>
-                <div class="flex space-x-2 ml-4">
-                    <button onclick="showNewsOnScreen(${item.id})" class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center justify-center transition" title="Show on Main Screen">
-                        <i class="fas fa-tv"></i>
-                    </button>
-                    <button onclick="toggleActive(${item.id}, ${item.is_active})" class="w-8 h-8 rounded-full flex items-center justify-center transition ${item.is_active ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-200 text-gray-400 hover:bg-gray-300'}">
-                        <i class="fas fa-power-off"></i>
-                    </button>
-                    <button onclick="deleteNews(${item.id})" class="w-8 h-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200 flex items-center justify-center transition">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
+    // --- RENDER PENDING ---
+    if (pendingItems.length > 0) {
+        elQueue.innerHTML += `<div class="font-bold text-gray-500 text-xs uppercase tracking-wider mb-2 mt-4 ml-1">Pending Approval (${pendingItems.length})</div>`;
+        pendingItems.forEach(item => elQueue.innerHTML += renderItemCard(item, true));
+    }
+
+    // --- RENDER ACTIVE ---
+    if (activeItems.length > 0) {
+        elQueue.innerHTML += `<div class="font-bold text-green-600 text-xs uppercase tracking-wider mb-2 mt-6 ml-1">Live On Air (${activeItems.length})</div>`;
+        activeItems.forEach(item => elQueue.innerHTML += renderItemCard(item, false));
+    }
+}
+
+function renderItemCard(item, isPending) {
+    const isBreaking = item.type === 'BREAKING';
+    const cardClass = isPending
+        ? 'bg-yellow-50 border-l-4 border-yellow-400 opacity-90'
+        : (isBreaking ? 'border-l-4 border-red-500 bg-red-50' : 'bg-white border-l-4 border-gray-300');
+
+    // Action Buttons
+    let actionButtons = '';
+
+    if (isPending) {
+        actionButtons = `
+            <button onclick="approveNews(${item.id})" class="px-3 py-1 rounded bg-green-600 text-white text-xs font-bold hover:bg-green-700 transition shadow-sm">
+                <i class="fas fa-check mr-1"></i> Approve
+            </button>
+            <button onclick="rejectNews(${item.id})" class="px-3 py-1 rounded bg-red-100 text-red-600 text-xs font-bold hover:bg-red-200 transition">
+                <i class="fas fa-times"></i>
+            </button>
         `;
-        elQueue.innerHTML += html;
-    });
+    } else {
+        actionButtons = `
+            <button onclick="showNewsOnScreen(${item.id})" class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center justify-center transition" title="Show on Main Screen">
+                <i class="fas fa-tv"></i>
+            </button>
+            <button onclick="toggleActive(${item.id}, ${item.is_active})" class="w-8 h-8 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center transition" title="Unpublish">
+                <i class="fas fa-power-off"></i>
+            </button>
+            <button onclick="deleteNews(${item.id})" class="w-8 h-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200 flex items-center justify-center transition">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+    }
+
+    return `
+        <div class="p-3 rounded shadow-sm flex justify-between items-center ${cardClass} mb-2">
+            <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-[10px] font-bold uppercase tracking-wider ${isBreaking ? 'text-red-600 bg-red-100 px-1 rounded' : 'text-gray-500'}">
+                        ${item.type} • ${item.category}
+                    </span>
+                    ${item.source === 'RSS' ? `<span class="bg-blue-100 text-blue-600 text-[9px] font-bold px-1 rounded uppercase"><i class="fas fa-rss"></i> RSS</span>` : ''}
+                    ${isPending ? `<span class="bg-yellow-200 text-yellow-800 text-[9px] font-bold px-1 rounded uppercase"><i class="fas fa-clock"></i> WAIT</span>` : ''}
+                </div>
+                <h4 class="font-bold text-lg text-slate-800 leading-tight mt-1">${item.title_tamil}</h4>
+                <p class="text-[10px] text-gray-400 mt-1">ID: ${item.id} • ${new Date(item.created_at).toLocaleTimeString()}</p>
+            </div>
+            <div class="flex space-x-2 ml-4 items-center">
+                ${actionButtons}
+            </div>
+        </div>
+    `;
+}
+
+async function approveNews(id) {
+    try {
+        await fetch(`${API_BASE}/admin/news/${id}/approve`, { method: 'POST' });
+        // WebSocket will update UI
+    } catch (e) {
+        console.error(e);
+        alert("Failed to approve");
+    }
+}
+
+async function rejectNews(id) {
+    if (!confirm("Reject/Remove this draft?")) return;
+    try {
+        await fetch(`${API_BASE}/admin/news/${id}/reject`, { method: 'POST' });
+    } catch (e) { console.error(e); }
 }
 
 async function showNewsOnScreen(id) {

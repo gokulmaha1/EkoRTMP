@@ -9,6 +9,7 @@ import queue
 import asyncio
 import time
 import datetime
+import requests # Added for ntfy
 from typing import Optional, List
 from fastapi import FastAPI, UploadFile, Form, WebSocket, WebSocketDisconnect, Depends, HTTPException, File
 from fastapi.staticfiles import StaticFiles
@@ -20,6 +21,10 @@ from sqlalchemy.orm import Session
 # Import our new database module
 import database
 from database import NewsItem, SystemConfig, NewsType, NewsCategory, get_db
+
+# Notification Config
+NTFY_TOPIC = os.environ.get('NTFY_TOPIC', 'eko_news_secret_123') # CHANGE THIS IN PRODUCTION
+PUBLIC_URL = os.environ.get('PUBLIC_URL', 'http://127.0.0.1:8123') # CHANGE THIS
 
 app = FastAPI()
 
@@ -744,8 +749,12 @@ async def create_news(item: NewsCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_item)
     
-    # Notify Overlay via WebSocket
-    await broadcast_news_update("NEWS_ADDED", {"id": db_item.id, "title": db_item.title_tamil, "type": db_item.type})
+    # Notify Overlay via WebSocket (only if active)
+    if db_item.is_active:
+        await broadcast_news_update("NEWS_ADDED", {"id": db_item.id, "title": db_item.title_tamil, "type": db_item.type})
+    else:
+        # If Pending/Draft, send notification for approval
+        send_ntfy_approval_request(db_item)
     
     return db_item
 
@@ -768,6 +777,80 @@ async def update_news(news_id: int, item: NewsUpdate, db: Session = Depends(get_
 @app.delete("/api/news/{news_id}")
 async def delete_news(news_id: int, db: Session = Depends(get_db)):
     db_item = db.query(NewsItem).filter(NewsItem.id == news_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="News item not found")
+        
+    db.delete(db_item)
+    db.commit()
+    return {"status": "deleted"}
+
+# --- Admin API & Notification Logic ---
+
+@app.get("/api/admin/news")
+def get_admin_news(db: Session = Depends(get_db)):
+    # Return ALL news (Active + Drafts) sorted by ID desc (newest first)
+    items = db.query(NewsItem).order_by(NewsItem.id.desc()).all()
+    return items
+
+@app.post("/api/admin/news/{news_id}/approve")
+async def approve_news_item(news_id: int, db: Session = Depends(get_db)):
+    db_item = db.query(NewsItem).filter(NewsItem.id == news_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="News item not found")
+    
+    db_item.is_active = True
+    db.commit()
+    
+    await broadcast_news_update("NEWS_ADDED", {"id": db_item.id, "title": db_item.title_tamil, "type": db_item.type})
+    return {"status": "approved", "is_active": True}
+
+@app.post("/api/admin/news/{news_id}/reject")
+async def reject_news_item(news_id: int, db: Session = Depends(get_db)):
+    db_item = db.query(NewsItem).filter(NewsItem.id == news_id).first()
+    if not db_item:
+        raise HTTPException(status_code=404, detail="News item not found")
+    
+    # Rejecting = Deleting? Or checking as Inactive?
+    # Let's keep it but mark inactive (effectively does nothing if already inactive)
+    # OR delete from draft. Usually "Reject" implies "Kill it".
+    # User said manage draft vs active. But "Reject" button suggests tossing it?
+    # Let's just ensure it's inactive for now.
+    db_item.is_active = False
+    db.commit()
+    
+    await broadcast_news_update("NEWS_REMOVED", {"id": db_item.id}) # Just in case it was active
+    return {"status": "rejected", "is_active": False}
+
+
+def send_ntfy_approval_request(item):
+    """
+    Sends a push notification to ntfy.sh with interactive Approve/Reject buttons.
+    """
+    try:
+        topic = NTFY_TOPIC
+        url = f"https://ntfy.sh/{topic}"
+        
+        # Approve URL (POST)
+        action_approve = f"action=http, Approve, {PUBLIC_URL}/api/admin/news/{item.id}/approve, method=POST, clear=true"
+        # Reject URL (POST)
+        action_reject = f"action=http, Reject, {PUBLIC_URL}/api/admin/news/{item.id}/reject, method=POST, clear=true"
+        
+        headers = {
+            "Title": "New Draft Headline",
+            "Priority": "high",
+            "Tags": "newspaper,waiting",
+            "Actions": f"{action_approve}; {action_reject}"
+        }
+        
+        requests.post(url, 
+            data=f"Review: {item.title_tamil} ({item.category})", 
+            headers=headers,
+            timeout=5
+        )
+    except Exception as e:
+        print(f"[NTFY] Failed to send notification: {e}")
+
+
     if not db_item:
         raise HTTPException(status_code=404, detail="News item not found")
     
