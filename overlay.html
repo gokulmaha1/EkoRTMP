@@ -1227,7 +1227,7 @@
             const now = new Date();
             const isRecent = (now - itemDate) < MAX_AGE_MS;
 
-            if (true) { // Always show layout, even for text-only (using placeholder)
+            if (item.media_url && getMediaType(item.media_url) !== 'NONE') {
                 const displayItem = {
                     id: item.id,
                     title: item.title_tamil,
@@ -1237,6 +1237,9 @@
                     description: item.title_english || item.title_tamil
                 };
                 showNewsLayout(displayItem);
+            } else {
+                // If no media, hide the news presentation to show the main video feed
+                document.getElementById('newsPresentation').style.display = 'none';
             }
 
         }
