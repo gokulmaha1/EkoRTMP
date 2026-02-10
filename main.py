@@ -78,16 +78,15 @@ class StreamOverlayApp:
             print(f"Configuring Dual Stream: Primary + Backup")
             sink_pipeline = (
                 f'flvmux name=mux streamable=true ! tee name=t '
-                f't. ! queue max-size-time=3000000000 leaky=downstream ! rtmpsink location="{RTMP_URL}" '
-                f't. ! queue max-size-time=3000000000 leaky=downstream ! rtmpsink location="{BACKUP_RTMP_URL}" '
+                f't. ! queue ! rtmpsink location="{RTMP_URL}" '
+                f't. ! queue ! rtmpsink location="{BACKUP_RTMP_URL}" '
             )
         else:
             sink_pipeline = (
-                f'flvmux name=mux streamable=true ! queue max-size-time=3000000000 leaky=downstream ! rtmpsink location="{RTMP_URL}" '
+                f'flvmux name=mux streamable=true ! rtmpsink location="{RTMP_URL}" '
             )
 
         # Video Source & Encoding
-        # Changed speed-preset to 'ultrafast' for lowest CPU usage
         video_pipeline = (
             f'videotestsrc pattern=black ! video/x-raw,width={WIDTH},height={HEIGHT},framerate={FRAMERATE}/1 ! '
             'videoconvert ! cairooverlay name=overlay ! videoconvert ! queue ! '
