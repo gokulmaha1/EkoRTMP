@@ -87,9 +87,9 @@ async function submitNews(asDraft = false) {
         if (res.ok) {
             inpTitleTamil.value = ""; // Clear input
             // List will auto-update via WebSocket
-            // Switch to queue view if not there?
         } else {
-            alert("Failed to publish");
+            const err = await res.json();
+            alert("Failed to publish: " + (err.detail || "Unknown error"));
         }
     } catch (err) {
         console.error("Publish error:", err);

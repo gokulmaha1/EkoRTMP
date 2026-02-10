@@ -732,6 +732,10 @@ def get_news(db: Session = Depends(get_db)):
 
 @app.post("/api/news")
 async def create_news(item: NewsCreate, db: Session = Depends(get_db)):
+    # Validate Title Length
+    if len(item.title_tamil.split()) <= 3:
+        raise HTTPException(status_code=400, detail="Headline too short (must be > 3 words)")
+
     db_item = NewsItem(
         title_tamil=item.title_tamil,
         title_english=item.title_english,

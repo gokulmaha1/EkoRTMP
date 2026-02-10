@@ -42,6 +42,10 @@ def fetch_rss_feed(url: str, limit: int = 10) -> List[Dict]:
             # Regex removes the last " - Something" from the end of the string
             clean_title = re.sub(r' - [^-]+$', '', entry.title)
 
+            # Skip if title is too short (<= 3 words)
+            if len(clean_title.split()) <= 3:
+                continue
+
             items.append({
                 "title": clean_title,
                 "summary": clean_summary[:200] + "..." if len(clean_summary) > 200 else clean_summary,
