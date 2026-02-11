@@ -1122,9 +1122,16 @@
 
             if (newsItems.length === 0) return;
 
-            // Use all active items for loop
-            let pool = newsItems.filter(i => i.is_active);
-            if (pool.length === 0) return;
+            if (newsItems.length === 0) return;
+
+            // Use ONLY active items WITH MEDIA for main screen loop (Text-only news will only appear in ticker)
+            let pool = newsItems.filter(i => i.is_active && i.media_url && getMediaType(i.media_url) !== 'NONE');
+
+            if (pool.length === 0) {
+                // No image news available? Hide news presentation to show background stream
+                document.getElementById('newsPresentation').style.display = 'none';
+                return;
+            }
 
             headlineIndex = (headlineIndex + 1) % pool.length;
             const item = pool[headlineIndex];
