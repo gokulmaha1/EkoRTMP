@@ -441,6 +441,21 @@
             }
         }
 
+        /* --- LAYOUT MODES --- */
+        .news-presentation.no-media .np-media {
+            display: none !important;
+        }
+
+        .news-presentation.no-media .np-content {
+            flex: 1;
+            /* Take full width */
+            padding: 80px;
+            /* More padding for cleaner look */
+            align-items: center;
+            /* Center text */
+            text-align: center;
+        }
+
         .np-media {
             flex: 6;
             /* 60% width */
@@ -1009,7 +1024,10 @@
             placeholder.style.display = 'none';
             img.classList.remove('ken-burns-active'); // Reset Ken Burns
 
-            if (item.media_url) {
+            // Reset Toggle Class
+            container.classList.remove('no-media');
+
+            if (item.media_url && getMediaType(item.media_url) !== 'NONE') {
                 const type = getMediaType(item.media_url);
 
                 if (type === 'VIDEO') {
@@ -1025,7 +1043,8 @@
                     img.classList.add('ken-burns-active');
                 }
             } else {
-                placeholder.style.display = 'block';
+                // NO MEDIA -> TEXT ONLY MODE
+                container.classList.add('no-media');
             }
 
             // Show Container with ENTER animation
@@ -1155,23 +1174,18 @@
             const isRecent = (now - itemDate) < MAX_AGE_MS;
 
             // --- MAIN SCREEN AUTOMATION ---
-            // Logic: If media exists, show split view. If not, HIDE split view to show background stream.
+            // Logic: If media exists, show split view.
+            // If NOT, show Text-Only mode (Full width content).
 
-            if (item.media_url && getMediaType(item.media_url) !== 'NONE') {
-                const displayItem = {
-                    id: item.id,
-                    title: item.title_tamil,
-                    category: item.category,
-                    media_url: item.media_url,
-                    source: item.source,
-                    description: item.title_english || item.title_tamil
-                };
-                showNewsLayout(displayItem);
-            } else {
-                // HIDE news presentation layer to reveal background video/webview
-                // This prevents "blank screen" if background is set, but avoids showing placeholder
-                document.getElementById('newsPresentation').style.display = 'none';
-            }
+            const displayItem = {
+                id: item.id,
+                title: item.title_tamil,
+                category: item.category,
+                media_url: item.media_url,
+                source: item.source,
+                description: item.title_english || item.title_tamil
+            };
+            showNewsLayout(displayItem);
 
         }
 
