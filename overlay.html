@@ -1054,6 +1054,44 @@
             ttsVoices = window.speechSynthesis.getVoices();
         };
 
+        // --- AUDIO AUTOPLAY UNLOCK ---
+        let audioUnlocked = false;
+
+        function unlockAudio() {
+            if (audioUnlocked) return;
+
+            // Try to play a silent utterance
+            const u = new SpeechSynthesisUtterance('');
+            window.speechSynthesis.speak(u);
+            audioUnlocked = true;
+
+            // Remove button if exists
+            const existingBtn = document.getElementById('audio-unlock-btn');
+            if (existingBtn) existingBtn.remove();
+        }
+
+        // Add unlock listener to document
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('keydown', unlockAudio);
+
+        // Optional: Show visible button if audio is crucial
+        const unlockBtn = document.createElement('button');
+        unlockBtn.id = 'audio-unlock-btn';
+        unlockBtn.innerText = '🔊 Click to Enable Audio';
+        unlockBtn.style.position = 'fixed';
+        unlockBtn.style.top = '10px';
+        unlockBtn.style.left = '50%';
+        unlockBtn.style.transform = 'translateX(-50%)';
+        unlockBtn.style.zIndex = '9999';
+        unlockBtn.style.padding = '10px 20px';
+        unlockBtn.style.background = 'red';
+        unlockBtn.style.color = 'white';
+        unlockBtn.style.border = 'none';
+        unlockBtn.style.borderRadius = '5px';
+        unlockBtn.style.cursor = 'pointer';
+        unlockBtn.onclick = unlockAudio;
+        document.body.appendChild(unlockBtn);
+
         function speakText(text) {
             if (!text) return;
 
@@ -1080,8 +1118,7 @@
 
             utterance.onend = () => {
                 // Restore Volume
-                fetch(API_BASE + '/stream/duck', { // Reusing endpoint, or make separate? 
-                    // I realized I made a single endpoint with "state" param in server.py
+                fetch(API_BASE + '/stream/duck', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ state: 'unduck' })
