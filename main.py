@@ -187,38 +187,114 @@ class StreamOverlayApp:
         bus.add_signal_watch()
         bus.connect('message', self.on_message)
 
-        # Audio Trigger State
-        self.volume_trigger_file = "volume_trigger.json"
+        # TTS State
+        self.tts_bin = None
+        self.last_tts_timestamp = 0
+        self.tts_trigger_file = "tts_trigger.json"
         
-        # Start Audio Poller
-        GLib.timeout_add(500, self.check_volume_trigger)
+        # Start TTS Poller
+        GLib.timeout_add(1000, self.check_tts_trigger)
 
-    def check_volume_trigger(self):
-        # Don't interrupt Program volume? 
-        # Actually, if we are in a program, we might want to duck it too if news happens?
-        # But usually news ticker doesn't run during program.
-        # For now, let's just control vol_music.
+    def check_tts_trigger(self):
+        # Don't interrupt Program
+        if self.current_program_id is not None:
+            return True
             
         try:
-            if os.path.exists(self.volume_trigger_file):
-                with open(self.volume_trigger_file, 'r') as f:
+            if os.path.exists(self.tts_trigger_file):
+                with open(self.tts_trigger_file, 'r') as f:
                     data = json.load(f)
                     
                 ts = data.get('timestamp', 0)
                 if ts > self.last_tts_timestamp:
                     self.last_tts_timestamp = ts
-                    action = data.get('action')
-                    vol = data.get('volume', 1.0)
-                    
-                    print(f"Volume Trigger: {action} -> {vol}")
-                    
-                    if self.vol_music:
-                        self.vol_music.set_property("volume", vol)
-                        
+                    file_path = data.get('file')
+                    if file_path and os.path.exists(file_path):
+                        self.play_tts(file_path)
         except Exception as e:
-            print(f"Volume Check failed: {e}")
+            print(f"TTS Check failed: {e}")
             
         return True
+
+    def play_tts(self, file_path):
+        print(f"Playing TTS: {file_path}")
+        
+        # Duck Music
+        if self.vol_music:
+            self.vol_music.set_property("volume", 0.05)
+            
+        # Create TTS Bin if previous one exists (cleanup?)
+        if self.tts_bin:
+            self.tts_bin.set_state(Gst.State.NULL)
+            self.pipeline.remove(self.tts_bin)
+            self.tts_bin = None
+            
+        # New Bin
+        # file -> decode -> convert -> resample -> volume -> amix.sink_1
+        self.tts_bin = Gst.Bin.new("tts_bin")
+        
+        uri = f"file:///{file_path.replace(os.sep, '/')}"
+        
+        source = Gst.ElementFactory.make("uridecodebin")
+        source.set_property("uri", uri)
+        source.connect("pad-added", self.on_tts_pad_added)
+        
+        self.tts_bin.add(source)
+        self.pipeline.add(self.tts_bin)
+        self.tts_bin.set_state(Gst.State.PLAYING)
+
+    def on_tts_pad_added(self, source, new_pad):
+        # Link TTS to Mixer sink_1
+        new_pad_caps = new_pad.query_caps(None)
+        new_pad_struct = new_pad_caps.get_structure(0)
+        new_pad_name = new_pad_struct.get_name()
+        
+        if new_pad_name.startswith("audio"):
+            convert = Gst.ElementFactory.make("audioconvert")
+            resample = Gst.ElementFactory.make("audioresample")
+            vol = Gst.ElementFactory.make("volume")
+            vol.set_property("volume", 1.5) # Boost TTS slightly
+            
+            self.tts_bin.add(convert)
+            self.tts_bin.add(resample)
+            self.tts_bin.add(vol)
+            
+            convert.sync_state_with_parent()
+            resample.sync_state_with_parent()
+            vol.sync_state_with_parent()
+            
+            # Logic: source -> convert -> resample -> vol -> amix.sink_1
+            new_pad.link(convert.get_static_pad("sink"))
+            convert.link(resample)
+            resample.link(vol)
+            
+            src_pad = vol.get_static_pad("src")
+            sink_pad = self.amix.get_request_pad("sink_%u")
+            
+            if sink_pad:
+                 src_pad.link(sink_pad)
+                 sink_pad.add_probe(Gst.PadProbeType.EVENT_DOWNSTREAM, self.on_tts_event, None)
+            else:
+                print("Failed to get amix sink pad")
+
+    def on_tts_event(self, pad, info, user_data):
+        event = info.get_event()
+        if event.type == Gst.EventType.EOS:
+            print("TTS Finished (EOS)")
+            # Restore Music Volume
+            GLib.idle_add(self.restore_music_volume)
+        return Gst.PadProbeReturn.OK
+
+    def restore_music_volume(self):
+        if self.vol_music:
+            self.vol_music.set_property("volume", 1.0)
+        
+        # Cleanup TTS bin
+        if self.tts_bin:
+            self.tts_bin.set_state(Gst.State.NULL)
+            self.pipeline.remove(self.tts_bin)
+            self.tts_bin = None
+        return False
 
 
     def check_schedule(self):

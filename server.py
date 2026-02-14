@@ -826,27 +826,109 @@ async def reject_news_item(news_id: int, db: Session = Depends(get_db)):
     return {"status": "rejected", "is_active": False}
 
 
-# --- Volume Ducking Trigger (Frontend TTS Coordination) ---
+# --- Coqui TTS Integration ---
+import torch
+try:
+    from TTS.api import TTS
+except ImportError:
+    TTS = None
+    print("WARNING: Coqui TTS not installed. Install with 'pip install TTS'")
+
+class CoquiTTSWrapper:
+    def __init__(self):
+        self.tts = None
+        self.model_name = "tts_models/ta/tamil_female" # Default Tamil model
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    def load_model(self):
+        if self.tts is None and TTS is not None:
+            print(f"Loading Coqui TTS Model: {self.model_name} on {self.device}...")
+            self.tts = TTS(self.model_name).to(self.device)
+            print("Model Loaded.")
+
+    def tts_to_file(self, text, file_path):
+        if self.tts is None:
+            self.load_model()
+        
+        if self.tts:
+            self.tts.tts_to_file(text=text, file_path=file_path)
+            return True
+        else:
+            print("Coqui TTS not available.")
+            return False
+
+# Global TTS Instance
+coqui_engine = CoquiTTSWrapper()
+
+class TTSRequest(BaseModel):
+    text: str
+    lang: str = "ta"
+
+@app.post("/api/tts")
+async def generate_tts(req: TTSRequest):
+    try:
+        # Save to media/tts.wav (WAV is standard for Coqui)
+        media_dir = "media"
+        if not os.path.exists(media_dir):
+            os.makedirs(media_dir)
+            
+        file_name = f"tts_{int(time.time())}.wav"
+        file_path = os.path.join(media_dir, file_name)
+        abs_path = os.path.abspath(file_path)
+        
+        # Simple caching or just overwrite? User guide says "Cache audio files"
+        # For now, unique filenames to avoid locking/caching issues in GStreamer?
+        # Or fixed filename 'tts.wav' as per user guide example?
+        # User guide: "tts ... --out_path tts.wav"
+        # Using a fixed name can cause file lock issues if reading/writing simultaneously.
+        # But `tts_trigger.json` updates are sequential.
+        # let's use fixed name for simplicity as per guide, but maybe valid? 
+        # Actually GStreamer won't lock user-level file access usually on Linux, but Windows...
+        # Let's use 'tts.wav' but maybe a temp then move? 
+        # For now, direct write.
+        
+        target_file = os.path.join(media_dir, "tts.wav")
+        abs_target = os.path.abspath(target_file)
+
+        if TTS is not None:
+            # Use Coqui
+            coqui_engine.tts_to_file(req.text, abs_target)
+        else:
+            # Fallback for dev/testing without Coqui: Google Translate (Unofficial)
+            # Useful for local testing if Coqui fails
+            print("Fallback: Using Google Translate TTS")
+            text_enc = urllib.parse.quote(req.text)
+            url = f"https://translate.google.com/translate_tts?ie=UTF-8&q={text_enc}&tl={req.lang}&client=tw-ob"
+            req_web = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req_web) as response, open(abs_target, 'wb') as out_file:
+                out_file.write(response.read())
+
+        # Update trigger file for main.py
+        trigger_data = {
+            "timestamp": time.time(),
+            "file": abs_target,
+            "action": "play" 
+        }
+        
+        with open("tts_trigger.json", "w") as f:
+            json.dump(trigger_data, f)
+            
+        return {"status": "success", "file": abs_target}
+        
+    except Exception as e:
+        print(f"TTS Error: {e}")
+        # Don't fail the request completely if just TTS fails, maybe?
+        # But frontend expects success.
+        raise HTTPException(status_code=500, detail=str(e))
+
+# --- Volume Ducking Trigger (Kept for manual control if needed) ---
 class DuckRequest(BaseModel):
     state: str # "duck" or "unduck"
 
 @app.post("/api/stream/duck")
 def trigger_duck(req: DuckRequest):
-    try:
-        # Write to volume trigger file
-        trigger_data = {
-            "timestamp": time.time(),
-            "action": req.state, # duck (0.05) or unduck (1.0)
-            "volume": 0.05 if req.state == "duck" else 1.0
-        }
-        
-        with open("volume_trigger.json", "w") as f:
-            json.dump(trigger_data, f)
-            
-        return {"status": "success", "action": req.state}
-    except Exception as e:
-        print(f"Duck Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    # Backward compatibility or manual ducking
+    pass
 
 
 def send_ntfy_approval_request(item):
