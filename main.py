@@ -187,10 +187,16 @@ class StreamOverlayApp:
         bus.add_signal_watch()
         bus.connect('message', self.on_message)
 
+        # Audio Trigger State
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        self.volume_trigger_file = os.path.join(current_dir, "volume_trigger.json")
+        
         # TTS State
         self.tts_bin = None
         self.last_tts_timestamp = 0
-        self.tts_trigger_file = "tts_trigger.json"
+        self.tts_trigger_file = os.path.join(current_dir, "tts_trigger.json")
+        
+        print(f"DEBUG: Monitoring TTS trigger at: {self.tts_trigger_file}")
         
         # Start TTS Poller
         GLib.timeout_add(1000, self.check_tts_trigger)
@@ -202,15 +208,19 @@ class StreamOverlayApp:
             
         try:
             if os.path.exists(self.tts_trigger_file):
+                # print(f"DEBUG: Reading {self.tts_trigger_file}") # Too verbose? 
                 with open(self.tts_trigger_file, 'r') as f:
                     data = json.load(f)
                     
                 ts = data.get('timestamp', 0)
                 if ts > self.last_tts_timestamp:
+                    print(f"DEBUG: New TTS Trigger detected! Timestamp: {ts}")
                     self.last_tts_timestamp = ts
                     file_path = data.get('file')
                     if file_path and os.path.exists(file_path):
                         self.play_tts(file_path)
+                    else:
+                        print(f"DEBUG: TTS file not found: {file_path}")
         except Exception as e:
             print(f"TTS Check failed: {e}")
             

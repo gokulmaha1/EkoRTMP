@@ -887,61 +887,61 @@ class TTSRequest(BaseModel):
 
 @app.post("/api/tts")
 async def generate_tts(req: TTSRequest):
+    print(f"DEBUG: /api/tts request received: {req.text}")
     try:
-        # Save to media/tts.wav (WAV is standard for Coqui)
-        media_dir = "media"
+        # Define base directory (where server.py is)
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        media_dir = os.path.join(base_dir, "media")
+        
         if not os.path.exists(media_dir):
             os.makedirs(media_dir)
             
-        file_name = f"tts_{int(time.time())}.wav"
-        file_path = os.path.join(media_dir, file_name)
-        abs_path = os.path.abspath(file_path)
-        
-        # Simple caching or just overwrite? User guide says "Cache audio files"
-        # For now, unique filenames to avoid locking/caching issues in GStreamer?
-        # Or fixed filename 'tts.wav' as per user guide example?
-        # User guide: "tts ... --out_path tts.wav"
-        # Using a fixed name can cause file lock issues if reading/writing simultaneously.
-        # But `tts_trigger.json` updates are sequential.
-        # let's use fixed name for simplicity as per guide, but maybe valid? 
-        # Actually GStreamer won't lock user-level file access usually on Linux, but Windows...
-        # Let's use 'tts.wav' but maybe a temp then move? 
-        # For now, direct write.
-        
+        # Use a fixed name for simplicity
         target_file = os.path.join(media_dir, "tts.wav")
         abs_target = os.path.abspath(target_file)
+        
+        print(f"DEBUG: Generating TTS to: {abs_target}")
 
         success = False
         if TTS is not None:
             # Use Coqui
             success = coqui_engine.tts_to_file(req.text, abs_target)
+            print(f"DEBUG: Coqui TTS success: {success}")
             
         if not success:
-            # Fallback for dev/testing without Coqui: Google Translate (Unofficial)
-            # Useful for local testing if Coqui fails
+            # Fallback
             print("Fallback: Using Google Translate TTS")
-            text_enc = urllib.parse.quote(req.text)
-            url = f"https://translate.google.com/translate_tts?ie=UTF-8&q={text_enc}&tl={req.lang}&client=tw-ob"
-            req_web = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req_web) as response, open(abs_target, 'wb') as out_file:
-                out_file.write(response.read())
+            try:
+                text_enc = urllib.parse.quote(req.text)
+                url = f"https://translate.google.com/translate_tts?ie=UTF-8&q={text_enc}&tl={req.lang}&client=tw-ob"
+                req_web = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req_web) as response, open(abs_target, 'wb') as out_file:
+                    out_file.write(response.read())
+                success = True
+                print("DEBUG: Google TTS success")
+            except Exception as ex:
+                print(f"DEBUG: Google TTS failed: {ex}")
 
-        # Update trigger file for main.py
+        if not success:
+             raise Exception("Both Coqui and Google TTS failed")
+
+        # Update trigger file for main.py (absolute path)
+        trigger_file = os.path.join(base_dir, "tts_trigger.json")
         trigger_data = {
             "timestamp": time.time(),
             "file": abs_target,
             "action": "play" 
         }
         
-        with open("tts_trigger.json", "w") as f:
+        with open(trigger_file, "w") as f:
             json.dump(trigger_data, f)
+            
+        print(f"DEBUG: Written trigger to {trigger_file}")
             
         return {"status": "success", "file": abs_target}
         
     except Exception as e:
         print(f"TTS Error: {e}")
-        # Don't fail the request completely if just TTS fails, maybe?
-        # But frontend expects success.
         raise HTTPException(status_code=500, detail=str(e))
 
 # --- Volume Ducking Trigger (Kept for manual control if needed) ---
