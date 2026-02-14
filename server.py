@@ -827,32 +827,53 @@ async def reject_news_item(news_id: int, db: Session = Depends(get_db)):
 
 
 # --- Coqui TTS Integration ---
-import torch
+try:
+    import torch
+except ImportError:
+    torch = None
+    print("WARNING: torch not installed. Coqui TTS will be disabled.")
+
 try:
     from TTS.api import TTS
 except ImportError:
     TTS = None
     print("WARNING: Coqui TTS not installed. Install with 'pip install TTS'")
+except Exception as e:
+    TTS = None
+    print(f"WARNING: Error importing TTS: {e}")
 
 class CoquiTTSWrapper:
     def __init__(self):
         self.tts = None
         self.model_name = "tts_models/ta/tamil_female" # Default Tamil model
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = "cpu"
+        if torch and torch.cuda.is_available():
+            self.device = "cuda"
 
     def load_model(self):
         if self.tts is None and TTS is not None:
             print(f"Loading Coqui TTS Model: {self.model_name} on {self.device}...")
-            self.tts = TTS(self.model_name).to(self.device)
-            print("Model Loaded.")
+            try:
+                self.tts = TTS(self.model_name).to(self.device)
+                print("Model Loaded.")
+            except Exception as e:
+                print(f"Failed to load Coqui Model: {e}")
+                self.tts = None
 
     def tts_to_file(self, text, file_path):
+        if TTS is None:
+            return False
+            
         if self.tts is None:
             self.load_model()
         
         if self.tts:
-            self.tts.tts_to_file(text=text, file_path=file_path)
-            return True
+            try:
+                self.tts.tts_to_file(text=text, file_path=file_path)
+                return True
+            except Exception as e:
+                print(f"Coqui Sync Gen Error: {e}")
+                return False
         else:
             print("Coqui TTS not available.")
             return False
@@ -890,10 +911,12 @@ async def generate_tts(req: TTSRequest):
         target_file = os.path.join(media_dir, "tts.wav")
         abs_target = os.path.abspath(target_file)
 
+        success = False
         if TTS is not None:
             # Use Coqui
-            coqui_engine.tts_to_file(req.text, abs_target)
-        else:
+            success = coqui_engine.tts_to_file(req.text, abs_target)
+            
+        if not success:
             # Fallback for dev/testing without Coqui: Google Translate (Unofficial)
             # Useful for local testing if Coqui fails
             print("Fallback: Using Google Translate TTS")
