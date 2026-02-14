@@ -69,6 +69,10 @@
                 class="nav-link w-full text-left block p-3 rounded hover:bg-slate-800 text-gray-300 transition">
                 <i class="fas fa-sliders-h mr-2"></i> Layout Config
             </button>
+            <button onclick="switchView('schedule')" id="nav-schedule"
+                class="nav-link w-full text-left block p-3 rounded hover:bg-slate-800 text-gray-300 transition">
+                <i class="fas fa-calendar-alt mr-2"></i> Schedule
+            </button>
         </nav>
         <div class="p-4 border-t border-gray-700">
             <div class="flex items-center">
@@ -605,10 +609,89 @@
                 </div>
             </div>
 
-        </div>
-    </main>
+            <!-- VIEW: SCHEDULE -->
+            <div id="view-schedule" class="view-section hidden space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-slate-700 text-lg"><i class="fas fa-calendar-alt mr-2"></i> Program
+                            Schedule
+                        </h3>
+                        <button onclick="openProgramModal()"
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold shadow">
+                            <i class="fas fa-plus mr-2"></i> Add Program
+                        </button>
+                    </div>
 
-    <script src="/static/admin/admin.js"></script>
+                    <!-- Schedule Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 text-sm uppercase">
+                                    <th class="p-3 border-b">Start Time</th>
+                                    <th class="p-3 border-b">End Time</th>
+                                    <th class="p-3 border-b">Title</th>
+                                    <th class="p-3 border-b">Status</th>
+                                    <th class="p-3 border-b text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scheduleList" class="text-sm">
+                                <!-- Programs Injected Here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROGRAM MODAL -->
+            <div id="programModal"
+                class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800">Add Scheduled Program</h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700">Program Title</label>
+                            <input type="text" id="progTitle" class="w-full border p-2 rounded"
+                                placeholder="e.g. Morning News">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700">Start Time</label>
+                                <input type="datetime-local" id="progStart" class="w-full border p-2 rounded">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700">End Time</label>
+                                <input type="datetime-local" id="progEnd" class="w-full border p-2 rounded">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700">Video Source</label>
+
+                            <!-- File Upload -->
+                            <div class="flex items-center space-x-2 mt-1">
+                                <input type="file" id="progFile" accept="video/*"
+                                    class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            </div>
+                            <!-- Or URL -->
+                            <p class="text-xs text-gray-500 mt-2 mb-1">OR enter video path/URL manually:</p>
+                            <input type="text" id="progVideoPath" class="w-full border p-2 rounded text-sm"
+                                placeholder="/media/video.mp4">
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button onclick="closeProgramModal()"
+                            class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
+                        <button onclick="submitProgram()"
+                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-bold">Save
+                            Program</button>
+                    </div>
+                </div>
+            </div>
+
+            <script src="/static/admin/admin.js"></script>
 </body>
 
 </html>

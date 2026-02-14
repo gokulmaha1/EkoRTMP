@@ -112,6 +112,19 @@ class BlockedNews(Base):
     reason = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+class Program(Base):
+    __tablename__ = "programs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    video_path = Column(String, nullable=False) # Local path or URL
+    
+    start_time = Column(DateTime, nullable=False)
+    end_time = Column(DateTime, nullable=False)
+    
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
 class SystemConfig(Base):
     __tablename__ = "system_config"
 

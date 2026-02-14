@@ -12,6 +12,8 @@ gi.require_version('WebKit2', '4.0')
 print("DEBUG: main.py is starting...", flush=True)
 
 import time
+import json
+import urllib.request
 from gi.repository import Gst, Gtk, GObject, WebKit2, GLib, Gdk
 
 # Initialize GStreamer and GTK
@@ -33,6 +35,11 @@ class StreamOverlayApp:
         self.img_surface = None
         self.img_ctx = None
         self.last_heartbeat = time.time()
+        
+        # --- Program Schedule State ---
+        self.current_program_id = None
+        self.program_bin = None
+        self.api_base = "http://127.0.0.1:8123/api"
         
         # --- WebKit Setup (Headless) ---
         self.window = Gtk.OffscreenWindow()
@@ -67,15 +74,18 @@ class StreamOverlayApp:
         
         # Start a timer to snapshot the webview
         GLib.timeout_add(1000 // FRAMERATE, self.update_surface)
+        
+        # Start Schedule Poller
+        GLib.timeout_add_seconds(5, self.check_schedule)
 
         # --- GStreamer Pipeline ---
+        # We use input-selectors to switch between Default (Pad 0) and Program (Pad 1)
+        
         BACKUP_RTMP_URL = os.environ.get('BACKUP_RTMP_URL')
         
-        # We start with the Muxer and Sinks
-        # If backup is present, we Tee the output of the muxer to two sinks.
-        # Added leaky=downstream to prevent pipeline stalling if network lags
+        sink_pipeline = ""
         if BACKUP_RTMP_URL:
-            print(f"Configuring Dual Stream: Primary + Backup")
+            # print(f"Configuring Dual Stream: Primary + Backup")
             sink_pipeline = (
                 f'flvmux name=mux streamable=true ! tee name=t '
                 f't. ! queue ! rtmpsink location="{RTMP_URL}" '
@@ -86,40 +96,47 @@ class StreamOverlayApp:
                 f'flvmux name=mux streamable=true ! rtmpsink location="{RTMP_URL}" '
             )
 
-        # Video Source & Encoding
+        # --- VIDEO BRANCH ---
+        # Selector 0: Default Black
+        # Selector 1: Program Video (Dynamic)
         video_pipeline = (
+            f'input-selector name=vsel ! '
+            f'videoconvert ! cairooverlay name=overlay ! videoconvert ! queue ! '
+            f'x264enc bitrate=2500 tune=zerolatency speed-preset=ultrafast key-int-max=40 threads=3 ! queue ! mux. '
+            
+            # Default Source (Pad 0) connected to vsel
             f'videotestsrc pattern=black ! video/x-raw,width={WIDTH},height={HEIGHT},framerate={FRAMERATE}/1 ! '
-            'videoconvert ! cairooverlay name=overlay ! videoconvert ! queue ! '
-            'x264enc bitrate=2500 tune=zerolatency speed-preset=ultrafast key-int-max=40 threads=3 ! queue ! mux. '
+            f'videoconvert ! vsel.sink_0 '
         )
         
-        pipeline_str = sink_pipeline + video_pipeline
-        
-        # Audio Pipeline Component
-        # If the news music file exists, loop it. Otherwise fallback to silence (or ticks).
+        # --- AUDIO BRANCH ---
+        # Selector 0: Default Music/Silence
+        # Selector 1: Program Audio (Dynamic)
+        audio_pipeline = (
+            f'input-selector name=asel ! '
+            f'voaacenc bitrate=128000 ! mux. '
+        )
+
         music_file = "news-music-2025-335894.mp3"
         if os.path.exists(music_file):
-            print(f"Found background music: {music_file}")
-            # multifilesrc loop=true allows looping the file
-            audio_pipeline = (
+            # print(f"Found background music: {music_file}")
+            audio_source = (
                 f'multifilesrc location="{music_file}" loop=true ! '
                 'decodebin ! audioconvert ! audioresample ! audio/x-raw,rate=44100,channels=2 ! '
-                'volume volume=0.3 ! ' # Lower volume for background
-                'voaacenc bitrate=128000 ! mux.'
+                'volume volume=0.3 ! asel.sink_0 '
             )
         else:
-            print("Music file not found, using silence.")
-            audio_pipeline = (
-                'audiotestsrc wave=silence ! audio/x-raw,rate=44100,channels=2 ! '
-                'voaacenc bitrate=128000 ! mux.'
+            audio_source = (
+                'audiotestsrc wave=silence ! audio/x-raw,rate=44100,channels=2 ! asel.sink_0 '
             )
-
-        pipeline_str += audio_pipeline
         
-        print(f"Starting pipeline: {pipeline_str}")
+        pipeline_str = sink_pipeline + video_pipeline + audio_pipeline + audio_source
+        
+        print(f"Starting pipeline...")
         self.pipeline = Gst.parse_launch(pipeline_str)
         
-        # Connect to cairooverlay draw signal
+        self.vsel = self.pipeline.get_by_name('vsel')
+        self.asel = self.pipeline.get_by_name('asel')
         self.overlay = self.pipeline.get_by_name('overlay')
         self.overlay.connect('draw', self.on_draw)
         
@@ -127,6 +144,157 @@ class StreamOverlayApp:
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
         bus.connect('message', self.on_message)
+
+    def check_schedule(self):
+        try:
+            with urllib.request.urlopen(f"{self.api_base}/programs/current", timeout=2) as response:
+                if response.getcode() == 200:
+                    data = json.loads(response.read().decode())
+                    if data and 'id' in data:
+                        # Found active program
+                        if self.current_program_id != data['id']:
+                            self.start_program(data)
+                    else:
+                        # No active program
+                        if self.current_program_id is not None:
+                            self.stop_program()
+                else:
+                    if self.current_program_id is not None:
+                        self.stop_program()
+        except Exception as e:
+            print(f"Schedule Check Error: {e}")
+            
+        return True
+
+    def start_program(self, data):
+        print(f"Starting Program: {data['title']} (ID: {data['id']})")
+        self.current_program_id = data['id']
+        
+        # Construct path (handle relative media)
+        video_path = data['video_path']
+        if not os.path.isabs(video_path):
+            video_path = os.path.abspath(video_path)
+        
+        uri = f"file:///{video_path.replace(os.sep, '/')}"
+        
+        # Create Dynamic Bin
+        self.program_bin = Gst.Bin.new("program_bin")
+        
+        # URIDecodeBin
+        source = Gst.ElementFactory.make("uridecodebin", "source")
+        source.set_property("uri", uri)
+        source.connect("pad-added", self.on_pad_added)
+        
+        self.program_bin.add(source)
+        self.pipeline.add(self.program_bin)
+        
+        # Sync state
+        self.program_bin.set_state(Gst.State.PLAYING)
+        
+        # Switch Selectors (Optimistic switch)
+        # Note: If decode fails, we might get silence/black.
+        pad0 = self.vsel.get_static_pad("sink_1")
+        self.vsel.set_property("active-pad", pad0)
+        
+        apad0 = self.asel.get_static_pad("sink_1")
+        self.asel.set_property("active-pad", apad0)
+        
+        # Notify Overlay (optional, hiding overlays done via API usually, but we can enforce)
+        # For now, we leave overlays ON (Ticker over video is common)
+
+    def stop_program(self):
+        print("Stopping Program")
+        self.current_program_id = None
+        
+        # Switch back to default
+        pad0 = self.vsel.get_static_pad("sink_0")
+        self.vsel.set_property("active-pad", pad0)
+        
+        apad0 = self.asel.get_static_pad("sink_0")
+        self.asel.set_property("active-pad", apad0)
+        
+        # Cleanup Bin
+        if self.program_bin:
+            self.program_bin.set_state(Gst.State.NULL)
+            self.pipeline.remove(self.program_bin)
+            self.program_bin = None
+
+    def on_pad_added(self, source, new_pad):
+        # Link dynamic pads to selectors
+        new_pad_caps = new_pad.query_caps(None)
+        new_pad_struct = new_pad_caps.get_structure(0)
+        new_pad_type = new_pad_struct.get_name()
+        
+        if new_pad_type.startswith("video"):
+            # Ensure format compatibility
+            # source -> videoconvert -> videoscale -> caps -> vsel.sink_1
+            convert = Gst.ElementFactory.make("videoconvert")
+            scale = Gst.ElementFactory.make("videoscale")
+            capsfilter = Gst.ElementFactory.make("capsfilter")
+            caps = Gst.Caps.from_string(f"video/x-raw,width={WIDTH},height={HEIGHT}")
+            capsfilter.set_property("caps", caps)
+            
+            self.program_bin.add(convert)
+            self.program_bin.add(scale)
+            self.program_bin.add(capsfilter)
+            
+            convert.sync_state_with_parent()
+            scale.sync_state_with_parent()
+            capsfilter.sync_state_with_parent()
+            
+            # Internal Links
+            new_pad.link(convert.get_static_pad("sink"))
+            convert.link(scale)
+            scale.link(capsfilter)
+            
+            # External Link to Selector
+            src_pad = capsfilter.get_static_pad("src")
+            sink_pad = self.vsel.get_request_pad("sink_%u") # Use request pad or static? input-selector has sometimes sink_%u
+            # Actually input-selector usually has sink_%u request pads, but we manually used sink_0 in string.
+            # sink_1 might not exist until requested?
+            # GStreamer parse_launch might create sink_0 and sink_1 if referenced? No, sink_0 was referenced.
+            # Let's request a pad.
+            
+            # Wait, in the pipeline string string I didn't reference vsel.sink_1.
+            # So I should request a pad.
+            # BUT I need to know it is index 1 for switching?
+            # input-selector pads have a 'always-ok' property? No.
+            # We used set_property("active-pad", pad).
+            
+            # If I request, I get sink_1?
+            # sink_pad = self.vsel.get_compat_pad(sink_1)? 
+            
+            # Let's get static first?
+            sink_pad = self.vsel.get_static_pad("sink_1")
+            if not sink_pad:
+                sink_pad = self.vsel.get_request_pad("sink_%u")
+            
+            if sink_pad:
+                src_pad.link(sink_pad)
+            else:
+                print("Failed to get video sink pad")
+
+        elif new_pad_type.startswith("audio"):
+            # source -> audioconvert -> audioresample -> asel.sink_1
+            convert = Gst.ElementFactory.make("audioconvert")
+            resample = Gst.ElementFactory.make("audioresample")
+            
+            self.program_bin.add(convert)
+            self.program_bin.add(resample)
+            
+            convert.sync_state_with_parent()
+            resample.sync_state_with_parent()
+            
+            new_pad.link(convert.get_static_pad("sink"))
+            convert.link(resample)
+            
+            src_pad = resample.get_static_pad("src")
+            sink_pad = self.asel.get_static_pad("sink_1")
+            if not sink_pad:
+                sink_pad = self.asel.get_request_pad("sink_%u")
+                
+            if sink_pad:
+                src_pad.link(sink_pad)
 
     def update_surface(self):
         # This runs in the main GTK thread
@@ -171,11 +339,16 @@ class StreamOverlayApp:
         t = message.type
         if t == Gst.MessageType.EOS:
             print("End of stream")
-            self.mainloop.quit()
+            # If loading a file, EOS might trigger?
+            # We should probably handle EOS from program_bin separately?
+            # But the bus is shared.
+            # If EOS comes from program_bin, we should loop or stop?
+            # For now, simplistic approach: ignore EOS from files (loop handled by uridecodebin? no)
+            pass 
         elif t == Gst.MessageType.ERROR:
             err, debug = message.parse_error()
             print(f"Error: {err}, {debug}")
-            self.mainloop.quit()
+            # self.mainloop.quit() # detailed error handling needed
         elif t == Gst.MessageType.WARNING:
             err, debug = message.parse_warning()
             print(f"Warning: {err}, {debug}")

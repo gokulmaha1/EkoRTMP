@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 
 # Import our new database module
 import database
-from database import NewsItem, SystemConfig, NewsType, NewsCategory, get_db
+from database import NewsItem, SystemConfig, NewsType, NewsCategory, get_db, Program
 
 # Notification Config
 NTFY_TOPIC = os.environ.get('NTFY_TOPIC', 'eko_news_secret_123') # CHANGE THIS IN PRODUCTION
