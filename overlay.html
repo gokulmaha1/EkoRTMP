@@ -492,15 +492,7 @@
         }
 
         /* --- ANIMATIONS: Text & Media --- */
-        @keyframes kenBurns {
-            0% {
-                transform: scale(1.0);
-            }
-
-            100% {
-                transform: scale(1.15);
-            }
-        }
+        /* Ken Burns Removed for Performance */
 
         @keyframes fadeInUp {
             from {
@@ -525,20 +517,16 @@
         }
 
         .ken-burns-active {
-            animation: kenBurns 15s linear forwards;
-            /* Slow 15s zoom */
+            /* animation: kenBurns 15s linear forwards; */
+            /* Ken Burns Disabled */
         }
 
-        @keyframes newsWipe {
+        @keyframes newsFadeIn {
             0% {
-                clip-path: polygon(0 0, 0 0, 0 100%, 0% 100%);
-                transform: translateX(-30px);
                 opacity: 0;
             }
 
             100% {
-                clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
-                transform: translateX(0);
                 opacity: 1;
             }
         }
@@ -551,7 +539,8 @@
         .anim-desc {
             opacity: 0;
             /* Tamil TV Style: Sharp wipe from left with slight slide */
-            animation: newsWipe 1.0s cubic-bezier(0.19, 1, 0.22, 1) 0.4s forwards;
+            /* Simplified Fade In */
+            animation: newsFadeIn 0.5s ease-out 0.2s forwards;
             background: rgba(0, 0, 0, 0.03);
             /* Subtle backdrop */
             padding: 15px;
@@ -1205,10 +1194,10 @@
         fetchNews();
         fetchAds();
 
-        // Fallback Poll
-        setInterval(fetchNews, 20000);
-        setInterval(fetchAds, 30000); // Refresh ads every 30s
-        setInterval(fetchConfig, 10000);
+        // Fallback Poll (Disabled/Relaxed)
+        // setInterval(fetchNews, 20000);
+        // setInterval(fetchAds, 30000); 
+        // setInterval(fetchConfig, 10000);
 
         // Start Scheduler
         setTimeout(startAdScheduler, 5000); // Delay start
