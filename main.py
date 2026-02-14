@@ -21,7 +21,7 @@ Gst.init(None)
 WIDTH = 1280
 HEIGHT = 720
 RTMP_URL = os.environ.get('RTMP_URL', 'rtmp://localhost/live/test')
-FRAMERATE = 30
+FRAMERATE = 20
 
 class StreamOverlayApp:
     def __init__(self):
@@ -90,7 +90,7 @@ class StreamOverlayApp:
         video_pipeline = (
             f'videotestsrc pattern=black ! video/x-raw,width={WIDTH},height={HEIGHT},framerate={FRAMERATE}/1 ! '
             'videoconvert ! cairooverlay name=overlay ! videoconvert ! queue ! '
-            'x264enc bitrate=4000 tune=zerolatency speed-preset=ultrafast key-int-max=60 threads=4 ! queue ! mux. '
+            'x264enc bitrate=4000 tune=zerolatency speed-preset=ultrafast key-int-max=60 threads=2 ! queue ! mux. '
         )
         
         pipeline_str = sink_pipeline + video_pipeline

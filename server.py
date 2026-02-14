@@ -77,7 +77,7 @@ class StreamManager:
             if not self.should_run:
                 if self.process:
                     self._kill_process()
-                time.sleep(1)
+                time.sleep(2)
                 continue
 
             if self.process is None or self.process.poll() is not None:
@@ -181,7 +181,7 @@ async def broadcast_logs():
                     if ws in connected_websockets:
                         connected_websockets.remove(ws)
             except queue.Empty:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.5)
         except Exception as e:
             print(f"Error in broadcast loop: {e}")
             await asyncio.sleep(1)
