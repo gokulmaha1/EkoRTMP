@@ -935,49 +935,51 @@ function showAddItemModal(campId) {
     }
 
     if (content) createAdItem(campId, type, content);
-    // --- Schedule Management ---
+}
 
-    const programModal = document.getElementById('programModal');
+// --- Schedule Management ---
 
-    async function fetchSchedule() {
-        const el = document.getElementById('scheduleList');
-        el.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-400">Loading schedule...</td></tr>';
+const programModal = document.getElementById('programModal');
 
-        try {
-            const res = await fetch(`${API_BASE}/programs`);
-            const items = await res.json();
-            renderSchedule(items);
-        } catch (e) {
-            console.error(e);
-            el.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-red-400">Error loading schedule</td></tr>';
-        }
+async function fetchSchedule() {
+    const el = document.getElementById('scheduleList');
+    el.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-400">Loading schedule...</td></tr>';
+
+    try {
+        const res = await fetch(`${API_BASE}/programs`);
+        const items = await res.json();
+        renderSchedule(items);
+    } catch (e) {
+        console.error(e);
+        el.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-red-400">Error loading schedule</td></tr>';
+    }
+}
+
+function renderSchedule(items) {
+    const el = document.getElementById('scheduleList');
+    el.innerHTML = "";
+
+    if (items.length === 0) {
+        el.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-400">No scheduled programs.</td></tr>';
+        return;
     }
 
-    function renderSchedule(items) {
-        const el = document.getElementById('scheduleList');
-        el.innerHTML = "";
+    const now = new Date();
 
-        if (items.length === 0) {
-            el.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-400">No scheduled programs.</td></tr>';
-            return;
+    items.forEach(p => {
+        const start = new Date(p.start_time);
+        const end = new Date(p.end_time);
+
+        let status = '<span class="px-2 py-1 rounded bg-gray-100 text-gray-500 text-xs font-bold">UPCOMING</span>';
+        if (now >= start && now <= end) {
+            status = '<span class="px-2 py-1 rounded bg-green-100 text-green-600 text-xs font-bold animate-pulse">ON AIR</span>';
+        } else if (now > end) {
+            status = '<span class="px-2 py-1 rounded bg-gray-100 text-gray-400 text-xs font-bold">ENDED</span>';
         }
 
-        const now = new Date();
-
-        items.forEach(p => {
-            const start = new Date(p.start_time);
-            const end = new Date(p.end_time);
-
-            let status = '<span class="px-2 py-1 rounded bg-gray-100 text-gray-500 text-xs font-bold">UPCOMING</span>';
-            if (now >= start && now <= end) {
-                status = '<span class="px-2 py-1 rounded bg-green-100 text-green-600 text-xs font-bold animate-pulse">ON AIR</span>';
-            } else if (now > end) {
-                status = '<span class="px-2 py-1 rounded bg-gray-100 text-gray-400 text-xs font-bold">ENDED</span>';
-            }
-
-            const tr = document.createElement('tr');
-            tr.className = "border-b hover:bg-slate-50";
-            tr.innerHTML = `
+        const tr = document.createElement('tr');
+        tr.className = "border-b hover:bg-slate-50";
+        tr.innerHTML = `
             <td class="p-3">${start.toLocaleString()}</td>
             <td class="p-3">${end.toLocaleString()}</td>
             <td class="p-3 font-bold text-slate-700">${p.title}</td>
@@ -988,124 +990,124 @@ function showAddItemModal(campId) {
                 </button>
             </td>
         `;
-            el.appendChild(tr);
-        });
+        el.appendChild(tr);
+    });
+}
+
+function openProgramModal() {
+    programModal.classList.remove('hidden');
+    // Set default times (next hour)
+    const now = new Date();
+    now.setMinutes(0, 0, 0); // round to hour
+    now.setHours(now.getHours() + 1);
+
+    // Format for datetime-local (YYYY-MM-DDTHH:mm)
+    const fmt = (d) => {
+        const offset = d.getTimezoneOffset() * 60000;
+        return new Date(d.getTime() - offset).toISOString().slice(0, 16);
     }
 
-    function openProgramModal() {
-        programModal.classList.remove('hidden');
-        // Set default times (next hour)
-        const now = new Date();
-        now.setMinutes(0, 0, 0); // round to hour
-        now.setHours(now.getHours() + 1);
+    document.getElementById('progStart').value = fmt(now);
 
-        // Format for datetime-local (YYYY-MM-DDTHH:mm)
-        const fmt = (d) => {
-            const offset = d.getTimezoneOffset() * 60000;
-            return new Date(d.getTime() - offset).toISOString().slice(0, 16);
-        }
+    const end = new Date(now);
+    end.setHours(end.getHours() + 1);
+    document.getElementById('progEnd').value = fmt(end);
+}
 
-        document.getElementById('progStart').value = fmt(now);
+function closeProgramModal() {
+    programModal.classList.add('hidden');
+}
 
-        const end = new Date(now);
-        end.setHours(end.getHours() + 1);
-        document.getElementById('progEnd').value = fmt(end);
-    }
+async function submitProgram() {
+    const title = document.getElementById('progTitle').value.trim();
+    if (!title) return alert("Enter a title");
 
-    function closeProgramModal() {
-        programModal.classList.add('hidden');
-    }
+    const start = document.getElementById('progStart').value;
+    const end = document.getElementById('progEnd').value;
 
-    async function submitProgram() {
-        const title = document.getElementById('progTitle').value.trim();
-        if (!title) return alert("Enter a title");
+    if (!start || !end) return alert("Enter start and end times");
 
-        const start = document.getElementById('progStart').value;
-        const end = document.getElementById('progEnd').value;
+    // File Handling
+    const file = document.getElementById('progFile').files[0];
+    let videoPath = document.getElementById('progVideoPath').value.trim();
 
-        if (!start || !end) return alert("Enter start and end times");
+    if (!file && !videoPath) return alert("Please select a video file or enter a path/URL");
 
-        // File Handling
-        const file = document.getElementById('progFile').files[0];
-        let videoPath = document.getElementById('progVideoPath').value.trim();
-
-        if (!file && !videoPath) return alert("Please select a video file or enter a path/URL");
-
-        // If file selected, upload it first
-        if (file) {
-            // Change button state
-            const btn = document.querySelector('#programModal button.bg-blue-600');
-            const originalText = btn.innerText;
-            btn.innerText = "Uploading...";
-            btn.disabled = true;
-
-            try {
-                const formData = new FormData();
-                formData.append("file", file);
-                const res = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await res.json();
-                if (data.url) {
-                    videoPath = data.url; // Relative URL e.g. /media/video.mp4
-                } else {
-                    throw new Error("Upload failed");
-                }
-
-            } catch (e) {
-                console.error(e);
-                alert("Upload failed: " + e.message);
-                btn.innerText = originalText;
-                btn.disabled = false;
-                return;
-            }
-        }
-
-        if (videoPath.startsWith('/media/')) {
-            videoPath = videoPath.substring(1); // Remove leading slash -> "media/foo.mp4"
-        }
-
-        const payload = {
-            title: title,
-            video_path: videoPath,
-            start_time: new Date(start).toISOString(),
-            end_time: new Date(end).toISOString(),
-            is_active: true
-        };
+    // If file selected, upload it first
+    if (file) {
+        // Change button state
+        const btn = document.querySelector('#programModal button.bg-blue-600');
+        const originalText = btn.innerText;
+        btn.innerText = "Uploading...";
+        btn.disabled = true;
 
         try {
-            const res = await fetch(`${API_BASE}/programs`, {
+            const formData = new FormData();
+            formData.append("file", file);
+            const res = await fetch('/api/upload', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: formData
             });
-
-            if (res.ok) {
-                closeProgramModal();
-                fetchSchedule();
-                alert("Program Scheduled!");
+            const data = await res.json();
+            if (data.url) {
+                videoPath = data.url; // Relative URL e.g. /media/video.mp4
             } else {
-                const err = await res.json();
-                alert("Error: " + err.detail);
+                throw new Error("Upload failed");
             }
+
         } catch (e) {
             console.error(e);
-            alert("Failed to save program");
-        } finally {
-            // Reset button
-            const btn = document.querySelector('#programModal button.bg-blue-600');
-            if (btn) {
-                btn.innerText = "Save Program";
-                btn.disabled = false;
-            }
+            alert("Upload failed: " + e.message);
+            btn.innerText = originalText;
+            btn.disabled = false;
+            return;
         }
     }
 
-    async function deleteProgram(id) {
-        if (!confirm("Are you sure you want to delete this program?")) return;
-        try {
-            await fetch(`${API_BASE}/programs/${id}`, { method: 'DELETE' });
-            fetchSchedule();
-        } catch (e) { console.error(e); }
+    if (videoPath.startsWith('/media/')) {
+        videoPath = videoPath.substring(1); // Remove leading slash -> "media/foo.mp4"
     }
+
+    const payload = {
+        title: title,
+        video_path: videoPath,
+        start_time: new Date(start).toISOString(),
+        end_time: new Date(end).toISOString(),
+        is_active: true
+    };
+
+    try {
+        const res = await fetch(`${API_BASE}/programs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            closeProgramModal();
+            fetchSchedule();
+            alert("Program Scheduled!");
+        } else {
+            const err = await res.json();
+            alert("Error: " + err.detail);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Failed to save program");
+    } finally {
+        // Reset button
+        const btn = document.querySelector('#programModal button.bg-blue-600');
+        if (btn) {
+            btn.innerText = "Save Program";
+            btn.disabled = false;
+        }
+    }
+}
+
+async function deleteProgram(id) {
+    if (!confirm("Are you sure you want to delete this program?")) return;
+    try {
+        await fetch(`${API_BASE}/programs/${id}`, { method: 'DELETE' });
+        fetchSchedule();
+    } catch (e) { console.error(e); }
+}

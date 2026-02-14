@@ -881,6 +881,12 @@ class CoquiTTSWrapper:
 # Global TTS Instance
 coqui_engine = CoquiTTSWrapper()
 
+# Fallback (System Native)
+try:
+    import pyttsx3
+except ImportError:
+    pyttsx3 = None
+
 class TTSRequest(BaseModel):
     text: str
     lang: str = "ta"
@@ -896,23 +902,33 @@ async def generate_tts(req: TTSRequest):
         if not os.path.exists(media_dir):
             os.makedirs(media_dir)
             
-        # Use a fixed name for simplicity
-        target_file = os.path.join(media_dir, "tts.wav")
+        # Use a unique name to avoid Windows file locking issues
+        # Clean up old files? (Maybe later task)
+        filename = f"tts_{int(time.time()*1000)}.wav"
+        target_file = os.path.join(media_dir, filename)
         abs_target = os.path.abspath(target_file)
         
         print(f"DEBUG: Generating TTS to: {abs_target}")
 
         success = False
+        
+        # 1. Try Coqui TTS
         if TTS is not None:
-            # Use Coqui
-            success = coqui_engine.tts_to_file(req.text, abs_target)
-            print(f"DEBUG: Coqui TTS success: {success}")
+            try:
+                # Use Coqui
+                print("DEBUG: Attempting Coqui TTS...")
+                success = coqui_engine.tts_to_file(req.text, abs_target)
+                if success:
+                    print(f"DEBUG: Coqui TTS success")
+            except Exception as e:
+                print(f"DEBUG: Coqui TTS failed: {e}")
             
+        # 2. Try Google TTS (gtranslate)
         if not success:
-            # Fallback
             print("Fallback: Using Google Translate TTS")
             try:
                 text_enc = urllib.parse.quote(req.text)
+                # Client 'tw-ob' sometimes blocked, try without or standard
                 url = f"https://translate.google.com/translate_tts?ie=UTF-8&q={text_enc}&tl={req.lang}&client=tw-ob"
                 req_web = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
                 with urllib.request.urlopen(req_web) as response, open(abs_target, 'wb') as out_file:
@@ -922,8 +938,24 @@ async def generate_tts(req: TTSRequest):
             except Exception as ex:
                 print(f"DEBUG: Google TTS failed: {ex}")
 
+        # 3. Try pyttsx3 (System Native)
+        if not success and pyttsx3 is not None:
+            print("Fallback: Using pyttsx3 (System Native)")
+            try:
+                engine = pyttsx3.init()
+                # Try to find a Tamil voice if possible, otherwise default
+                # On Windows, Tamil might not be installed, but it will speak in default voice (maybe garbage for Tamil text)
+                # But at least it won't crash the server.
+                # Saving to file
+                engine.save_to_file(req.text, abs_target)
+                engine.runAndWait()
+                success = True
+                print("DEBUG: pyttsx3 success")
+            except Exception as ex:
+                print(f"DEBUG: pyttsx3 failed: {ex}")
+
         if not success:
-             raise Exception("Both Coqui and Google TTS failed")
+             raise Exception("All TTS engines failed (Coqui, Google, System)")
 
         # Update trigger file for main.py (absolute path)
         trigger_file = os.path.join(base_dir, "tts_trigger.json")
@@ -942,6 +974,7 @@ async def generate_tts(req: TTSRequest):
         
     except Exception as e:
         print(f"TTS Error: {e}")
+        # Return 500 but log it
         raise HTTPException(status_code=500, detail=str(e))
 
 # --- Volume Ducking Trigger (Kept for manual control if needed) ---
