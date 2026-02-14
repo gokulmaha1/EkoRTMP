@@ -386,11 +386,17 @@ async def upload_file(file: UploadFile = File(...)):
         clean_name = re.sub(r'[^\w\.-]', '_', file.filename)
         file_location = f"media/{clean_name}"
         
+        # Write file in chunks to avoid memory issues with large videos
         with open(file_location, "wb+") as f:
-            f.write(file.file.read())
+            while True:
+                chunk = await file.read(1024 * 1024) # Read 1MB chunks
+                if not chunk:
+                    break
+                f.write(chunk)
             
         return {"info": f"File saved", "url": f"/media/{clean_name}"}
     except Exception as e:
+        print(f"Upload Error: {e}")
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.get("/api/media")
@@ -691,6 +697,65 @@ def delete_ad_item(item_id: int, db: Session = Depends(get_db)):
         db.delete(item)
         db.commit()
     return {"status": "success"}
+
+# --- Program Management API (Schedule) ---
+
+class ProgramCreate(BaseModel):
+    title: str
+    video_path: str
+    start_time: datetime.datetime
+    end_time: datetime.datetime
+    is_active: bool = True
+
+@app.get("/api/programs")
+def get_programs(db: Session = Depends(get_db)):
+    # Return active programs sorted by start time
+    now = datetime.datetime.utcnow()
+    # Optional: Filter for future/recent programs? For now return all to show history in admin
+    return db.query(Program).order_by(Program.start_time.desc()).all()
+
+@app.post("/api/programs")
+def create_program(prog: ProgramCreate, db: Session = Depends(get_db)):
+    # Validate times
+    if prog.end_time <= prog.start_time:
+         raise HTTPException(status_code=400, detail="End time must be after start time")
+
+    db_prog = Program(
+        title=prog.title,
+        video_path=prog.video_path,
+        start_time=prog.start_time,
+        end_time=prog.end_time,
+        is_active=prog.is_active
+    )
+    db.add(db_prog)
+    db.commit()
+    db.refresh(db_prog)
+    return db_prog
+
+@app.delete("/api/programs/{prog_id}")
+def delete_program(prog_id: int, db: Session = Depends(get_db)):
+    prog = db.query(Program).filter(Program.id == prog_id).first()
+    if prog:
+        db.delete(prog)
+        db.commit()
+    return {"status": "success"}
+
+@app.get("/api/programs/current")
+def get_current_program(db: Session = Depends(get_db)):
+    """
+    Returns the program that should be playing NOW.
+    Used by main.py to switch streams.
+    """
+    now = datetime.datetime.utcnow()
+    prog = db.query(Program).filter(
+        Program.is_active == True,
+        Program.start_time <= now,
+        Program.end_time > now
+    ).order_by(Program.start_time.desc()).first()
+    
+    if prog:
+        return prog
+    return None # No active program
 
 @app.get("/api/ads/active")
 def get_active_ads(db: Session = Depends(get_db)):
