@@ -939,7 +939,7 @@ function showAddItemModal(campId) {
 
 // --- Schedule Management ---
 
-const programModal = document.getElementById('programModal');
+// const programModal = document.getElementById('programModal'); // Moved inside functions to avoid init issues
 
 async function fetchSchedule() {
     const el = document.getElementById('scheduleList');
@@ -948,7 +948,13 @@ async function fetchSchedule() {
     try {
         const res = await fetch(`${API_BASE}/programs`);
         const items = await res.json();
-        renderSchedule(items);
+
+        if (Array.isArray(items)) {
+            renderSchedule(items);
+        } else {
+            console.error("Schedule API returned non-array:", items);
+            el.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-red-400">Error: ${items.detail || "Invalid response"}</td></tr>`;
+        }
     } catch (e) {
         console.error(e);
         el.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-red-400">Error loading schedule</td></tr>';
@@ -995,6 +1001,7 @@ function renderSchedule(items) {
 }
 
 function openProgramModal() {
+    const programModal = document.getElementById('programModal');
     programModal.classList.remove('hidden');
     // Set default times (next hour)
     const now = new Date();
@@ -1015,7 +1022,7 @@ function openProgramModal() {
 }
 
 function closeProgramModal() {
-    programModal.classList.add('hidden');
+    document.getElementById('programModal').classList.add('hidden');
 }
 
 async function submitProgram() {
