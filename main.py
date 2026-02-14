@@ -110,33 +110,75 @@ class StreamOverlayApp:
         )
         
         # --- AUDIO BRANCH ---
-        # Selector 0: Default Music/Silence
+        # We use audiomixer to mix Background Music and TTS
+        # Selector 0: Default Mix (Music + TTS)
         # Selector 1: Program Audio (Dynamic)
-        audio_pipeline = (
-            f'input-selector name=asel ! '
+        
+        # Audio Mixer Construction
+        # Pad 0: Music (Background)
+        # Pad 1: TTS (Announcement)
+        audio_mix_pipeline = (
+            f'audiomixer name=amix ! '
             f'voaacenc bitrate=128000 ! mux. '
         )
-
+        
+        # Music Source (Pad 0 of Mixer)
         music_file = "news-music-2025-335894.mp3"
         if os.path.exists(music_file):
             # print(f"Found background music: {music_file}")
             audio_source = (
                 f'multifilesrc location="{music_file}" loop=true ! '
                 'decodebin ! audioconvert ! audioresample ! audio/x-raw,rate=44100,channels=2 ! '
-                'volume volume=0.3 ! asel.sink_0 '
+                'volume name=vol_music volume=1.0 ! amix.sink_0 '
             )
         else:
             audio_source = (
-                'audiotestsrc wave=silence ! audio/x-raw,rate=44100,channels=2 ! asel.sink_0 '
+                'audiotestsrc wave=silence ! audio/x-raw,rate=44100,channels=2 ! '
+                'volume name=vol_music volume=1.0 ! amix.sink_0 '
             )
+            
+        # TTS Source (Pad 1 of Mixer) - Initially silence/waiting
+        # We don't keep a live source open, we just want the pad ready?
+        # Typically we dynamically link/unlink or use a latch.
+        # Simplest: Input-selector for the Whole Audio Branch? 
+        # No, we want mixing.
+        # So we leave amix.sink_1 open (or request it dynamically).
         
-        pipeline_str = sink_pipeline + video_pipeline + audio_pipeline + audio_source
+        # Let's wrap the mix in an input-selector branch so we can switch to Program Audio totally.
+        # Selector 0: The Mixer (Music + TTS)
+        # Selector 1: Program Audio
+        
+        audio_pipeline = (
+            f'input-selector name=asel ! '
+            f'voaacenc bitrate=128000 ! mux. '
+            
+            # Branch 0: Mixer
+            f'audiomixer name=amix ! asel.sink_0 '
+        )
+        
+        # Determine Music Source string again for clarity
+        if os.path.exists(music_file):
+             audio_source_0 = (
+                f'multifilesrc location="{music_file}" loop=true ! '
+                'decodebin ! audioconvert ! audioresample ! audio/x-raw,rate=44100,channels=2 ! '
+                'volume name=vol_music volume=1.0 ! amix.sink_0 '
+            )
+        else:
+            audio_source_0 = (
+                'audiotestsrc wave=silence ! audio/x-raw,rate=44100,channels=2 ! '
+                'volume name=vol_music volume=1.0 ! amix.sink_0 '
+            )
+
+        pipeline_str = sink_pipeline + video_pipeline + audio_pipeline + audio_source_0
         
         print(f"Starting pipeline...")
         self.pipeline = Gst.parse_launch(pipeline_str)
         
         self.vsel = self.pipeline.get_by_name('vsel')
         self.asel = self.pipeline.get_by_name('asel')
+        self.amix = self.pipeline.get_by_name('amix')
+        self.vol_music = self.pipeline.get_by_name('vol_music')
+        
         self.overlay = self.pipeline.get_by_name('overlay')
         self.overlay.connect('draw', self.on_draw)
         
@@ -144,6 +186,40 @@ class StreamOverlayApp:
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
         bus.connect('message', self.on_message)
+
+        # Audio Trigger State
+        self.volume_trigger_file = "volume_trigger.json"
+        
+        # Start Audio Poller
+        GLib.timeout_add(500, self.check_volume_trigger)
+
+    def check_volume_trigger(self):
+        # Don't interrupt Program volume? 
+        # Actually, if we are in a program, we might want to duck it too if news happens?
+        # But usually news ticker doesn't run during program.
+        # For now, let's just control vol_music.
+            
+        try:
+            if os.path.exists(self.volume_trigger_file):
+                with open(self.volume_trigger_file, 'r') as f:
+                    data = json.load(f)
+                    
+                ts = data.get('timestamp', 0)
+                if ts > self.last_tts_timestamp:
+                    self.last_tts_timestamp = ts
+                    action = data.get('action')
+                    vol = data.get('volume', 1.0)
+                    
+                    print(f"Volume Trigger: {action} -> {vol}")
+                    
+                    if self.vol_music:
+                        self.vol_music.set_property("volume", vol)
+                        
+        except Exception as e:
+            print(f"Volume Check failed: {e}")
+            
+        return True
+
 
     def check_schedule(self):
         try:

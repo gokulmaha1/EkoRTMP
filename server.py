@@ -826,6 +826,29 @@ async def reject_news_item(news_id: int, db: Session = Depends(get_db)):
     return {"status": "rejected", "is_active": False}
 
 
+# --- Volume Ducking Trigger (Frontend TTS Coordination) ---
+class DuckRequest(BaseModel):
+    state: str # "duck" or "unduck"
+
+@app.post("/api/stream/duck")
+def trigger_duck(req: DuckRequest):
+    try:
+        # Write to volume trigger file
+        trigger_data = {
+            "timestamp": time.time(),
+            "action": req.state, # duck (0.05) or unduck (1.0)
+            "volume": 0.05 if req.state == "duck" else 1.0
+        }
+        
+        with open("volume_trigger.json", "w") as f:
+            json.dump(trigger_data, f)
+            
+        return {"status": "success", "action": req.state}
+    except Exception as e:
+        print(f"Duck Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 def send_ntfy_approval_request(item):
     """
     Sends a push notification to ntfy.sh with interactive Approve/Reject buttons.

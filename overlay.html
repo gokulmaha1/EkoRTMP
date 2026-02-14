@@ -1041,6 +1041,64 @@
             container.classList.remove('page-enter');
             void container.offsetWidth;
             container.classList.add('page-enter');
+
+            // --- TRIGGER FRONTEND TTS ---
+            if (item.title) {
+                speakText(item.title);
+            }
+        }
+
+        // --- TTS SUBSYSTEM ---
+        let ttsVoices = [];
+        window.speechSynthesis.onvoiceschanged = () => {
+            ttsVoices = window.speechSynthesis.getVoices();
+        };
+
+        function speakText(text) {
+            if (!text) return;
+
+            // Cancel any current speech
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+
+            // Attempt to find Tamil Voice
+            // Common IDs: 'Google Tamil India', 'Microsoft Valluvar'
+            const taVoice = ttsVoices.find(v => v.lang === 'ta-IN' || v.lang.includes('Tamil'));
+            if (taVoice) utterance.voice = taVoice;
+
+            utterance.rate = 0.9; // Slightly slower for news
+
+            utterance.onstart = () => {
+                // Trigger Ducking
+                fetch(API_BASE + '/stream/duck', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ state: 'duck' })
+                }).catch(e => console.error("Duck failed", e));
+            };
+
+            utterance.onend = () => {
+                // Restore Volume
+                fetch(API_BASE + '/stream/duck', { // Reusing endpoint, or make separate? 
+                    // I realized I made a single endpoint with "state" param in server.py
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ state: 'unduck' })
+                }).catch(e => console.error("Unduck failed", e));
+            };
+
+            utterance.onerror = (e) => {
+                console.error("TTS Error", e);
+                // Ensure we unduck if error
+                fetch(API_BASE + '/stream/duck', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ state: 'unduck' })
+                });
+            };
+
+            window.speechSynthesis.speak(utterance);
         }
 
         // --- ADVERTISEMENT LOGIC ---
