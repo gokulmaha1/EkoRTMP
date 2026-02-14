@@ -912,6 +912,8 @@ async def generate_tts(req: TTSRequest):
 
         success = False
         
+        errors = []
+        
         # 1. Try Coqui TTS
         if TTS is not None:
             try:
@@ -921,7 +923,11 @@ async def generate_tts(req: TTSRequest):
                 if success:
                     print(f"DEBUG: Coqui TTS success")
             except Exception as e:
-                print(f"DEBUG: Coqui TTS failed: {e}")
+                msg = f"Coqui TTS failed: {e}"
+                print(f"DEBUG: {msg}")
+                errors.append(msg)
+        else:
+            errors.append("Coqui TTS not available (module not loaded)")
             
         # 2. Try Google TTS (gtranslate)
         if not success:
@@ -936,26 +942,64 @@ async def generate_tts(req: TTSRequest):
                 success = True
                 print("DEBUG: Google TTS success")
             except Exception as ex:
-                print(f"DEBUG: Google TTS failed: {ex}")
+                msg = f"Google TTS failed: {ex}"
+                print(f"DEBUG: {msg}")
+                errors.append(msg)
 
         # 3. Try pyttsx3 (System Native)
-        if not success and pyttsx3 is not None:
-            print("Fallback: Using pyttsx3 (System Native)")
+        if not success:
+            if pyttsx3 is not None:
+                print("Fallback: Using pyttsx3 (System Native)")
+                try:
+                    # Initialize engine every time? Or use global? initializing new one might be safer for threading if use drivers allow
+                    # save_to_file might require runAndWait to actually process?
+                    engine = pyttsx3.init()
+                    engine.save_to_file(req.text, abs_target)
+                    engine.runAndWait() 
+                    # Check if file exists and has size
+                    if os.path.exists(abs_target) and os.path.getsize(abs_target) > 0:
+                        success = True
+                        print("DEBUG: pyttsx3 success")
+                    else:
+                        raise Exception("pyttsx3 ran but file is empty or missing")
+                except Exception as ex:
+                    msg = f"pyttsx3 failed: {ex}"
+                    print(f"DEBUG: {msg}")
+                    errors.append(msg)
+            else:
+                errors.append("pyttsx3 not installed")
+
+        # 4. Try PowerShell (Windows only, robust fallback)
+        if not success and os.name == 'nt':
+            print("Fallback: Using PowerShell TTS")
             try:
-                engine = pyttsx3.init()
-                # Try to find a Tamil voice if possible, otherwise default
-                # On Windows, Tamil might not be installed, but it will speak in default voice (maybe garbage for Tamil text)
-                # But at least it won't crash the server.
-                # Saving to file
-                engine.save_to_file(req.text, abs_target)
-                engine.runAndWait()
-                success = True
-                print("DEBUG: pyttsx3 success")
+                # Powershell command to save to file
+                # Add-Type -AssemblyName System.Speech; $speak = New-Object System.Speech.Synthesis.SpeechSynthesizer; $speak.SetOutputToWaveFile('C:\path\to\file.wav'); $speak.Speak('Text'); $speak.Dispose();
+                ps_script = f"""
+                Add-Type -AssemblyName System.Speech;
+                $speak = New-Object System.Speech.Synthesis.SpeechSynthesizer;
+                $speak.SetOutputToWaveFile('{abs_target}');
+                $speak.Speak('{req.text.replace("'", "''")}');
+                $speak.Dispose();
+                """
+                # Run powershell
+                cmd = ["powershell", "-Command", ps_script]
+                subprocess.run(cmd, check=True)
+                
+                if os.path.exists(abs_target) and os.path.getsize(abs_target) > 0:
+                    success = True
+                    print("DEBUG: PowerShell TTS success")
+                else:
+                    errors.append("PowerShell ran but file missing/empty")
             except Exception as ex:
-                print(f"DEBUG: pyttsx3 failed: {ex}")
+                msg = f"PowerShell TTS failed: {ex}"
+                print(f"DEBUG: {msg}")
+                errors.append(msg)
 
         if not success:
-             raise Exception("All TTS engines failed (Coqui, Google, System)")
+             error_summary = "; ".join(errors)
+             print(f"DEBUG: All TTS engines failed. Python: {sys.executable}")
+             raise Exception(f"All TTS engines failed: {error_summary}")
 
         # Update trigger file for main.py (absolute path)
         trigger_file = os.path.join(base_dir, "tts_trigger.json")
