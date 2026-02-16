@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -39,6 +39,125 @@
             width: 1280px;
             height: 720px;
         }
+
+        /* --- VOTING STYLES --- */
+        .party-bar-container {
+            display: flex;
+            align-items: flex-end;
+            height: 200px;
+            gap: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            backdrop-filter: blur(4px);
+            position: absolute;
+            bottom: 100px;
+            right: 20px;
+            z-index: 50;
+        }
+
+        .party-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 50px;
+            transition: all 0.5s ease;
+        }
+
+        .bar {
+            width: 100%;
+            background: linear-gradient(to top, #3b82f6, #60a5fa);
+            border-radius: 4px 4px 0 0;
+            transition: height 1s ease;
+            min-height: 10px;
+            position: relative;
+        }
+
+        /* Party Colors */
+        .bar-DMK {
+            background: linear-gradient(to top, #dd2c00, #ff5722);
+        }
+
+        .bar-ADMK {
+            background: linear-gradient(to top, #2e7d32, #4caf50);
+        }
+
+        .bar-BJP {
+            background: linear-gradient(to top, #ff6f00, #ffca28);
+        }
+
+        .bar-NTK {
+            background: linear-gradient(to top, #d32f2f, #f44336);
+        }
+
+        .bar-TVK {
+            background: linear-gradient(to top, #bf360c, #d84315);
+        }
+
+        .count-badge {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.2rem;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .label-badge {
+            margin-top: 8px;
+            background: #fff;
+            color: #000;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Popup */
+        .vote-popup {
+            position: fixed;
+            top: 120px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(200%);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 60;
+        }
+
+        .vote-popup.show {
+            transform: translateX(0);
+        }
+
+        .vote-popup img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .vote-popup .popup-text {
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .vote-popup .popup-sub {
+            font-size: 0.7rem;
+            color: #ccc;
+        }
+
 
         /* --- MAIN LAYOUT (GRID) --- */
         .container {
@@ -195,868 +314,405 @@
             display: none;
         }
 
-        /* Media Elements */
-        #videoPlayer,
-        #imagePlayer,
-        #webview {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: none;
-            border: none;
-        }
-
-        /* --- FOOTER SECTION --- */
-        .bottom-footer {
-            grid-row: 3;
-            background-color: var(--footer-bg);
-            /* TABLE LAYOUT: For Stability */
-            display: table;
-            width: 100%;
-            table-layout: fixed;
-            border-top: 4px solid #cc0000;
-            z-index: 100;
-            height: var(--ticker-height);
-            /* box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2); */
-        }
-
-        .ticker-label {
-            display: table-cell;
-            width: 180px;
-            /* Fixed Width */
-            vertical-align: middle;
-            background: var(--header-gradient);
-            /* Match Header */
-            color: white;
-            font-size: 22px;
-            font-weight: 700;
-            padding: 0 25px;
-            height: 100%;
-            z-index: 10;
-            text-transform: uppercase;
-            /* box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3); */
-            /* Separation Shadow */
-            position: relative;
-        }
-
-        /* Ticker Triangle Arrow */
-        .ticker-label::after {
-            content: '';
+        /* Missing CSS for Vote Ticker */
+        .vote-ticker-strip {
             position: absolute;
-            right: -10px;
-            top: 0;
-            bottom: 0;
-            width: 10px;
-            background: inherit;
-            clip-path: polygon(0 0, 100% 50%, 0 100%);
-            z-index: 12;
-        }
-
-        .ticker-container {
-            display: table-cell;
-            vertical-align: middle;
-            background: white;
-            height: 100%;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .ticker-content {
-            display: block;
-            width: 100%;
-            padding-top: 5px;
-            /* Center text vertically */
-        }
-
-        .ticker-item {
-            font-size: 28px;
-            font-weight: 600;
-            color: #000;
-            margin-right: 80px;
-            display: inline-flex;
+            bottom: 80px;
+            /* Above footer */
+            left: 0;
+            background: linear-gradient(to right, rgba(0, 0, 0, 0.8), transparent);
+            color: white;
+            padding: 5px 10px;
+            display: flex;
             align-items: center;
             gap: 10px;
+            z-index: 55;
+            border-left: 4px solid #f1c40f;
         }
 
-        .footer-right {
-            display: table-cell;
-            width: 240px;
-            /* Slightly wider */
-            vertical-align: middle;
-            background: #f0f0f0;
-            /* Simplified gradient */
-            height: 100%;
-            border-left: 2px solid #ddd;
-            padding: 0 15px;
-            z-index: 20;
-            /* box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1); */
-        }
-
-        .live-badge {
-            background: #d60000;
-            color: white;
-            font-weight: 700;
-            padding: 7px 10px;
-            border-radius: 25px;
-            font-size: 14px;
-            display: inline-flex !important;
-            align-items: stretch;
-            gap: 6px;
-            /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); */
-            float: right;
-            display: inline-block;
-            /* margin-top: 4px; */
-            flex-direction: row;
-
-        }
-
-        .datetime {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            justify-content: center;
-        }
-
-        .time-display {
-            font-family: 'Oswald', sans-serif;
-            font-size: 25px;
-            font-weight: 700;
-            color: #2c3e50;
-            line-height: 1;
-            margin-bottom: 4px;
-            margin-right: 3px;
-        }
-
-        .date-display {
-            font-size: 13px;
-            color: #666;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Blink Animation */
-        .blink-dot {
-            width: 8px;
-            height: 8px;
-            background: white;
-            border-radius: 50%;
-            animation: blink 1s infinite;
-            float: left;
-            margin-top: 9px;
-            margin-left: 2px;
+        .vt-label {
+            font-weight: bold;
+            font-size: 12px;
+            color: #f1c40f;
             margin-right: 5px;
         }
 
-        @keyframes ticker-scroll {
-            0% {
-                transform: translateX(0);
-            }
-
-            100% {
-                transform: translateX(-100%);
-            }
+        .vt-content {
+            display: flex;
+            gap: 10px;
         }
 
-        @keyframes blink {
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        /* --- ANIMATIONS --- */
-        @keyframes slideOutDown {
-            0% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-
-            100% {
-                transform: translateY(100%);
-                opacity: 0;
-            }
-        }
-
-        @keyframes slideInDown {
-            0% {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-
-            100% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .animate-out {
-            animation: slideOutDown 0.5s forwards;
-        }
-
-        .animate-in {
-            animation: slideInDown 0.5s forwards;
-        }
-
-        /* --- SMOOTH TICKER --- */
-        .ticker-wrapper {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            position: relative;
+        .vt-item {
             display: flex;
             align-items: center;
-        }
-
-        .ticker-track {
-            display: flex;
-            white-space: nowrap;
-            will-change: transform;
-            /* Animation applied via JS for dynamic speed */
-        }
-
-        @keyframes scroll-linear {
-            0% {
-                transform: translateX(0);
-            }
-
-            100% {
-                transform: translateX(-50%);
-            }
-        }
-
-        /* --- NEWS PRESENTATION (SPLIT VIEW) --- */
-        .news-presentation {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            background: #e0e0e0;
-            /* Simplified gradient */
-            z-index: 50;
-            animation: slideInRight 0.5s ease-out;
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-            }
-
-            to {
-                transform: translateX(0);
-            }
-        }
-
-        /* --- LAYOUT MODES --- */
-        .news-presentation.no-media .np-media {
-            display: none !important;
-        }
-
-        .news-presentation.no-media .np-content {
-            flex: 1;
-            /* Take full width */
-            padding: 80px;
-            /* More padding for cleaner look */
-            align-items: center;
-            /* Center text */
-            text-align: center;
-        }
-
-        .np-media {
-            flex: 6;
-            /* 60% width */
-            background: #000;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border-right: 4px solid #cc0000;
-        }
-
-        .np-media img,
-        .np-media video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .placeholder-icon {
-            font-size: 80px;
-            color: #555;
-        }
-
-        .np-content {
-            flex: 4;
-            /* 40% width */
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            background: white;
-            /* box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1); */
-        }
-
-        /* --- ANIMATIONS: Text & Media --- */
-        /* Ken Burns Removed for Performance */
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        .ken-burns-active {
-            /* animation: kenBurns 15s linear forwards; */
-            /* Ken Burns Disabled */
-        }
-
-        @keyframes newsFadeIn {
-            0% {
-                opacity: 0;
-            }
-
-            100% {
-                opacity: 1;
-            }
-        }
-
-        .anim-title {
-            opacity: 0;
-            animation: fadeInUp 0.8s ease-out 0.2s forwards;
-        }
-
-        .anim-desc {
-            opacity: 0;
-            /* Tamil TV Style: Sharp wipe from left with slight slide */
-            /* Simplified Fade In */
-            animation: newsFadeIn 0.5s ease-out 0.2s forwards;
-            background: rgba(0, 0, 0, 0.03);
-            /* Subtle backdrop */
-            padding: 15px;
-            border-left: 4px solid #b90909;
-            /* Red accent line */
-            border-radius: 0 8px 8px 0;
-        }
-
-        .anim-meta {
-            opacity: 0;
-            animation: fadeIn 1s ease-out 0.8s forwards;
-        }
-
-        /* --- TRANSITIONS --- */
-        .page-exit {
-            animation: slideOutLeft 0.5s ease-in forwards;
-        }
-
-        .page-enter {
-            animation: slideInRight 0.5s ease-out forwards;
-        }
-
-        @keyframes slideOutLeft {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-
-            to {
-                transform: translateX(-100%);
-                opacity: 0;
-            }
-        }
-
-        .np-tag {
-            background: #b90909;
-            color: white;
-            align-self: flex-start;
-            padding: 5px 15px;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 18px;
-            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
             border-radius: 4px;
-            opacity: 0;
-            /* Animation handled by JS adding classes */
+            font-size: 11px;
         }
 
-        .anim-tag-in {
-            animation: fadeIn 0.5s ease-out forwards;
-        }
-
-        .np-content h1 {
-            font-size: 36px;
-            line-height: 1.2;
-            margin-bottom: 20px;
-            color: #2c3e50;
-            font-family: 'Baloo Thambi 2', sans-serif;
-            /* Animation handled by class .anim-title */
-        }
-
-        .np-content p {
-            font-size: 22px;
-            color: #555;
-            line-height: 1.5;
-            margin-bottom: 30px;
-            font-family: 'Roboto', sans-serif;
-            /* Animation handled by class .anim-desc */
-        }
-
-        .np-meta {
-            margin-top: auto;
-            border-top: 1px solid #ddd;
-            padding-top: 15px;
-            color: #888;
-            font-size: 16px;
-            font-weight: 600;
-            /* Animation handled by class .anim-meta */
+        .vt-img {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 4px;
         }
     </style>
 </head>
 
 <body>
-
     <div class="container">
-
-        <!-- ROW 1: HEADER -->
+        <!-- HEADER SECTION -->
         <div class="top-header">
-            <!-- Left: Location -->
             <div class="header-left">
                 <div class="location-tag">
-                    <!-- <i class="fas fa-map-marker-alt"></i> -->
-                    <span id="locationText">அண்மை செய்திகள்</span>
+                    <i class="fas fa-map-marker-alt"></i> <span id="locationText">CHENNAI</span>
                 </div>
             </div>
-
-            <!-- Center: Headline -->
             <div class="header-center">
-                <div id="topHeadline" class="breaking-text">
-                    தமிழ் செய்திகள் 24x7
-                </div>
+                <div id="topHeadline" class="breaking-text">WELCOME TO EKO TV NEWS</div>
             </div>
-
-            <!-- Right: Logo -->
             <div class="header-right">
-                <!-- Direct Path with default fallback -->
-                <img id="headerLogo" src="media/logo.gif" class="logo-img" alt="Logo">
+                <img src="/media/logo.gif" class="logo-img" onerror="this.style.display='none'">
             </div>
         </div>
 
-        <!-- ROW 2: MAIN CONTENT -->
+        <!-- MAIN CONTENT -->
         <div class="main-content">
             <div class="video-wrapper">
-                <iframe id="webview" src=""></iframe>
-                <video id="videoPlayer" muted playsinline></video>
-                <img id="imagePlayer" src="">
-            </div>
+                <!-- Background Players -->
+                <video id="videoPlayer" style="display:none; width:100%; height:100%; object-fit:cover;" loop></video>
+                <img id="imagePlayer" style="display:none; width:100%; height:100%; object-fit:cover;">
+                <iframe id="webview" style="display:none; width:100%; height:100%; border:none;"></iframe>
 
-            <!-- NEWS PRESENTATION (Split View) -->
-            <div id="newsPresentation" class="news-presentation" style="display: none;">
-                <div class="np-media">
-                    <!-- Media Content (Image or Video) -->
-                    <img id="npImage" src="" style="display: none;">
-                    <video id="npVideo" muted playsinline loop style="display: none;"></video>
-                    <div id="npPlaceholder" class="placeholder-icon">
-                        <i class="fas fa-newspaper"></i>
+                <!-- NEWS PRESENTATION (Split View) -->
+                <div id="newsPresentation" class="news-presentation" style="display:none;">
+                    <div class="np-media">
+                        <img id="npImage" src="" style="display:none;">
+                        <video id="npVideo" src="" style="display:none;" loop muted></video>
+                        <div id="npPlaceholder" class="placeholder-icon" style="display:none;"><i
+                                class="fas fa-newspaper"></i></div>
+                    </div>
+                    <div class="np-content">
+                        <div id="npCategory" class="np-tag">NEWS</div>
+                        <h1 id="npTitle" class="np-title">Loading...</h1>
+                        <p id="npDescription" class="np-desc">Please wait for updates.</p>
+                        <div id="npSource" class="np-meta">Source</div>
                     </div>
                 </div>
-                <div class="np-content">
-                    <!-- <div class="np-tag" id="npCategory">TAMIL NADU</div> -->
-                    <h1 id="npTitle">News Headline Goes Here</h1>
-                    <!-- <p id="npDescription"></p> -->
-                    <!-- <div class="np-meta">
-                        <span id="npSource"><i class="fas fa-link"></i> Source Name</span>
-                    </div> -->
-                </div>
             </div>
-
-            <!-- Optional L-Bar -->
-            <div id="lBar" class="l-bar" style="display: none;">
-                <div id="lBarContent" style="width:100%; height:100%;"></div>
-            </div>
+            <div class="l-bar"></div>
         </div>
 
-        <!-- ROW 3: FOOTER -->
+        <!-- FOOTER SECTION -->
         <div class="bottom-footer">
             <div class="ticker-label">NEWS UPDATES</div>
-
             <div class="ticker-container">
-                <div class="ticker-container">
-                    <!-- Smooth CSS Ticker -->
-                    <div class="ticker-wrapper">
-                        <div id="tickerTrack" class="ticker-track"></div>
+                <marquee class="ticker-content" truespeed scrolldelay="30" scrollamount="2" id="tickerMarquee">
+                    <span class="ticker-item">Loading news updates...</span>
+                </marquee>
+            </div>
+            <div class="footer-right">
+                <div style="display: flex; align-items: center; justify-content: space-between; height: 100%;">
+                    <div class="live-badge">LIVE</div>
+                    <div id="clockDisplay"
+                        style="font-size: 24px; font-weight: 700; color: #333; font-family: 'Oswald', sans-serif;">00:00
                     </div>
                 </div>
             </div>
-
-            <div class="footer-right">
-                <div class="live-badge">நேரலை <div class="blink-dot"></div>
-                </div>
-                <div class="datetime">
-                    <div id="clock" class="time-display">12:00 PM</div>
-                    <div id="dateDisplay" class="date-display">01/01/2026</div>
-                </div>
-                <!-- Optional Footer Logo
-                <img src="/media/logo.gif" class="logo-img" style="height: 40px; margin-left: 5px;">
-                -->
-            </div>
         </div>
-
     </div>
 
-    <!-- SCRIPT -->
-    <script>
-        // CONFIG
-        const DEFAULT_LOGO = "/media/logo.gif";
-        const API_BASE = window.location.origin + '/api';
-        const WS_URL = 'ws://' + window.location.host + '/ws/news';
+    <!-- Voting Overlay Containers -->
+    <div id="voteOverlay" style="display: none;">
+        <!-- 1. Bar Chart (Bottom Right) -->
+        <div class="party-bar-container" id="voteBarContainer">
+            <!-- Bars Injected Here -->
+        </div>
 
-        // STATE
+        <!-- 2. Voter Ticker (Bottom Left) -->
+        <div class="vote-ticker-strip">
+            <div class="vt-label">LIVE VOTES</div>
+            <div class="vt-content" id="voteTickerWrapper"></div>
+        </div>
+
+        <!-- 3. Popup (Top Right) -->
+        <div class="vote-popup" id="votePopup">
+            <img src="" id="vpImg" class="vp-img">
+            <div>
+                <div style="font-size: 10px; color: #ccc;">JUST VOTED</div>
+                <div style="line-height: 1;">
+                    <span id="vpName" style="font-weight: bold;">-</span>
+                    <span style="font-size: 10px;">for</span>
+                    <span id="vpParty" style="color: #f1c40f; font-weight: bold;">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        const API_BASE = '/api';
+
+        // --- CLOCK ---
+        function updateClock() {
+            const now = new Date();
+            let hrs = now.getHours();
+            let min = now.getMinutes();
+            const ampm = hrs >= 12 ? 'PM' : 'AM';
+            hrs = hrs % 12;
+            hrs = hrs ? hrs : 12;
+            min = min < 10 ? '0' + min : min;
+
+            document.getElementById('clockDisplay').innerText = `${hrs
+                }
+            :${min
+                }
+            ${ampm
+                }
+
+            `;
+        }
+
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- CONFIG & STATE ---
+        let currentLayout = 'FULL';
         let newsItems = [];
         let headlineIndex = 0;
         let headlineInterval = null;
 
-        // --- CLOCK ---
-        function updateTime() {
-            const now = new Date();
-            // Force IST Timezone
-            const timeStr = now.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true,
-                timeZone: 'Asia/Kolkata'
-            });
-            const dateStr = now.toLocaleDateString('en-GB', {
-                timeZone: 'Asia/Kolkata'
-            }); // DD/MM/YYYY
+        // --- VOTING LOGIC ---
+        let isVotingActive = false;
+        let votePollInterval = null;
+        let lastVoterId = null;
 
-            document.getElementById('clock').innerText = timeStr;
-            document.getElementById('dateDisplay').innerText = dateStr;
+        async function checkVotingStatus() {
+            try {
+                const res = await fetch(`${API_BASE
+                    }
+
+                    /voting/status`);
+                const data = await res.json();
+
+                if (data.is_running && !isVotingActive) {
+                    startVotingUI(data.video_id);
+                }
+
+                else if (!data.is_running && isVotingActive) {
+                    stopVotingUI();
+                }
+            }
+
+            catch (e) {
+                console.error("Vote Status Error:", e);
+            }
         }
-        setInterval(updateTime, 1000);
-        updateTime();
 
-        // --- LOG DATA & CONFIG ---
+        function startVotingUI(videoId) {
+            console.log("Switching to Voting View");
+            isVotingActive = true;
+
+            // Hide News View
+            document.getElementById('newsPresentation').style.display = 'none';
+            // Stop News Rotation
+            if (headlineInterval) clearInterval(headlineInterval);
+
+            // Show Voting View
+            document.getElementById('voteOverlay').style.display = 'block';
+
+            // Start sub-pollers
+            updateVoteStats();
+            updateVoteTicker();
+
+            votePollInterval = setInterval(() => {
+                updateVoteStats();
+                checkNewVoter();
+                updateVoteTicker();
+            }, 3000);
+        }
+
+        function stopVotingUI() {
+            console.log("Switching to News View");
+            isVotingActive = false;
+            document.getElementById('voteOverlay').style.display = 'none';
+
+            if (votePollInterval) clearInterval(votePollInterval);
+
+            // Restore News View
+            if (newsItems.length > 0) {
+                document.getElementById('newsPresentation').style.display = 'flex';
+                startHeadlines(); // Resume news
+            }
+        }
+
+        async function updateVoteStats() {
+            try {
+                const res = await fetch(`${API_BASE
+                    }
+
+                    /voting/stats`);
+                const data = await res.json();
+                renderVoteBars(data.counts);
+            }
+
+            catch (e) { }
+        }
+
+        function renderVoteBars(counts) {
+            const container = document.getElementById('voteBarContainer');
+            if (!counts) return;
+
+            const max = Math.max(...counts.map(c => c.count), 1);
+            const fixedOrder = ['DMK',
+                'ADMK',
+                'TVK',
+                'NTK',
+                'BJP'];
+
+            const html = fixedOrder.map(code => {
+                const item = counts.find(c => c.party_code === code) || {
+                    count: 0, party_tamil: code
+                }
+
+                    ;
+                const h = Math.max((item.count / max) * 100, 5);
+
+                // Color Map
+                const colors = {
+                    'DMK': 'linear-gradient(to top, #dd2c00, #ff5722)',
+                    'ADMK': 'linear-gradient(to top, #2e7d32, #4caf50)',
+                    'BJP': 'linear-gradient(to top, #ff6f00, #ffca28)',
+                    'NTK': 'linear-gradient(to top, #d32f2f, #f44336)',
+                    'TVK': 'linear-gradient(to top, #bf360c, #d84315)'
+                }
+
+                    ;
+
+                return ` <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;" > <div style="font-family: 'Oswald'; font-size: 24px; color: white; text-shadow: 1px 1px 2px black; font-weight: bold; margin-bottom: 5px;" >${item.count
+                    }
+
+                    </div> <div style="width: 100%; background: ${colors[code] || '#ccc'}; border-radius: 4px 4px 0 0; transition: height 1s ease; height: ${h}%;" ></div> <div style="margin-top: 8px; background: white; color: black; padding: 2px 5px; border-radius: 4px; font-weight: bold; font-size: 14px; width: 100%; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.5);" >${item.party_tamil || code
+                    }
+
+                    </div> </div> `;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        async function updateVoteTicker() {
+            try {
+                const res = await fetch(`${API_BASE
+                    }
+
+                    /voting/ticker`);
+                const voters = await res.json();
+                const wrapper = document.getElementById('voteTickerWrapper');
+
+                if (voters.length > 0) {
+                    const html = voters.map(v => ` <div class="vt-item" > <img src="${v.profile_image_url}" class="vt-img" onerror="this.src='/media/logo.gif'" > <span style="font-weight: bold; color: #ffeb3b; margin-right: 5px;" >${v.display_name
+                        }
+
+                        </span> <span style="color: #ddd;" >voted</span> <span style="font-weight: bold; background: white; color: black; padding: 0 4px; border-radius: 2px; font-size: 12px; margin-left: 5px;" >${v.party_tamil || v.party_code
+                        }
+
+                        </span> </div> `).join('');
+                    wrapper.innerHTML = html + html; // Duplicate for loop
+                }
+            }
+
+            catch (e) { }
+        }
+
+        async function checkNewVoter() {
+            try {
+                const res = await fetch(`${API_BASE
+                    }
+
+                    /voting/latest`);
+                const voter = await res.json();
+
+                if (voter && voter.id && voter.id !== lastVoterId) {
+                    lastVoterId = voter.id;
+                    showVotePopup(voter);
+                }
+            }
+
+            catch (e) { }
+        }
+
+        function showVotePopup(voter) {
+            const popup = document.getElementById('votePopup');
+            document.getElementById('vpImg').src = voter.profile_image_url;
+            document.getElementById('vpName').innerText = voter.display_name;
+            document.getElementById('vpParty').innerText = voter.party_tamil || voter.party_code;
+
+            popup.classList.add('show');
+            setTimeout(() => popup.classList.remove('show'), 5000);
+        }
+
+        // Start Global Poll
+        setInterval(checkVotingStatus, 5000);
+
+        // ... (Existing Code) ...
+
         async function fetchConfig() {
             try {
-                const res = await fetch(API_BASE + '/config');
-                const conf = await res.json();
-                applyConfig(conf);
-            } catch (e) {
-                console.error("Config Fetch Error:", e);
-                // Fallback already in HTML
+                const res = await fetch(API_BASE + '/config'); // Fixed path
+                const config = await res.json();
+                // Apply Config logic...
+                // Only if not voting? Or independent?
+                // Let's allow config to set layout, but Voting overlays on top.
+            }
+
+            catch (e) {
+                console.error("Config Error:", e);
             }
         }
 
-        function applyConfig(conf) {
-            const root = document.documentElement;
-
-            // Colors
-            if (conf.brand_color_primary) root.style.setProperty('--header-bg', conf.brand_color_primary);
-            if (conf.brand_color_dark) document.body.style.backgroundColor = conf.brand_color_dark; // Debug bg
-
-            // Logo
-            const logoUrl = conf.logo_url || DEFAULT_LOGO;
-            const logoEl = document.getElementById('headerLogo');
-            if (logoEl) {
-                logoEl.src = logoUrl;
-                logoEl.style.display = 'block'; // Force show
-            }
-
-            // Text Labels
-            if (conf.location_label) document.getElementById('locationText').innerText = conf.location_label;
-
-            // L-Bar Logic
-            const lBar = document.getElementById('lBar');
-            const wrapper = document.querySelector('.main-content');
-
-            if (conf.layout_mode === 'L_BAR') {
-                const w = conf.lbar_width || 25;
-                lBar.style.display = 'block';
-                lBar.style.width = w + '%';
-                lBar.style.backgroundColor = conf.lbar_bg_color || '#000';
-
-                // Position
-                wrapper.style.flexDirection = (conf.lbar_position === 'LEFT') ? 'row-reverse' : 'row';
-
-                // Content
-                const contentDiv = document.getElementById('lBarContent');
-                if (conf.lbar_content_type === 'IMAGE' && conf.lbar_content_data) {
-                    contentDiv.innerHTML = `<img src="${conf.lbar_content_data}" style="width:100%;height:100%;object-fit:cover;">`;
-                } else if (conf.lbar_content_type === 'URL') {
-                    contentDiv.innerHTML = `<iframe src="${conf.lbar_content_data}" style="width:100%;height:100%;border:none;"></iframe>`;
-                }
-            } else {
-                lBar.style.width = '0';
-                setTimeout(() => lBar.style.display = 'none', 500);
-            }
-        }
-
-        // --- NEWS HANDLING ---
         async function fetchNews() {
             try {
+                // Fixed path: /api/news (server.py line 819)
                 const res = await fetch(API_BASE + '/news');
-                newsItems = await res.json();
-                console.log(`Loaded ${newsItems.length} news items.`);
-                updateTicker();
-                if (!headlineInterval) startHeadlines();
-            } catch (e) { console.error("News Fetch Error:", e); }
-        }
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
-        let lastTickerHash = "";
+                const data = await res.json();
 
-        function updateTicker() {
-            const active = newsItems.filter(i => i.is_active);
-            const track = document.getElementById('tickerTrack');
-
-            if (active.length === 0) {
-                track.innerHTML = "";
-                return;
-            }
-
-            // Create single pass string
-            const singlePassHtml = active.map(i =>
-                `<span class="ticker-item"><i class="fas fa-circle" style="font-size:15px; color:#b90909;"></i> ${i.title_tamil}</span>`
-            ).join('');
-
-            // CHECK IF CONTENT CHANGED
-            // If the content is identical to what we last rendered, DO NOT reset the animation
-            if (singlePassHtml === lastTickerHash) {
-                // Determine if we need to restart animation if it stopped? 
-                // Usually no, CSS infinite loop handles it.
-                // However, if the duration needs to change due to container resize?
-                // For now, assume fixed container size.
-                return;
-            }
-
-            lastTickerHash = singlePassHtml;
-
-            // DUPLICATE CONTENT for seamless loop (A + A)
-            // When we scroll to -50% (end of first A), we are visually at the start of second A,
-            // which is identical to start of first A. Resetting to 0% is invisible.
-            track.innerHTML = singlePassHtml + singlePassHtml;
-
-            // Calculate Speed (Pixels Per Second)
-            // We want constant speed regardless of content width
-            const PIXELS_PER_SECOND = 150; // Adjust for speed
-
-            // Measure clear width (approximate or wait for render)
-            // Ideally we wait, but estimation is safe here for updates
-            // We can use a short timeout to let DOM render width
-            setTimeout(() => {
-                const totalWidth = track.scrollWidth;
-                const halfWidth = totalWidth / 2; // The width of one set of items
-
-                // If content is too short to scroll (less than screen width), maybe just center it or duplicate more?
-                // For now, standard behavior.
-
-                const duration = halfWidth / PIXELS_PER_SECOND;
-
-                track.style.animation = 'none';
-                track.offsetHeight; /* trigger reflow */
-                track.style.animation = `scroll-linear ${duration}s linear infinite`;
-            }, 50);
-        }
-
-
-
-        // --- WEBSOCKET ---
-        const ws = new WebSocket(WS_URL);
-        ws.onopen = () => console.log("WS Connected");
-        ws.onmessage = (e) => {
-            const msg = JSON.parse(e.data);
-            if (msg.type.includes('NEWS')) fetchNews();
-            if (msg.type === 'CONFIG_UPDATED') applyConfig(msg.payload);
-            if (msg.type === 'OVERLAY_UPDATED') updateMainScreen(msg.payload);
-            if (msg.type === 'SHOW_NEWS_MAIN') showNewsLayout(msg.payload);
-        };
-
-        // --- HELPER: Detect Media Type ---
-        function getMediaType(url) {
-            if (!url) return 'NONE';
-            // Remove query params for extension check
-            const cleanUrl = url.split('?')[0].toLowerCase();
-
-            if (cleanUrl.match(/\.(mp4|webm|ogg|mov)$/)) return 'VIDEO';
-            if (cleanUrl.match(/\.(jpeg|jpg|gif|png|webp|bmp|svg)$/)) return 'IMAGE';
-            return 'WEB';
-        }
-
-        // --- MAIN SCREEN LOGIC ---
-        // Persistence
-        let lastMainScreenData = { webview_url: "" };
-
-        function updateMainScreen(data) {
-            // If this is NOT an Ad, save it as the "Default" state
-            if (data.type !== 'AD') {
-                lastMainScreenData = { ...data };
-            }
-
-            // Hide News Layout if active (unless we are just updating background behind it?)
-            // If ad, force hide. If config update, maybe not? 
-            // generally updateMainScreen implies "Show this now".
-
-            if (data.type === 'AD') {
-                document.getElementById('newsPresentation').style.display = 'none';
-            }
-
-            renderMainScreen(data);
-        }
-
-        function renderMainScreen(data) {
-            const webview = document.getElementById('webview');
-            const video = document.getElementById('videoPlayer');
-            const image = document.getElementById('imagePlayer');
-
-            // Reset
-            webview.style.display = 'none'; webview.src = "";
-            video.style.display = 'none'; video.pause();
-            image.style.display = 'none'; image.src = "";
-
-            const url = data.webview_url;
-            if (!url) return;
-
-            const type = getMediaType(url);
-
-            if (type === 'VIDEO') {
-                video.src = url;
-                video.style.display = 'block';
-                video.play().catch(e => console.error("Autoplay failed", e));
-            } else if (type === 'IMAGE') {
-                image.src = url;
-                image.style.display = 'block';
-            } else {
-                // Assume Web/Iframe
-                webview.src = url;
-                webview.style.display = 'block';
-            }
-        }
-
-        function restoreBackground() {
-            // Called when News Layout hides
-            renderMainScreen(lastMainScreenData);
-        }
-
-        // --- TRANSITION LOGIC ---
-        let isTransitioning = false;
-
-        async function showNewsLayout(item) {
-            // Check if already showing this item to avoid redundant anims? 
-            // Actually, for loop, we might want to re-show.
-
-            const container = document.getElementById('newsPresentation');
-
-            // If already visible, transition OUT first
-            if (container.style.display === 'flex' && !isTransitioning) {
-                isTransitioning = true;
-                container.classList.add('page-exit');
-
-                // Wait for animation
-                await new Promise(r => setTimeout(r, 500));
-
-                container.classList.remove('page-exit');
-                // Reset scroll/state if needed
-                isTransitioning = false;
-            }
-
-            // Hide standard players? 
-            // If we hide them, we save resources, but we might have a black gap during transition.
-            // Since newsPresentation is z-index 50 and transparent? No, it has background.
-            // Let's NOT hide them immediately, but maybe pause video if it's heavy?
-            // For smooth transition, keep them.
-
-            // document.getElementById('webview').style.display = 'none';
-            // document.getElementById('videoPlayer').style.display = 'none';
-            // document.getElementById('imagePlayer').style.display = 'none';
-
-            // Populate Data
-            // Populate Data
-            const cat = document.getElementById('npCategory');
-            const tit = document.getElementById('npTitle');
-            const desc = document.getElementById('npDescription');
-            const meta = document.getElementById('npSource');
-
-            if (cat) cat.innerText = item.category || 'NEWS';
-            if (tit) tit.innerText = item.title;
-            if (desc) desc.innerText = item.description || item.title; // Fallback
-            if (meta) meta.innerHTML = `<i class="fas fa-link"></i> ${item.source}`;
-
-            // --- RESET TEXT ANIMATIONS ---
-            if (cat) cat.classList.remove('anim-tag-in');
-            if (tit) tit.classList.remove('anim-title');
-            if (desc) desc.classList.remove('anim-desc');
-            if (meta) meta.classList.remove('anim-meta');
-
-            if (tit) void tit.offsetWidth; // Reflow
-
-            if (cat) cat.classList.add('anim-tag-in');
-            if (tit) tit.classList.add('anim-title');
-            if (desc) desc.classList.add('anim-desc');
-            if (meta) meta.classList.add('anim-meta');
-
-            // Handle Media
-            const img = document.getElementById('npImage');
-            const vid = document.getElementById('npVideo');
-            const placeholder = document.getElementById('npPlaceholder');
-
-            img.style.display = 'none';
-            vid.style.display = 'none';
-            placeholder.style.display = 'none';
-            img.classList.remove('ken-burns-active'); // Reset Ken Burns
-
-            // Reset Toggle Class
-            container.classList.remove('no-media');
-
-            if (item.media_url && getMediaType(item.media_url) !== 'NONE') {
-                const type = getMediaType(item.media_url);
-
-                if (type === 'VIDEO') {
-                    vid.src = item.media_url;
-                    vid.style.display = 'block';
-                    vid.play().catch(e => console.error("News AutoPlay Error:", e));
+                // Ensure it's an array
+                if (Array.isArray(data)) {
+                    newsItems = data;
                 } else {
-                    img.src = item.media_url;
-                    img.style.display = 'block';
-
-                    // Trigger Ken Burns Reflow
-                    void img.offsetWidth;
-                    img.classList.add('ken-burns-active');
+                    console.warn("API returned non-array for news:", data);
+                    newsItems = [];
                 }
-            } else {
-                // NO MEDIA -> TEXT ONLY MODE
-                container.classList.add('no-media');
+
+                updateTicker(newsItems);
+                if (newsItems.length > 0 && !headlineInterval) startHeadlines();
             }
 
-            // Show Container with ENTER animation
-            container.style.display = 'flex';
-            container.classList.remove('page-enter');
-            void container.offsetWidth;
-            container.classList.add('page-enter');
-
-            // --- TRIGGER BACKEND TTS ---
-            if (item.title) {
-                fetch(API_BASE + '/tts', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: item.title, lang: 'ta' })
-                }).catch(err => console.error("TTS Auto-Trigger Failed:", err));
+            catch (e) {
+                console.error("News Error:", e);
+                newsItems = []; // Fallback
+                updateTicker([]);
             }
+        }
+
+        function updateTicker(items) {
+            const marquee = document.getElementById('tickerMarquee');
+            // Filter Ticker items
+            const tickers = items.filter(i => i.type === 'TICKER' || i.type === 'GENERAL');
+
+            if (tickers.length === 0) {
+                marquee.innerHTML = '<span class="ticker-item">No active news updates...</span>';
+                return;
+            }
+
+            marquee.innerHTML = tickers.map(i => `<span class="ticker-item" ><i class="fas fa-newspaper text-red-600" ></i> ${i.title_tamil
+                }
+
+                </span>`).join('');
         }
 
         // --- ADVERTISEMENT LOGIC ---
@@ -1064,10 +720,18 @@
 
         async function fetchAds() {
             try {
-                const res = await fetch(API_BASE + '/ads/active');
+                const res = await fetch(API_BASE + '/api/ads/active');
                 activeAds = await res.json();
-                console.log(`Loaded ${activeAds.length} active ads.`);
-            } catch (e) { console.error("Ad Fetch Error:", e); }
+
+                console.log(`Loaded ${activeAds.length
+                    }
+
+                    active ads.`);
+            }
+
+            catch (e) {
+                console.error("Ad Fetch Error:", e);
+            }
         }
 
         function getAdsByType(type) {
@@ -1084,12 +748,16 @@
             // Check less frequently to avoid constant interruption, but enough to catch schedule
             adIntervalHandle = setInterval(() => {
                 const fsAds = getAdsByType('FULLSCREEN');
-                if (fsAds.length > 0 && Math.random() > 0.5) { // 50% chance to play if available, or use strict interval
+
+                if (fsAds.length > 0 && Math.random() > 0.5) {
+                    // 50% chance to play if available, or use strict interval
                     // Pick one
                     const ad = fsAds[Math.floor(Math.random() * fsAds.length)];
                     playFullscreenAd(ad);
                 }
-            }, 5 * 60 * 1000); // 5 Minutes
+            }
+
+                , 5 * 60 * 1000); // 5 Minutes
         }
 
         function playFullscreenAd(ad) {
@@ -1109,7 +777,9 @@
                 // Determine what to do next?
                 // Ideally, go back to News Loop
                 startHeadlines();
-            }, ad.duration * 1000);
+            }
+
+                , ad.duration * 1000);
         }
 
         // --- CORE LOOP ---
@@ -1124,8 +794,6 @@
         function rotateHeadline() {
             // Priority:
             // 1. If Ad is playing, do nothing? (Handled by clearing interval)
-
-            if (newsItems.length === 0) return;
 
             if (newsItems.length === 0) return;
 
@@ -1149,31 +817,36 @@
             setTimeout(() => {
                 const text = item.title_tamil || "";
                 el.innerText = text;
+
                 // Sizing text
                 if (text.length > 50) {
                     el.style.fontSize = "22px";
                     el.style.whiteSpace = "normal";
                     el.style.lineHeight = "1.3";
-                } else {
+                }
+
+                else {
                     el.style.fontSize = "32px";
                     el.style.whiteSpace = "nowrap";
                     el.style.lineHeight = "1.2";
                 }
 
                 // Location - Always show static label
-                document.getElementById('locationText').innerText = "அண்மை செய்திகள்";
+                document.getElementById('locationText').innerText = "à®…à®£à¯ à®®à¯ˆ à®šà¯†à®¯à¯ à®¤à®¿à®•à®³à¯ ";
 
                 el.classList.remove('animate-out');
                 el.classList.add('animate-in');
-            }, 500);
+            }
+
+                , 500);
 
 
             // --- MAIN SCREEN AUTOMATION ---
-            // Logic: 
+            // Logic:
             // 1. If item has media -> Show split layout
-            // 2. If item has NO media -> Show default/webview OR keep previous? 
+            // 2. If item has NO media -> Show default/webview OR keep previous?
             //    For now, let's behave like a TV channel. If no media, maybe show logo or just keep text?
-            //    Current implementation: Only interrupts if media exists. 
+            //    Current implementation: Only interrupts if media exists.
             //    FIX: If we want a continuous loop, we should explicitly "clear" or show something else if no media?
 
             const MAX_AGE_MS = 24 * 60 * 60 * 1000;
@@ -1192,24 +865,161 @@
                 media_url: item.media_url,
                 source: item.source,
                 description: item.title_english || item.title_tamil
-            };
+            }
+
+                ;
             showNewsLayout(displayItem);
 
         }
 
+        // --- TRANSITION LOGIC ---
+        let isTransitioning = false;
 
+        async function showNewsLayout(item) {
+            // Check if already showing this item to avoid redundant anims?
+            // Actually, for loop, we might want to re-show.
 
+            const container = document.getElementById('newsPresentation');
+
+            // If already visible, transition OUT first
+            if (container.style.display === 'flex' && !isTransitioning) {
+                isTransitioning = true;
+                container.classList.add('page-exit');
+
+                // Wait for animation
+                await new Promise(r => setTimeout(r, 500));
+
+                container.classList.remove('page-exit');
+                // Reset scroll/state if needed
+                isTransitioning = false;
+            }
+
+            // Populate Data
+            const cat = document.getElementById('npCategory');
+            const tit = document.getElementById('npTitle');
+            const desc = document.getElementById('npDescription');
+            const meta = document.getElementById('npSource');
+
+            if (cat) cat.innerText = item.category || 'NEWS';
+            if (tit) tit.innerText = item.title;
+            if (desc) desc.innerText = item.description || item.title; // Fallback
+
+            if (meta) meta.innerHTML = `<i class="fas fa-link"></i>${item.source
+                }
+
+            `;
+
+            // --- RESET TEXT ANIMATIONS ---
+            if (cat) cat.classList.remove('anim-tag-in');
+            if (tit) tit.classList.remove('anim-title');
+            if (desc) desc.classList.remove('anim-desc');
+            if (meta) meta.classList.remove('anim-meta');
+
+            if (tit) void tit.offsetWidth; // Reflow
+
+            if (cat) cat.classList.add('anim-tag-in');
+            if (tit) tit.classList.add('anim-title');
+            if (desc) desc.classList.add('anim-desc');
+            if (meta) meta.classList.add('anim-meta');
+
+            // Handle Media
+            const img = document.getElementById('npImage');
+            const vid = document.getElementById('npVideo');
+            const placeholder = document.getElementById('npPlaceholder');
+
+            if (img) img.style.display = 'none';
+            if (vid) vid.style.display = 'none';
+            if (placeholder) placeholder.style.display = 'none';
+            if (img) img.classList.remove('ken-burns-active'); // Reset Ken Burns
+
+            // Reset Toggle Class
+            container.classList.remove('no-media');
+
+            if (item.media_url && getMediaType(item.media_url) !== 'NONE') {
+                const type = getMediaType(item.media_url);
+
+                if (type === 'VIDEO') {
+                    vid.src = item.media_url;
+                    vid.style.display = 'block';
+                    vid.play().catch(e => console.error("News AutoPlay Error:", e));
+                }
+
+                else {
+                    img.src = item.media_url;
+                    img.style.display = 'block';
+
+                    // Trigger Ken Burns Reflow
+                    void img.offsetWidth;
+                    img.classList.add('ken-burns-active');
+                }
+            }
+
+            else {
+                // NO MEDIA -> TEXT ONLY MODE
+                container.classList.add('no-media');
+            }
+
+            // Show Container with ENTER animation
+            container.style.display = 'flex';
+            container.classList.remove('page-enter');
+            void container.offsetWidth;
+            container.classList.add('page-enter');
+
+            // --- TRIGGER BACKEND TTS ---
+            if (item.title) {
+                fetch(API_BASE + '/tts', {
+
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+
+                    ,
+                    body: JSON.stringify({
+                        text: item.title, lang: 'ta'
+                    })
+                }).catch(err => console.error("TTS Auto-Trigger Failed:", err));
+            }
+        }
+
+        // --- HELPER: Detect Media Type ---
+        function getMediaType(url) {
+            if (!url) return 'NONE';
+            // Remove query params for extension check
+            const cleanUrl = url.split('?')[0].toLowerCase();
+
+            if (cleanUrl.match(/\.(mp4|webm|ogg|mov)$/)) return 'VIDEO';
+            if (cleanUrl.match(/\.(jpeg|jpg|gif|png|webp|bmp|svg)$/)) return 'IMAGE';
+            return 'WEB';
+        }
+
+        // --- WEBSOCKET ---
+        // Basic Reconnection Logic
+        function connectWebSocket() {
+            const WS_URL = 'ws://' + window.location.host + '/ws/news';
+            const ws = new WebSocket(WS_URL);
+            ws.onopen = () => console.log("WS Connected");
+
+            ws.onmessage = (e) => {
+                const msg = JSON.parse(e.data);
+                if (msg.type && msg.type.includes('NEWS')) fetchNews();
+                if (msg.type === 'CONFIG_UPDATED') applyConfig(msg.payload);
+                // if (msg.type === 'OVERLAY_UPDATED') updateMainScreen(msg.payload);
+                if (msg.type === 'SHOW_NEWS_MAIN') showNewsLayout(msg.payload);
+            }
+
+                ;
+            ws.onclose = () => setTimeout(connectWebSocket, 3000);
+            ws.onerror = (e) => console.error("WS Error:", e);
+        }
+
+        connectWebSocket();
 
 
         // INIT
         fetchConfig();
         fetchNews();
         fetchAds();
-
-        // Fallback Poll (Disabled/Relaxed)
-        // setInterval(fetchNews, 20000);
-        // setInterval(fetchAds, 30000); 
-        // setInterval(fetchConfig, 10000);
 
         // Start Scheduler
         setTimeout(startAdScheduler, 5000); // Delay start

@@ -131,6 +131,37 @@ class SystemConfig(Base):
     key = Column(String, primary_key=True, index=True)
     value = Column(Text) # JSON string or raw text
 
+# --- YouTube Voting Models ---
+class Voter(Base):
+    __tablename__ = "voters"
+
+    id = Column(Integer, primary_key=True, index=True)
+    stream_id = Column(String, index=True) # YouTube Video ID
+    author_channel_id = Column(String, index=True)
+    display_name = Column(String, nullable=True)
+    profile_image_url = Column(String, nullable=True)
+    
+    party_code = Column(String, index=True) # DMK, ADMK, etc.
+    party_tamil = Column(String, nullable=True)
+    message_id = Column(String, unique=True, index=True)
+    
+    voted_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    # Unique constraint to prevent duplicate votes per stream per user
+    # Handled via code check or unique index. sqlalchemy UniqueConstraint can be used.
+    # __table_args__ = (UniqueConstraint('stream_id', 'author_channel_id', name='_user_stream_uc'),)
+
+class VoteCount(Base):
+    __tablename__ = "vote_counts"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    stream_id = Column(String, index=True)
+    party_code = Column(String)
+    party_tamil = Column(String)
+    count = Column(Integer, default=0)
+    
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
 # Dependency
 def get_db():
     db = SessionLocal()

@@ -1,6 +1,11 @@
-import feedparser
-import requests
-from bs4 import BeautifulSoup
+try:
+    import feedparser
+    import requests
+    from bs4 import BeautifulSoup
+except ImportError:
+    feedparser = None
+    requests = None
+    BeautifulSoup = None
 from typing import List, Dict, Optional
 import re
 import ssl
@@ -13,6 +18,9 @@ def fetch_rss_feed(url: str, limit: int = 10) -> List[Dict]:
     """
     Fetches an RSS feed and returns normalized items.
     """
+    if not feedparser or not BeautifulSoup:
+        print("RSS Svc: Missing dependencies (feedparser/bs4)")
+        return []
     try:
         feed = feedparser.parse(url)
         items = []
@@ -66,6 +74,8 @@ def scrape_url(url: str) -> Dict:
     Scrapes a web page to extract the main headline and metadata.
     Simulates 'AI Summarizer' by extracting meta tags.
     """
+    if not requests or not BeautifulSoup:
+        return {"error": "Missing dependencies (requests/bs4)"}
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'

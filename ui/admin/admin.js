@@ -44,7 +44,8 @@ function switchView(viewName) {
         'ads': 'Ad Manager',
         'ads': 'Ad Manager',
         'config': 'Layout Configuration',
-        'schedule': 'Program Schedule'
+        'schedule': 'Program Schedule',
+        'voting': 'Voting Manager'
     };
     pageTitle.innerText = titles[viewName] || 'Control Room';
 
@@ -52,6 +53,7 @@ function switchView(viewName) {
     if (viewName === 'media') fetchMedia();
     if (viewName === 'ads') fetchAds();
     if (viewName === 'schedule') fetchSchedule();
+    if (viewName === 'voting') fetchVotingStatus();
 }
 
 // --- API Interactions ---
@@ -1120,5 +1122,71 @@ async function deleteProgram(id) {
     try {
         await fetch(`${API_BASE}/programs/${id}`, { method: 'DELETE' });
         fetchSchedule();
+    } catch (e) { console.error(e); }
+}
+
+// --- Voting Manager ---
+
+async function fetchVotingStatus() {
+    try {
+        const res = await fetch(`${API_BASE}/voting/status`);
+        const data = await res.json();
+
+        const statusEl = document.getElementById('voteServiceStatus');
+        const videoEl = document.getElementById('voteActiveVideo');
+
+        statusEl.innerText = data.is_running ? "RUNNING" : "STOPPED";
+        statusEl.className = data.is_running ? "font-bold text-green-600" : "font-bold text-red-600";
+
+        videoEl.innerText = data.video_id || "-";
+
+        if (data.is_running) {
+            document.getElementById('inpVoteVideoId').value = data.video_id;
+            fetchVotingStats();
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function saveVotingConfig(isActive) {
+    const videoId = document.getElementById('inpVoteVideoId').value.trim();
+    if (isActive && !videoId) return alert("Please enter a Video ID");
+
+    try {
+        const res = await fetch(`${API_BASE}/voting/config`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ video_id: videoId, is_active: isActive })
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            return alert("Error: " + err.detail);
+        }
+
+        fetchVotingStatus();
+        alert(isActive ? "Polling Started!" : "Polling Stopped.");
+    } catch (e) {
+        console.error(e);
+        alert("Failed to update voting config");
+    }
+}
+
+async function fetchVotingStats() {
+    try {
+        const res = await fetch(`${API_BASE}/voting/stats`);
+        const data = await res.json();
+
+        const el = document.getElementById('voteStatsArea');
+        if (!data.counts) {
+            el.innerText = "No data.";
+            return;
+        }
+
+        let html = `<div class="mb-2 border-b border-gray-600 pb-1">TOTAL VOTES: ${data.total}</div>`;
+        data.counts.forEach(c => {
+            html += `<div class="flex justify-between"><span>${c.party_code} (${c.party_tamil}):</span> <span>${c.count}</span></div>`;
+        });
+
+        el.innerHTML = html;
     } catch (e) { console.error(e); }
 }
