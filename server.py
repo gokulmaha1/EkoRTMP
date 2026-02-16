@@ -9,38 +9,24 @@ import queue
 import asyncio
 import time
 import datetime
-try:
-    import requests # Added for ntfy
-except ImportError:
-    requests = None
-import uvicorn
-from typing import List, Optional
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request, Depends, BackgroundTasks, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+import requests # Added for ntfy
+from typing import Optional, List
+from fastapi import FastAPI, UploadFile, Form, WebSocket, WebSocketDisconnect, Depends, HTTPException, File
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
 
 # Import our new database module
 import database
-from database import SessionLocal, engine, Base, NewsItem, AdCampaign, AdItem, NewsFeed, BlockedNews, Program, SystemConfig, Voter, VoteCount, NewsCategory, get_db, Program
+from database import NewsItem, SystemConfig, NewsType, NewsCategory, get_db, Program
 
 # Notification Config
 NTFY_TOPIC = os.environ.get('NTFY_TOPIC', 'eko_news_secret_123') # CHANGE THIS IN PRODUCTION
 PUBLIC_URL = os.environ.get('PUBLIC_URL', 'http://127.0.0.1:8123') # CHANGE THIS
 
 app = FastAPI()
-
-# Mount static files
-# ui/index.html references /static/style.css, so we mount ui at /static
-app.mount("/static", StaticFiles(directory="ui"), name="static")
-app.mount("/media", StaticFiles(directory="media"), name="media")
 
 # Log Management
 log_queue = queue.Queue()
@@ -275,10 +261,7 @@ async def sync_rss_feeds():
             
             for feed in feeds:
                 print(f"[RSS] Fetching {feed.name}...")
-                if news_fetcher:
-                    items = news_fetcher.fetch_rss_feed(feed.url)
-                else:
-                    items = []
+                items = news_fetcher.fetch_rss_feed(feed.url)
                 
                 for item in items:
                     # Check if blocked
@@ -572,10 +555,7 @@ class ExternalFetchRequest(BaseModel):
     source_type: str = "RSS" # RSS or SCRAPER
 
 # --- Services ---
-try:
-    import services.news_fetcher as news_fetcher
-except ImportError:
-    news_fetcher = None
+import services.news_fetcher as news_fetcher
 
 # --- API Endpoints ---
 
@@ -585,9 +565,6 @@ async def fetch_external_news(req: ExternalFetchRequest):
     Fetches news from an external source (RSS or URL) and returns 
     a list of items for the UI to preview/edit.
     """
-    if not news_fetcher:
-        return JSONResponse(status_code=500, content={"error": "Service unavailable"})
-        
     if req.source_type == "RSS":
         items = news_fetcher.fetch_rss_feed(req.url)
         return {"status": "success", "items": items}
@@ -602,10 +579,6 @@ async def fetch_external_news(req: ExternalFetchRequest):
 @app.get("/")
 def read_root():
     return FileResponse("ui/index.html")
-
-@app.get("/overlay")
-def read_overlay():
-    return FileResponse("overlay.html")
 
 @app.get("/admin")
 def read_admin():
@@ -1143,14 +1116,11 @@ def send_ntfy_approval_request(item):
             "Actions": f"{action_approve}; {action_reject}"
         }
         
-        if requests:
-            requests.post(url, 
-                data=f"Review: {item.title_tamil} ({item.category})", 
-                headers=headers,
-                timeout=5
-            )
-        else:
-            print("[NTFY] Skipped: requests module missing")
+        requests.post(url, 
+            data=f"Review: {item.title_tamil} ({item.category})", 
+            headers=headers,
+            timeout=5
+        )
     except Exception as e:
         print(f"[NTFY] Failed to send notification: {e}")
 
@@ -1250,106 +1220,3 @@ def stop_stream():
 @app.get("/api/stream/status")
 def get_status():
     return {"running": stream_manager.is_running()}
-
-# --- YouTube Voting API ---
-try:
-    from services.youtube_service import vote_service
-except ImportError:
-    vote_service = None
-from database import Voter, VoteCount
-
-class VotingConfig(BaseModel):
-    video_id: str
-    is_active: bool
-
-@app.post("/api/voting/config")
-def update_voting_config(conf: VotingConfig):
-    if not vote_service:
-        raise HTTPException(status_code=500, detail="Voting Service unavailable (missing dependencies)")
-        
-    if conf.is_active:
-        success = vote_service.start(conf.video_id)
-        if not success:
-            raise HTTPException(status_code=400, detail="Failed to start. Check API Key.")
-    else:
-        vote_service.stop()
-    return {"status": "updated", "is_running": vote_service.is_running}
-
-@app.get("/api/voting/status")
-def get_voting_status():
-    if not vote_service:
-        return {"is_running": False, "video_id": None, "error": "Service Unavailable"}
-        
-    return {
-        "is_running": vote_service.is_running,
-        "video_id": vote_service.video_id
-    }
-
-@app.get("/api/voting/stats")
-def get_voting_stats(db: Session = Depends(get_db)):
-    if not vote_service:
-        return {"total": 0, "counts": []}
-        
-    # Aggregate counts
-    counts = db.query(VoteCount).filter(
-        VoteCount.stream_id == vote_service.video_id
-    ).all()
-    
-    total = sum(c.count for c in counts)
-    return {
-        "total": total,
-        "counts": [
-            {
-                "party_code": c.party_code,
-                "party_tamil": c.party_tamil, 
-                "count": c.count
-            } for c in counts
-        ]
-    }
-
-@app.get("/api/voting/ticker")
-def get_voting_ticker(limit: int = 20, db: Session = Depends(get_db)):
-    # Latest 20 voters
-    voters = db.query(Voter).filter(
-        Voter.stream_id == vote_service.video_id
-    ).order_by(Voter.voted_at.desc()).limit(limit).all()
-    
-    return [
-        {
-            "display_name": v.display_name,
-            "profile_image_url": v.profile_image_url,
-            "party_code": v.party_code,
-            "party_tamil": v.party_tamil,
-            "voted_at": v.voted_at
-        } for v in voters
-    ]
-
-@app.get("/api/voting/latest")
-def get_latest_voter(db: Session = Depends(get_db)):
-    # Get VERY latest voter for popup
-    voter = db.query(Voter).filter(
-        Voter.stream_id == vote_service.video_id
-    ).order_by(Voter.voted_at.desc()).first()
-    
-    if voter:
-        return {
-            "id": voter.id,
-            "display_name": voter.display_name,
-            "profile_image_url": voter.profile_image_url,
-            "party_code": voter.party_code,
-            "party_tamil": voter.party_tamil
-        }
-    return {}
-
-# --- Init ---
-# Ensure Voting Service stops gracefully on shutdown?
-# app.add_event_handler("shutdown", vote_service.stop) # Optional
-
-if __name__ == "__main__":
-    # Ensure media directory exists
-    if not os.path.exists("media"):
-        os.makedirs("media")
-    
-    # Run Server
-    print("Starting EKO News Server on port 8123...")
-    uvicorn.run(app, host="0.0.0.0", port=8123)

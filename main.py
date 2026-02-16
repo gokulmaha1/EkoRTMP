@@ -14,11 +14,6 @@ print("DEBUG: main.py is starting...", flush=True)
 import time
 import json
 import urllib.request
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
 from gi.repository import Gst, Gtk, GObject, WebKit2, GLib, Gdk
 
 # Initialize GStreamer and GTK
