@@ -52,10 +52,12 @@
         /* --- HEADER SECTION --- */
         /* --- VISUAL POLISH (PREMIUM TV LOOK) --- */
         :root {
-            /* Richer TV Gradient */
-            --header-gradient: linear-gradient(to bottom, #cc0000 0%, #990000 100%);
-            --gloss-overlay: linear-gradient(to bottom, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.1) 100%);
-            --shadow-soft: 0 4px 10px rgba(0, 0, 0, 0.5);
+            /* Simplified Gradients for Performance */
+            --header-gradient: #b90909;
+            /* Solid color is faster */
+            /* --gloss-overlay: linear-gradient(to bottom, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.1) 100%); */
+            /* --shadow-soft: 0 4px 10px rgba(0, 0, 0, 0.5); */
+            /* Removed shadow */
         }
 
         /* --- HEADER SECTION --- */
@@ -70,12 +72,12 @@
             border-bottom: 3px solid #ffcc00;
             /* Gold Accent Bottom */
             z-index: 100;
-            box-shadow: var(--shadow-soft);
+            /* box-shadow: var(--shadow-soft); */
             height: var(--header-height);
             position: relative;
         }
 
-        /* Gloss Shine Effect (Pseudo-element for safety) */
+        /* Gloss Shine Effect (Pseudo-element for safety) 
         .top-header::after {
             content: '';
             position: absolute;
@@ -87,6 +89,7 @@
             pointer-events: none;
             z-index: 0;
         }
+        */
 
         /* Header Columns */
         .header-left {
@@ -125,7 +128,8 @@
 
         /* Header Elements */
         .location-tag {
-            background: linear-gradient(to bottom, #ffffff 0%, #e0e0e0 100%);
+            background: #f0f0f0;
+            /* Simplified gradient */
             color: #b90909;
             padding: 6px 15px;
             border-radius: 4px;
@@ -133,7 +137,7 @@
             font-weight: 700;
             font-size: 20px;
             text-transform: uppercase;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+            /* box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3); */
             display: inline-flex;
             /* Fix flex alignment inside table cell */
             align-items: center;
@@ -148,8 +152,9 @@
             /* Large TV Size */
             font-weight: 700;
             white-space: nowrap;
-            text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
-            /* Hard Shadow for crispness */
+            /* text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5); */
+            /* Simplified Shadow */
+            text-shadow: 1px 1px 0 #000;
             /* Ensure Visibility */
             display: block !important;
             opacity: 1 !important;
@@ -163,7 +168,7 @@
             height: 94px;
             width: auto;
             object-fit: contain;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+            /* filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4)); */
             display: inline-block !important;
         }
 
@@ -212,7 +217,7 @@
             border-top: 4px solid #cc0000;
             z-index: 100;
             height: var(--ticker-height);
-            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+            /* box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2); */
         }
 
         .ticker-label {
@@ -229,7 +234,7 @@
             height: 100%;
             z-index: 10;
             text-transform: uppercase;
-            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3);
+            /* box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3); */
             /* Separation Shadow */
             position: relative;
         }
@@ -278,12 +283,13 @@
             width: 240px;
             /* Slightly wider */
             vertical-align: middle;
-            background: linear-gradient(to bottom, #f8f9fa 0%, #e9ecef 100%);
+            background: #f0f0f0;
+            /* Simplified gradient */
             height: 100%;
             border-left: 2px solid #ddd;
             padding: 0 15px;
             z-index: 20;
-            box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1);
+            /* box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1); */
         }
 
         .live-badge {
@@ -296,7 +302,7 @@
             display: inline-flex !important;
             align-items: stretch;
             gap: 6px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); */
             float: right;
             display: inline-block;
             /* margin-top: 4px; */
@@ -426,7 +432,8 @@
             right: 0;
             bottom: 0;
             display: flex;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: #e0e0e0;
+            /* Simplified gradient */
             z-index: 50;
             animation: slideInRight 0.5s ease-out;
         }
@@ -488,7 +495,7 @@
             flex-direction: column;
             justify-content: center;
             background: white;
-            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            /* box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1); */
         }
 
         /* --- ANIMATIONS: Text & Media --- */
@@ -1153,12 +1160,8 @@
                     el.style.lineHeight = "1.2";
                 }
 
-                // Location
-                if (item.source_url && item.source_url.length < 15) {
-                    document.getElementById('locationText').innerText = item.source_url;
-                } else {
-                    document.getElementById('locationText').innerText = "அண்மை செய்திகள்";
-                }
+                // Location - Always show static label
+                document.getElementById('locationText').innerText = "அண்மை செய்திகள்";
 
                 el.classList.remove('animate-out');
                 el.classList.add('animate-in');

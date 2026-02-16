@@ -23,7 +23,7 @@ Gst.init(None)
 WIDTH = 1280
 HEIGHT = 720
 RTMP_URL = os.environ.get('RTMP_URL', 'rtmp://localhost/live/test')
-FRAMERATE = 20
+FRAMERATE = 15
 
 class StreamOverlayApp:
     def __init__(self):
@@ -51,7 +51,7 @@ class StreamOverlayApp:
         settings = self.webview.get_settings()
         settings.set_enable_write_console_messages_to_stdout(True) # Debugging
         settings.set_enable_developer_extras(True)
-        settings.set_enable_webgl(True)
+        settings.set_enable_webgl(False)
         # Spoof a standard browser User-Agent to avoid being blocked
         settings.set_user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
         settings.set_media_playback_requires_user_gesture(False) # Allow autoplay

@@ -973,8 +973,12 @@ function renderSchedule(items) {
     const now = new Date();
 
     items.forEach(p => {
-        const start = new Date(p.start_time);
-        const end = new Date(p.end_time);
+        // Force UTC interpretation if Z is missing
+        const startStr = p.start_time.endsWith('Z') ? p.start_time : p.start_time + 'Z';
+        const endStr = p.end_time.endsWith('Z') ? p.end_time : p.end_time + 'Z';
+
+        const start = new Date(startStr);
+        const end = new Date(endStr);
 
         let status = '<span class="px-2 py-1 rounded bg-gray-100 text-gray-500 text-xs font-bold">UPCOMING</span>';
         if (now >= start && now <= end) {
