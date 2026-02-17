@@ -125,6 +125,8 @@ class Program(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
+
+
 class SystemConfig(Base):
     __tablename__ = "system_config"
 
