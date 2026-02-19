@@ -106,78 +106,120 @@ def scrape_url(url: str) -> Dict:
         print(f"Scrape Error: {e}")
         return {"error": str(e)}
 
-def scrape_news_feed(url: str, limit: int = 15) -> List[Dict]:
-    """
-    Crawls a main news page and extracts article links to scrape.
-    Heuristic: 
-    1. Find all <a> tags.
-    2. Filter for those that look like article links (sufficient text length).
-    3. Scrape individual pages (or just use link metadata if efficient).
-    4. Return list of items.
-    """
-    try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        res = requests.get(url, headers=headers, timeout=10)
-        soup = BeautifulSoup(res.text, "html.parser")
-        
-        articles = []
+# --- Scrapy Implementation ---
+try:
+    import scrapy
+    from scrapy.crawler import CrawlerProcess
+    from scrapy.utils.project import get_project_settings
+    import multiprocessing
+except ImportError:
+    scrapy = None
+    print("WARNING: Scrapy not installed.")
+
+class NewsSpider(scrapy.Spider):
+    name = "news_spider"
+    
+    def __init__(self, url=None, *args, **kwargs):
+        super(NewsSpider, self).__init__(*args, **kwargs)
+        self.start_urls = [url] if url else []
+        self.items = []
+
+    def parse(self, response):
+        # Heuristic: Find all links
+        # Filter for substantial text
         seen_links = set()
         
-        # Heuristic: Find links with substantial text
-        # Improve: Look for common news markers like 'article', 'story', 'h1', 'h2', 'h3' inside <a>
-        for a in soup.find_all('a', href=True):
-            href = a['href']
-            text = a.get_text(strip=True)
+        for a in response.css('a'):
+            href = a.attrib.get('href')
+            text = a.css('::text').get()
             
-            # Normalize URL
-            if href.startswith('/'):
-                from urllib.parse import df
-                # Need base URL
-                from urllib.parse import urljoin
-                href = urljoin(url, href)
+            if not href or not text:
+                continue
+                
+            text = text.strip()
+            href = response.urljoin(href)
             
             # Basic Filters
-            if len(text) < 20: continue # Too short to be a headline
+            if len(text) < 20: continue 
             if href in seen_links: continue
             if "javascript:" in href or "mailto:" in href: continue
             
             # Skip common non-news links
             if any(x in href.lower() for x in ['privacy', 'terms', 'contact', 'login', 'signup', 'about']):
                 continue
-                
+
             seen_links.add(href)
             
-            # Deep Scrape? Or just use Link Text as Title?
-            # Deep scraping 15 links might be slow (15 requests).
-            # Strategy: Use Link Text as Title. If image exists in parent/child, use it.
-            
-            # Try to find image near the link
+            # Image extraction (heuristic)
             image = None
-            # Check for <img> inside <a>
-            img_tag = a.find('img')
-            if img_tag and img_tag.get('src'):
-                image = img_tag['src']
+            img = a.css('img::attr(src)').get()
+            if img:
+                image = response.urljoin(img)
             
-            # Logic: Just add to candidate list
-            articles.append({
+            self.items.append({
                 "title": text,
-                "summary": "", # To be filled if deep scraped, or empty
+                "summary": "",
                 "link": href,
-                "id": href, # Use URL as ID
+                "id": href,
                 "published": "",
-                "image": image, # Might be None
+                "image": image,
                 "source": "SCRAPER"
             })
             
-            if len(articles) >= limit:
+            if len(self.items) >= 15:
                 break
-                
-        # Optional: Deep scrape top 5 if no images?
-        # For now, return what we found.
-        return articles
-            
+
+def run_spider(url, queue):
+    """
+    Worker function to run Scrapy in a separate process.
+    """
+    try:
+        # Create a spider class on the fly or use the one defined
+        class ResultsSpider(NewsSpider):
+            def closed(self, reason):
+                queue.put(self.items)
+
+        process = CrawlerProcess(settings={
+            'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'LOG_LEVEL': 'ERROR',
+            'REQUEST_FINGERPRINTER_IMPLEMENTATION': '2.7',
+        })
+        
+        process.crawl(ResultsSpider, url=url)
+        process.start() # Blocks until finished
     except Exception as e:
-        print(f"Feed Scrape Error: {e}")
+        queue.put({"error": str(e)})
+
+def scrape_news_feed(url: str, limit: int = 15) -> List[Dict]:
+    """
+    Scrapes a news feed using Scrapy in a separate process.
+    """
+    if scrapy is None:
+        print("Scrapy not installed. Returning empty list.")
+        return []
+
+    queue = multiprocessing.Queue()
+    p = multiprocessing.Process(target=run_spider, args=(url, queue))
+    
+    try:
+        p.start()
+        # Wait with timeout (e.g. 30 seconds)
+        p.join(timeout=30)
+        
+        if p.is_alive():
+            print("Scrapy process timed out. Terminating...")
+            p.terminate()
+            p.join()
+            return []
+            
+        if not queue.empty():
+            result = queue.get()
+            if isinstance(result, dict) and "error" in result:
+                print(f"Scrapy Error: {result['error']}")
+                return []
+            return result
+            
+        return []
+    except Exception as e:
+        print(f"Multiprocessing Error: {e}")
         return []

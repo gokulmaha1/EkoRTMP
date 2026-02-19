@@ -186,7 +186,6 @@ async function saveConfig() {
         brand_color_secondary: document.getElementById('inpColorSecondary').value,
         brand_color_dark: document.getElementById('inpColorDark').value,
         logo_url: document.getElementById('inpLogoUrl').value,
-        ticker_speed: parseInt(document.getElementById('inpTickerSpeed').value),
         default_headline: document.getElementById('inpDefaultHeadline').value,
         ticker_label: document.getElementById('inpTickerLabel').value,
         breaking_label: document.getElementById('inpBreakingLabel').value,
@@ -214,10 +213,7 @@ async function saveConfig() {
     }
 }
 
-// Init speed listener
-document.getElementById('inpTickerSpeed').addEventListener('input', (e) => {
-    document.getElementById('lblTickerSpeed').innerText = e.target.value + 's';
-});
+// Speed listener removed
 
 // --- News Tabs & External Fetching ---
 // --- News Tabs & External Fetching ---
