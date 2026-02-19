@@ -105,3 +105,79 @@ def scrape_url(url: str) -> Dict:
     except Exception as e:
         print(f"Scrape Error: {e}")
         return {"error": str(e)}
+
+def scrape_news_feed(url: str, limit: int = 15) -> List[Dict]:
+    """
+    Crawls a main news page and extracts article links to scrape.
+    Heuristic: 
+    1. Find all <a> tags.
+    2. Filter for those that look like article links (sufficient text length).
+    3. Scrape individual pages (or just use link metadata if efficient).
+    4. Return list of items.
+    """
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        res = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(res.text, "html.parser")
+        
+        articles = []
+        seen_links = set()
+        
+        # Heuristic: Find links with substantial text
+        # Improve: Look for common news markers like 'article', 'story', 'h1', 'h2', 'h3' inside <a>
+        for a in soup.find_all('a', href=True):
+            href = a['href']
+            text = a.get_text(strip=True)
+            
+            # Normalize URL
+            if href.startswith('/'):
+                from urllib.parse import df
+                # Need base URL
+                from urllib.parse import urljoin
+                href = urljoin(url, href)
+            
+            # Basic Filters
+            if len(text) < 20: continue # Too short to be a headline
+            if href in seen_links: continue
+            if "javascript:" in href or "mailto:" in href: continue
+            
+            # Skip common non-news links
+            if any(x in href.lower() for x in ['privacy', 'terms', 'contact', 'login', 'signup', 'about']):
+                continue
+                
+            seen_links.add(href)
+            
+            # Deep Scrape? Or just use Link Text as Title?
+            # Deep scraping 15 links might be slow (15 requests).
+            # Strategy: Use Link Text as Title. If image exists in parent/child, use it.
+            
+            # Try to find image near the link
+            image = None
+            # Check for <img> inside <a>
+            img_tag = a.find('img')
+            if img_tag and img_tag.get('src'):
+                image = img_tag['src']
+            
+            # Logic: Just add to candidate list
+            articles.append({
+                "title": text,
+                "summary": "", # To be filled if deep scraped, or empty
+                "link": href,
+                "id": href, # Use URL as ID
+                "published": "",
+                "image": image, # Might be None
+                "source": "SCRAPER"
+            })
+            
+            if len(articles) >= limit:
+                break
+                
+        # Optional: Deep scrape top 5 if no images?
+        # For now, return what we found.
+        return articles
+            
+    except Exception as e:
+        print(f"Feed Scrape Error: {e}")
+        return []

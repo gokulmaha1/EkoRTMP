@@ -320,19 +320,39 @@ async function fetchFeeds() {
 async function addNewFeed() {
     const name = prompt("Enter Feed Name (e.g. Google News):");
     if (!name) return;
-    const url = prompt("Enter RSS Feed URL:");
+    const url = prompt("Enter Feed/Page URL:");
     if (!url) return;
+
+    // Simple way to get type without building a modal: 
+    // If URL contains common RSS extensions, default to RSS, else ask?
+    // Let's just ask.
+    let type = prompt("Enter Source Type (RSS or SCRAPER):", "RSS");
+    if (!type) type = "RSS";
+    type = type.toUpperCase();
+    if (type !== 'RSS' && type !== 'SCRAPER') type = 'RSS';
 
     try {
         await fetch(`${API_BASE}/feeds`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, url, source_type: "RSS" })
+            body: JSON.stringify({ name, url, source_type: type })
         });
         fetchFeeds();
     } catch (e) {
         console.error(e);
         alert("Failed to save feed");
+    }
+}
+
+async function forceSync() {
+    if (!confirm("Start manual sync of all feeds?")) return;
+    try {
+        const res = await fetch(`${API_BASE}/feeds/sync`, { method: 'POST' });
+        const d = await res.json();
+        alert("Sync started! Check pending queue shortly.");
+    } catch (e) {
+        console.error(e);
+        alert("Failed to trigger sync");
     }
 }
 

@@ -242,71 +242,7 @@ from database import NewsFeed, NewsItem, SystemConfig, BlockedNews, SessionLocal
 async def sync_rss_feeds():
     """Background task to sync RSS feeds periodically."""
     while True:
-        try:
-            db = database.SessionLocal()
-            feeds = db.query(NewsFeed).filter(NewsFeed.is_active == True).all()
-            
-            # Load Filters
-            filter_config = db.query(SystemConfig).filter(SystemConfig.key == "news_filters").first()
-            filter_list = []
-            if filter_config and filter_config.value:
-                try:
-                    # stored as JSON list ["bad", "word"]
-                    filter_list = json.loads(filter_config.value)
-                except:
-                    # Fallback to comma sep if JSON fails
-                    filter_list = [x.strip() for x in filter_config.value.split(',') if x.strip()]
-            
-            new_items_count = 0
-            
-            for feed in feeds:
-                print(f"[RSS] Fetching {feed.name}...")
-                items = news_fetcher.fetch_rss_feed(feed.url)
-                
-                for item in items:
-                    # Check if blocked
-                    blocked = db.query(BlockedNews).filter(BlockedNews.external_id == item['id']).first()
-                    if blocked:
-                        continue # Skip blocked items
-
-                    # Check if exists
-                    exists = db.query(NewsItem).filter(NewsItem.external_id == item['id']).first()
-                    if not exists:
-                        # Apply Filtering
-                        raw_title = item['title']
-                        clean_title = apply_content_filters(raw_title, filter_list)
-                        
-                        if not clean_title:
-                            print(f"[RSS] Skipped filtered item: {raw_title}")
-                            continue
-
-                        # Create new item
-                        new_news = NewsItem(
-                            title_tamil=clean_title, # Filtered Title
-                            title_english="",
-                            type="TICKER", # Default to Ticker so it scrolls
-                            category="GENERAL",
-                            source="RSS",
-                            source_url=feed.name, # Use Feed Name as source label
-                            external_id=item['id'],
-                            media_url=item['image'],
-                            is_active=True,
-                            priority=5 # Normal priority
-                        )
-                        db.add(new_news)
-                        new_items_count += 1
-            
-            if new_items_count > 0:
-                db.commit()
-                print(f"[RSS] Added {new_items_count} new items.")
-                # Broadcast update
-                await broadcast_news_update("NEWS_REFRESH", {"count": new_items_count})
-            
-            db.close()
-            
-        except Exception as e:
-            print(f"[RSS] Sync Error: {e}")
-        
+        await sync_rss_feeds_logic()
         await asyncio.sleep(60) # Sync every 60 seconds
 
 @app.on_event("startup")
@@ -697,6 +633,85 @@ def delete_ad_item(item_id: int, db: Session = Depends(get_db)):
         db.delete(item)
         db.commit()
     return {"status": "success"}
+
+@app.post("/api/feeds/sync")
+async def sync_feeds_manual():
+    """
+    Manually triggers the background sync task immediately.
+    """
+    asyncio.create_task(sync_rss_feeds_logic())
+    return {"status": "sync_started"}
+
+# Refactor sync_rss_feeds to separate logic for reusability
+async def sync_rss_feeds_logic():
+    print("[NewsSync] Manual/Scheduled Sync Triggered")
+    try:
+        db = database.SessionLocal()
+        feeds = db.query(NewsFeed).filter(NewsFeed.is_active == True).all()
+        
+        # Load Filters
+        filter_config = db.query(SystemConfig).filter(SystemConfig.key == "news_filters").first()
+        filter_list = []
+        if filter_config and filter_config.value:
+            try:
+                filter_list = json.loads(filter_config.value)
+            except:
+                filter_list = [x.strip() for x in filter_config.value.split(',') if x.strip()]
+        
+        new_items_count = 0
+        
+        for feed in feeds:
+            print(f"[NewsSync] Syncing {feed.name} ({feed.source_type})...")
+            items = []
+            
+            if feed.source_type == "RSS":
+                items = news_fetcher.fetch_rss_feed(feed.url)
+            elif feed.source_type == "SCRAPER":
+                items = news_fetcher.scrape_news_feed(feed.url)
+            
+            for item in items:
+                # Check if blocked
+                blocked = db.query(BlockedNews).filter(BlockedNews.external_id == item['id']).first()
+                if blocked:
+                    continue 
+
+                # Check if exists
+                exists = db.query(NewsItem).filter(NewsItem.external_id == item['id']).first()
+                if not exists:
+                    # Apply Filtering
+                    raw_title = item['title']
+                    clean_title = apply_content_filters(raw_title, filter_list)
+                    
+                    if not clean_title:
+                        continue
+
+                    # Create new item
+                    is_active_default = True if feed.source_type == "RSS" else False
+                    
+                    new_news = NewsItem(
+                        title_tamil=clean_title, 
+                        title_english="",
+                        type="TICKER", 
+                        category="GENERAL",
+                        source=feed.source_type,
+                        source_url=feed.name, 
+                        external_id=item['id'],
+                        media_url=item['image'],
+                        is_active=is_active_default,
+                        priority=0
+                    )
+                    db.add(new_news)
+                    new_items_count += 1
+        
+        if new_items_count > 0:
+            db.commit()
+            print(f"[NewsSync] Added {new_items_count} new items.")
+            await broadcast_news_update("NEWS_REFRESH", {"count": new_items_count})
+        
+        db.close()
+        
+    except Exception as e:
+        print(f"[NewsSync] Error: {e}")
 
 # --- Program Management API (Schedule) ---
 
