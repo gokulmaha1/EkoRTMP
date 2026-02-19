@@ -1168,6 +1168,9 @@
             }, 500);
 
 
+            const MAX_AGE_MS = 24 * 60 * 60 * 1000;
+            const itemDate = new Date(item.created_at || new Date());
+            const now = new Date();
             const isRecent = (now - itemDate) < MAX_AGE_MS;
 
             // --- MAIN SCREEN AUTOMATION ---
