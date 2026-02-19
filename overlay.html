@@ -1127,10 +1127,10 @@
 
             if (newsItems.length === 0) return;
 
-            if (newsItems.length === 0) return;
 
-            // Use ONLY active items WITH MEDIA for main screen loop (Text-only news will only appear in ticker)
-            let pool = newsItems.filter(i => i.is_active && i.media_url && getMediaType(i.media_url) !== 'NONE');
+
+            // Use all active items (Text-only news will use no-media layout)
+            let pool = newsItems.filter(i => i.is_active);
 
             if (pool.length === 0) {
                 // No image news available? Hide news presentation to show background stream
@@ -1168,18 +1168,10 @@
             }, 500);
 
 
-            // --- MAIN SCREEN AUTOMATION ---
-            // Logic: 
-            // 1. If item has media -> Show split layout
-            // 2. If item has NO media -> Show default/webview OR keep previous? 
-            //    For now, let's behave like a TV channel. If no media, maybe show logo or just keep text?
-            //    Current implementation: Only interrupts if media exists. 
-            //    FIX: If we want a continuous loop, we should explicitly "clear" or show something else if no media?
-
-            const MAX_AGE_MS = 24 * 60 * 60 * 1000;
-            const itemDate = new Date(item.created_at || new Date());
-            const now = new Date();
             const isRecent = (now - itemDate) < MAX_AGE_MS;
+
+            // --- MAIN SCREEN AUTOMATION ---
+            // Always show news layout (it handles media/no-media internaly)
 
             // --- MAIN SCREEN AUTOMATION ---
             // Logic: If media exists, show split view.
