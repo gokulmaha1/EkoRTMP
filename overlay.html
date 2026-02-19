@@ -1129,8 +1129,8 @@
 
 
 
-            // Use all active items (Text-only news will use no-media layout)
-            let pool = newsItems.filter(i => i.is_active);
+            // Use ONLY active items WITH MEDIA for main screen loop
+            let pool = newsItems.filter(i => i.is_active && i.media_url && getMediaType(i.media_url) !== 'NONE');
 
             if (pool.length === 0) {
                 // No image news available? Hide news presentation to show background stream
