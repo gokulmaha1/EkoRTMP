@@ -106,120 +106,44 @@ def scrape_url(url: str) -> Dict:
         print(f"Scrape Error: {e}")
         return {"error": str(e)}
 
-# --- Scrapy Implementation ---
-try:
-    import scrapy
-    from scrapy.crawler import CrawlerProcess
-    from scrapy.utils.project import get_project_settings
-    import multiprocessing
-except ImportError:
-    scrapy = None
-    print("WARNING: Scrapy not installed.")
-
-class NewsSpider(scrapy.Spider):
-    name = "news_spider"
-    
-    def __init__(self, url=None, *args, **kwargs):
-        super(NewsSpider, self).__init__(*args, **kwargs)
-        self.start_urls = [url] if url else []
-        self.items = []
-
-    def parse(self, response):
-        # Heuristic: Find all links
-        # Filter for substantial text
-        seen_links = set()
-        
-        for a in response.css('a'):
-            href = a.attrib.get('href')
-            text = a.css('::text').get()
-            
-            if not href or not text:
-                continue
-                
-            text = text.strip()
-            href = response.urljoin(href)
-            
-            # Basic Filters
-            if len(text) < 20: continue 
-            if href in seen_links: continue
-            if "javascript:" in href or "mailto:" in href: continue
-            
-            # Skip common non-news links
-            if any(x in href.lower() for x in ['privacy', 'terms', 'contact', 'login', 'signup', 'about']):
-                continue
-
-            seen_links.add(href)
-            
-            # Image extraction (heuristic)
-            image = None
-            img = a.css('img::attr(src)').get()
-            if img:
-                image = response.urljoin(img)
-            
-            self.items.append({
-                "title": text,
-                "summary": "",
-                "link": href,
-                "id": href,
-                "published": "",
-                "image": image,
-                "source": "SCRAPER"
-            })
-            
-            if len(self.items) >= 15:
-                break
-
-def run_spider(url, queue):
-    """
-    Worker function to run Scrapy in a separate process.
-    """
-    try:
-        # Create a spider class on the fly or use the one defined
-        class ResultsSpider(NewsSpider):
-            def closed(self, reason):
-                queue.put(self.items)
-
-        process = CrawlerProcess(settings={
-            'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'LOG_LEVEL': 'ERROR',
-            'REQUEST_FINGERPRINTER_IMPLEMENTATION': '2.7',
-        })
-        
-        process.crawl(ResultsSpider, url=url)
-        process.start() # Blocks until finished
-    except Exception as e:
-        queue.put({"error": str(e)})
+import subprocess
+import sys
+import json
+import os
 
 def scrape_news_feed(url: str, limit: int = 15) -> List[Dict]:
     """
-    Scrapes a news feed using Scrapy in a separate process.
+    Scrapes a news feed using the external scraper_worker.py script.
+    Run in subprocess to ensure isolation.
     """
-    if scrapy is None:
-        print("Scrapy not installed. Returning empty list.")
-        return []
-
-    queue = multiprocessing.Queue()
-    p = multiprocessing.Process(target=run_spider, args=(url, queue))
-    
     try:
-        p.start()
-        # Wait with timeout (e.g. 30 seconds)
-        p.join(timeout=30)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        worker_path = os.path.join(current_dir, "scraper_worker.py")
         
-        if p.is_alive():
-            print("Scrapy process timed out. Terminating...")
-            p.terminate()
-            p.join()
+        # Run worker
+        result = subprocess.check_output(
+            [sys.executable, worker_path, url],
+            stderr=subprocess.STDOUT,
+            timeout=45
+        )
+        
+        # Parse Output
+        try:
+            items = json.loads(result.decode('utf-8'))
+            if isinstance(items, dict) and "error" in items:
+                print(f"Scraper Worker Error: {items['error']}")
+                return []
+            return items
+        except json.JSONDecodeError:
+            print(f"Scraper Worker Bad Output: {result.decode('utf-8')}")
             return []
             
-        if not queue.empty():
-            result = queue.get()
-            if isinstance(result, dict) and "error" in result:
-                print(f"Scrapy Error: {result['error']}")
-                return []
-            return result
-            
+    except subprocess.TimeoutExpired:
+        print("Scraper Worker Timed Out")
+        return []
+    except subprocess.CalledProcessError as e:
+        print(f"Scraper Worker Failed: {e.output.decode('utf-8') if e.output else str(e)}")
         return []
     except Exception as e:
-        print(f"Multiprocessing Error: {e}")
+        print(f"Scrape Execution Error: {e}")
         return []
