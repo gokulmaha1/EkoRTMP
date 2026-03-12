@@ -1138,7 +1138,7 @@
         ws.onmessage = (e) => {
             const msg = JSON.parse(e.data);
             if (msg.type.includes('NEWS')) fetchNews();
-            if (msg.type === 'CONFIG_UPDATED') applyConfig(msg.payload);
+            if (msg.type === 'CONFIG_UPDATED') fetchConfig();
             if (msg.type === 'OVERLAY_UPDATED') updateMainScreen(msg.payload);
             if (msg.type === 'SHOW_NEWS_MAIN') {
                 isNewsActive = true;
@@ -1502,6 +1502,10 @@
                     window.votingConfig = config;
                     if (config.overlay_display_mode) {
                         currentOverlayMode = config.overlay_display_mode;
+                        // Force update UI if not in auto
+                        if (currentOverlayMode !== 'auto') {
+                            updateDisplayModeDirectly();
+                        }
                     }
                 }
 
@@ -1621,6 +1625,16 @@
 
         // --- CONTENT ROTATION ---
         function cycleContent() {
+            if (currentOverlayMode === 'voting') {
+                document.getElementById('newsPresentation').style.display = 'none';
+                document.getElementById('votingPresentation').style.display = 'flex';
+                return;
+            }
+            if (currentOverlayMode === 'news') {
+                document.getElementById('votingPresentation').style.display = 'none';
+                document.getElementById('newsPresentation').style.display = 'flex';
+                return;
+            }
             if (currentOverlayMode !== 'auto') return; // Respect manual mode
 
             const news = document.getElementById('newsPresentation');
