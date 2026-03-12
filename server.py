@@ -1180,6 +1180,9 @@ def test_vote_connection(api_key: str, video_id: str):
 @app.get("/api/votes/counts")
 def get_vote_counts(db: Session = Depends(get_db)):
     from services.vote_collector import PARTIES
+    # Debug log
+    # print(f"[DEBUG] PARTIES: {PARTIES.keys()}")
+    
     db_counts = db.query(VoteCount).all()
     
     # Start with zeroes for all defined parties

@@ -41,14 +41,34 @@ class VoteCollector:
         self.on_new_vote = None
 
     def load_config(self, db: Session):
-        def get_cfg(key, default=None):
-            cfg = db.query(SystemConfig).filter(SystemConfig.key == key).first()
-            return cfg.value if cfg else default
+        cfg = db.query(SystemConfig).filter(SystemConfig.key == "voting_config").first()
+        if not cfg:
+            return
 
-        self.api_key = get_cfg("youtube_api_key")
-        self.main_video_id = get_cfg("main_video_id")
-        self.vote_video_id = get_cfg("vote_video_id")
-        self.stream_mode = get_cfg("stream_mode", "single")
+        try:
+            data = json.loads(cfg.value)
+            new_api_key = data.get("api_key")
+            new_main_id = data.get("main_video_id")
+            new_vote_id = data.get("vote_video_id")
+            new_mode = data.get("stream_mode", "single")
+            new_interval = int(data.get("poll_interval", 5))
+
+            # Detect change in video/key to reset polling state
+            target_id = new_vote_id if new_mode == "dual" else new_main_id
+            current_target = self.vote_video_id if self.stream_mode == "dual" else self.main_video_id
+            
+            if target_id != current_target or new_api_key != self.api_key:
+                print(f"[VoteCollector] Config changed. Resetting state. Target: {target_id}")
+                self.next_page_token = None
+                self.last_chat_id = None
+
+            self.api_key = new_api_key
+            self.main_video_id = new_main_id
+            self.vote_video_id = new_vote_id
+            self.stream_mode = new_mode
+            self.polling_interval = new_interval
+        except Exception as e:
+            print(f"[VoteCollector] Error loading config: {e}")
         
     def get_live_chat_id(self, video_id):
         if not self.api_key or not video_id:
