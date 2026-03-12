@@ -1162,11 +1162,12 @@
 
             if (newsItems.length === 0) return;
 
-            // Use ALL active items for main screen loop (Text-only + Media)
-            let pool = newsItems.filter(i => i.is_active);
+            // Main screen only shows items WITH an image/video
+            // Items without media go only to the ticker scroll below
+            let pool = newsItems.filter(i => i.is_active && i.media_url);
 
             if (pool.length === 0) {
-                // No image news available? Hide news presentation to show background stream
+                // No image news available — hide news presentation to show background stream
                 document.getElementById('newsPresentation').style.display = 'none';
                 return;
             }
