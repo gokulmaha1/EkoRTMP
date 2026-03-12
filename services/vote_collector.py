@@ -11,19 +11,19 @@ from database import SessionLocal, Voter, VoteCount, SystemConfig
 PARTIES = {
     "DMK_PLUS": {
         "tamil": "திமுக கூட்டணி",
-        "keywords": ["DMK", "VOTE DMK", "திமுக", "உதயசூரியன்", "DMK+", "DMK PLUS"]
+        "keywords": ["DMK", "VOTE DMK", "dmk", "vote dmk", "திமுக", "உதயசூரியன்", "DMK+", "DMK PLUS", "dmk+", "dmk plus"]
     },
     "ADMK_PLUS": {
         "tamil": "அதிமுக கூட்டணி",
-        "keywords": ["ADMK", "AIADMK", "அதிமுக", "இரட்டை இலை", "ADMK+", "ADMK PLUS"]
+        "keywords": ["ADMK", "AIADMK", "admk", "aiadmk", "அதிமுக", "இரட்டை இலை", "ADMK+", "ADMK PLUS", "admk+", "admk plus"]
     },
     "NTK": {
         "tamil": "நாம் தமிழர்",
-        "keywords": ["NTK", "NAM TAMILAR", "நாம் தமிழர்", "சீமான்"]
+        "keywords": ["NTK", "NAM TAMILAR", "ntk", "nam tamilar", "நாம் தமிழர்", "சீமான்", "seeman","vivasayi","VIVASAYI","vivasayi katchi"]
     },
     "TVK": {
         "tamil": "தவெக",
-        "keywords": ["TVK", "VIJAY", "தவெக", "விஜய்", "வெற்றி கழகம்"]
+        "keywords": ["TVK", "VIJAY", "tvk", "vijay", "தவெக", "விஜய்", "வெற்றி கழகம்"]
     }
 }
 
@@ -146,18 +146,10 @@ class VoteCollector:
     def run_loop(self):
         print("[VoteCollector] Service started.")
         while self.is_running:
-            # Check window: 06:00 - 12:00 IST (UTC+5:30)
-            # IST 06:00 = 00:30 UTC
             # IST 12:00 = 06:30 UTC
             # But the user might want current server time or actual IST. 
             # Let's assume server is in a known TZ or we use offset.
-            # Local time check for 06:00 - 12:00
-            now = datetime.datetime.now()
-            if not (6 <= now.hour < 12):
-                # Outside window, sleep longer
-                time.sleep(60)
-                continue
-
+            
             db = SessionLocal()
             try:
                 self.load_config(db)

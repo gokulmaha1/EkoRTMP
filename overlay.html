@@ -299,18 +299,13 @@
             background: #d60000;
             color: white;
             font-weight: 700;
-            padding: 7px 10px;
+            padding: 7px 15px;
             border-radius: 25px;
             font-size: 14px;
-            display: inline-flex !important;
-            align-items: stretch;
-            gap: 6px;
-            /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); */
-            float: right;
-            display: inline-block;
-            /* margin-top: 4px; */
-            flex-direction: row;
-
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 10px;
         }
 
         .datetime {
@@ -348,10 +343,6 @@
             float: left;
             margin-top: 9px;
             margin-left: 2px;
-        }
-
-        /* Center text */
-        text-align: center;
         }
 
         @keyframes ticker-scroll {
@@ -530,8 +521,8 @@
         }
 
         .ken-burns-active {
-            /* animation: kenBurns 15s linear forwards; */
-            /* Ken Burns Disabled */
+            opacity: 1;
+            /* Non-empty rule */
         }
 
         @keyframes newsFadeIn {
@@ -633,6 +624,131 @@
             font-weight: 600;
             /* Animation handled by class .anim-meta */
         }
+
+        /* --- VOTING PRESENTATION --- */
+        .voting-presentation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+            z-index: 55;
+            padding: 40px;
+            gap: 40px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .vp-sidebar {
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .vp-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .glass-box {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .vp-party-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-left: 6px solid #ccc;
+        }
+
+        .vp-party-name {
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .vp-party-count {
+            color: white;
+            font-size: 40px;
+            font-weight: 900;
+            font-family: 'Oswald', sans-serif;
+        }
+
+        .vp-voter-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .vp-voter-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .vp-voter-info p {
+            margin: 0;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .vp-voter-info span {
+            font-size: 10px;
+            color: #aaa;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        /* Vote Popup */
+        .vote-popup-main {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: none;
+        }
+
+        .v-popup {
+            background: rgba(185, 9, 9, 0.95);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        .v-popup img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
     </style>
 </head>
 
@@ -691,6 +807,33 @@
                     </div> -->
                 </div>
             </div>
+
+            <!-- VOTING PRESENTATION -->
+            <div id="votingPresentation" class="voting-presentation" style="display: none;">
+                <div class="vp-sidebar">
+                    <div class="glass-box flex-1 overflow-hidden">
+                        <h3 class="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-4">Latest Voters
+                        </h3>
+                        <div id="vpVoterFeed">
+                            <!-- Voters Injected -->
+                        </div>
+                    </div>
+                </div>
+                <div class="vp-main">
+                    <div class="glass-box">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                            <span class="text-white font-bold uppercase tracking-wider">Live Voting Standings</span>
+                        </div>
+                        <div id="vpCounters">
+                            <!-- Counters Injected -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vote Popup Container -->
+            <div id="votePopupContainer" class="vote-popup-main"></div>
 
             <!-- Optional L-Bar -->
             <div id="lBar" class="l-bar" style="display: none;">
@@ -882,6 +1025,10 @@
 
 
         // --- WEBSOCKET ---
+        let voteCounts = {};
+        let ttsQueue = [];
+        let isSpeaking = false;
+
         const ws = new WebSocket(WS_URL);
         ws.onopen = () => console.log("WS Connected");
         ws.onmessage = (e) => {
@@ -889,7 +1036,14 @@
             if (msg.type.includes('NEWS')) fetchNews();
             if (msg.type === 'CONFIG_UPDATED') applyConfig(msg.payload);
             if (msg.type === 'OVERLAY_UPDATED') updateMainScreen(msg.payload);
-            if (msg.type === 'SHOW_NEWS_MAIN') showNewsLayout(msg.payload);
+            if (msg.type === 'SHOW_NEWS_MAIN') {
+                isNewsActive = true;
+                showNewsLayout(msg.payload);
+            }
+            if (msg.type === 'NEW_VOTE') {
+                showVPVotePopup(msg.payload);
+                fetchVoteStats();
+            }
         };
 
         // --- HELPER: Detect Media Type ---
@@ -1168,6 +1322,7 @@
 
             if (pool.length === 0) {
                 // No image news available — hide news presentation to show background stream
+                isNewsActive = false;
                 document.getElementById('newsPresentation').style.display = 'none';
                 return;
             }
@@ -1230,18 +1385,133 @@
 
 
 
+        // --- VOTING SYSTEM HELPERS ---
+        let showVoting = false;
+        let isNewsActive = false;
+
+        async function fetchVoteStats() {
+            try {
+                const resCounts = await fetch(`${API_BASE}/votes/counts`);
+                voteCounts = await resCounts.json();
+                renderVPCounters();
+
+                const resLatest = await fetch(`${API_BASE}/votes/latest`);
+                const latest = await resLatest.json();
+                renderVPVoterFeed(latest);
+            } catch (e) {
+                console.error("Error fetching vote stats:", e);
+            }
+        }
+
+        function renderVPCounters() {
+            const container = document.getElementById('vpCounters');
+            const parties = [
+                { code: 'DMK_PLUS', tamil: 'திமுக+', color: '#dc2626' },
+                { code: 'ADMK_PLUS', tamil: 'அதிமுக+', color: '#16a34a' },
+                { code: 'NTK', tamil: 'நாம் தமிழர்', color: '#eab308' },
+                { code: 'TVK', tamil: 'தவெக', color: '#2563eb' }
+            ];
+
+            container.innerHTML = parties.map(p => {
+                const count = voteCounts[p.code] || 0;
+                return `
+                    <div class="vp-party-card" style="border-left-color: ${p.color}">
+                        <span class="vp-party-name">${p.tamil}</span>
+                        <span class="vp-party-count">${count.toLocaleString()}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderVPVoterFeed(voters) {
+            const container = document.getElementById('vpVoterFeed');
+            container.innerHTML = voters.slice(0, 6).map(v => `
+                <div class="vp-voter-item">
+                    <img src="${v.profile_image_url}" class="vp-voter-img" alt="">
+                    <div class="vp-voter-info">
+                        <p>${v.display_name}</p>
+                        <span>${v.party_tamil}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showVPVotePopup(voter) {
+            const container = document.getElementById('votePopupContainer');
+            const div = document.createElement('div');
+            div.className = 'v-popup';
+            div.innerHTML = `
+                <img src="${voter.image}" alt="">
+                <div>
+                    <div style="font-weight: 900; font-size: 18px;">${voter.name}</div>
+                    <div style="font-size: 11px; opacity: 0.8; font-weight: 700; text-transform: uppercase;">${voter.party} VOTED</div>
+                </div>
+            `;
+            container.appendChild(div);
+
+            // TTS
+            queueTTS(`${voter.name} ${voter.party} க்கு வாக்களித்தார்`);
+
+            setTimeout(() => {
+                div.style.opacity = '0';
+                div.style.transform = 'translateY(-20px)';
+                setTimeout(() => div.remove(), 500);
+            }, 5000);
+        }
+
+        function queueTTS(text) {
+            ttsQueue.push(text);
+            processTTS();
+        }
+
+        function processTTS() {
+            if (isSpeaking || ttsQueue.length === 0) return;
+            isSpeaking = true;
+            const text = ttsQueue.shift();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ta-IN';
+            utterance.onend = () => {
+                isSpeaking = false;
+                processTTS();
+            };
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // --- CONTENT ROTATION ---
+        function cycleContent() {
+            const news = document.getElementById('newsPresentation');
+            const voting = document.getElementById('votingPresentation');
+
+            if (!isNewsActive && newsItems.filter(i => i.is_active && i.media_url).length === 0) {
+                // If no active news, always show voting or nothing (video background)
+                // For now, if no news, show voting.
+                news.style.display = 'none';
+                voting.style.display = 'flex';
+                return;
+            }
+
+            showVoting = !showVoting;
+
+            if (showVoting) {
+                news.style.display = 'none';
+                voting.style.display = 'flex';
+            } else {
+                voting.style.display = 'none';
+                news.style.display = 'flex';
+            }
+        }
+
         // INIT
         fetchConfig();
         fetchNews();
         fetchAds();
+        fetchVoteStats();
 
-        // Fallback Poll (Disabled/Relaxed)
-        // setInterval(fetchNews, 20000);
-        // setInterval(fetchAds, 30000); 
-        // setInterval(fetchConfig, 10000);
+        // Start Rotation
+        setInterval(cycleContent, 5000);
 
         // Start Scheduler
-        setTimeout(startAdScheduler, 5000); // Delay start
+        setTimeout(startAdScheduler, 5000);
 
     </script>
 </body>

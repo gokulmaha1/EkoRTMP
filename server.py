@@ -1138,7 +1138,7 @@ class VotingConfig(BaseModel):
     main_video_id: Optional[str] = None
     vote_video_id: Optional[str] = None
     stream_mode: str = "single"
-    poll_interval: int = 5
+    poll_interval: int = 30
 
 @app.get("/api/config/voting")
 def get_voting_config(db: Session = Depends(get_db)):
@@ -1165,8 +1165,17 @@ def set_voting_config(data: VotingConfig, db: Session = Depends(get_db)):
 # --- Voting System API ---
 @app.get("/api/votes/counts")
 def get_vote_counts(db: Session = Depends(get_db)):
-    counts = db.query(VoteCount).all()
-    return {c.party_code: c.total for c in counts}
+    from services.vote_collector import PARTIES
+    db_counts = db.query(VoteCount).all()
+    
+    # Start with zeroes for all defined parties
+    results = {code: 0 for code in PARTIES.keys()}
+    
+    # Overwrite with actual totals from DB
+    for c in db_counts:
+        results[c.party_code] = c.total
+        
+    return results
 
 @app.get("/api/votes/latest")
 def get_latest_voters(db: Session = Depends(get_db)):
