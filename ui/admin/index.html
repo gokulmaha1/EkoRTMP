@@ -1022,6 +1022,22 @@
                                     <p id="statVoteSession" class="text-lg font-black text-slate-900">0</p>
                                 </div>
                             </div>
+
+                            <!-- Debug Console -->
+                            <div class="mt-6">
+                                <div class="flex items-center justify-between mb-2">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Raw API Log
+                                        (Latest Response)</p>
+                                    <button onclick="toggleDebugConsole()"
+                                        class="text-[10px] font-black text-blue-500 uppercase hover:underline">Toggle
+                                        Console</button>
+                                </div>
+                                <div id="voteDebugConsole" class="hidden">
+                                    <pre id="statVoteRaw"
+                                        class="p-4 rounded-2xl bg-slate-900 text-green-400 text-[10px] font-mono overflow-auto max-h-40 whitespace-pre-wrap">Waiting for data...</pre>
+                                </div>
+                            </div>
+
                             <div id="statVoteError"
                                 class="mt-4 p-3 rounded-xl bg-red-50 text-red-600 text-[10px] font-bold hidden">
                                 <i class="fas fa-exclamation-triangle mr-1"></i>
@@ -1156,6 +1172,34 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- VIEW: API LOGS -->
+            <div id="view-logs" class="view-section">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-3xl font-black text-slate-800">Background API Logs</h2>
+                        <p class="text-slate-500 font-medium">Monitor background requests and responses</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <tbody id="apiLogsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal -->
+            <div id="logDetailModal" class="modal hidden fixed inset-0 z-[2000] flex items-center justify-center p-4">
+                <div class="modal-backdrop absolute inset-0 bg-slate-900/40" onclick="closeLogModal()"></div>
+                <div id="modalContent" class="modal-content relative bg-white w-full max-w-2xl p-8 rounded-3xl">
+                    <h3 class="text-xl font-bold mb-4">Log Detail</h3>
+                    <pre id="logModalBody"
+                        class="bg-slate-900 text-green-400 p-4 rounded-xl overflow-auto max-h-96 text-xs"></pre>
+                </div>
+            </div>
 </body>
 
 </html>

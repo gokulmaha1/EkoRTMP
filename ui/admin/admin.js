@@ -68,6 +68,9 @@ function switchView(viewName) {
         loadVotingConfig();
         fetchVoteResults();
         startVotingStatusPolling();
+    } else if (viewName === 'logs') {
+        fetchApiLogs();
+        stopVotingStatusPolling();
     } else {
         stopVotingStatusPolling();
     }
@@ -1474,6 +1477,11 @@ async function fetchVoteStatus() {
         elMsgs.innerText = status.messages_found || '0';
         elSession.innerText = status.total_votes_this_session || '0';
 
+        const elRaw = document.getElementById('statVoteRaw');
+        if (elRaw && status.raw_response_snippet) {
+            elRaw.innerText = status.raw_response_snippet;
+        }
+
         if (status.api_error) {
             elError.classList.remove('hidden');
             elErrorMsg.innerText = status.api_error;
@@ -1483,4 +1491,46 @@ async function fetchVoteStatus() {
     } catch (e) {
         console.error("Error fetching vote status:", e);
     }
+}
+
+function toggleDebugConsole() {
+    const el = document.getElementById('voteDebugConsole');
+    if (el) el.classList.toggle('hidden');
+}
+
+async function fetchApiLogs() {
+    try {
+        const res = await fetch(`${API_BASE}/logs`);
+        const logs = await res.json();
+        const table = document.getElementById('apiLogsTable');
+        if (!table) return;
+
+        table.innerHTML = logs.map(log => `
+            <tr class="hover:bg-slate-50 transition-colors">
+                <td class="py-4 text-xs font-medium text-slate-500">${new Date(log.created_at).toLocaleTimeString()}</td>
+                <td class="py-4 text-xs font-bold text-slate-700">${log.service_name}</td>
+                <td class="py-4 text-xs font-bold ${log.is_error ? 'text-red-600' : 'text-green-600'}">${log.response_code}</td>
+                <td class="py-4 text-xs font-medium text-slate-500 truncate max-w-[200px]">${log.endpoint}</td>
+                <td class="py-4">
+                    <button onclick='showLogDetails(${JSON.stringify(log).replace(/'/g, "&apos;")})' class="text-blue-500 hover:text-blue-700 font-bold text-xs">View Data</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (e) {
+        console.error("Error fetching API logs:", e);
+    }
+}
+
+function showLogDetails(log) {
+    const modal = document.getElementById('logDetailModal');
+    const body = document.getElementById('logModalBody');
+    if (modal && body) {
+        body.innerText = log.response_body || 'Empty Response';
+        modal.classList.remove('hidden');
+    }
+}
+
+function closeLogModal() {
+    const modal = document.getElementById('logDetailModal');
+    if (modal) modal.classList.add('hidden');
 }

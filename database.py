@@ -154,6 +154,19 @@ class VoteCount(Base):
     party_tamil = Column(String)
     total = Column(Integer, default=0)
 
+class ApiLog(Base):
+    __tablename__ = "api_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    service_name = Column(String) # e.g., 'VoteCollector', 'RSSSync'
+    endpoint = Column(String)
+    method = Column(String, default="GET")
+    request_params = Column(Text, nullable=True)
+    response_code = Column(Integer, nullable=True)
+    response_body = Column(Text, nullable=True)
+    is_error = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
 # Dependency
 def get_db():
     db = SessionLocal()

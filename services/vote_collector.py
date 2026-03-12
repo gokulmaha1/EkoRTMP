@@ -5,7 +5,7 @@ import datetime
 import threading
 import json
 from sqlalchemy.orm import Session
-from database import SessionLocal, Voter, VoteCount, SystemConfig
+from database import SessionLocal, Voter, VoteCount, SystemConfig, ApiLog
 
 # Party Configuration
 PARTIES = {
@@ -23,7 +23,7 @@ PARTIES = {
     },
     "TVK": {
         "tamil": "தவெக",
-        "keywords": ["TVK", "VIJAY", "tvk", "vijay", "தவெக", "விஜய்", "வெற்றி கழகம்"]
+        "keywords": ["TVK", "TAVK", "tvk", "tavk", "தவெக", "விஜய்", "vijay", "thalapathy", "THALAPATHY", "தளபதி"]
     }
 }
 
@@ -45,7 +45,8 @@ class VoteCollector:
             "messages_found": 0,
             "total_votes_this_session": 0,
             "current_video_id": None,
-            "api_error": None
+            "api_error": None,
+            "raw_response_snippet": None
         }
 
     def load_config(self, db: Session):
@@ -77,6 +78,22 @@ class VoteCollector:
             self.polling_interval = new_interval
         except Exception as e:
             print(f"[VoteCollector] Error loading config: {e}")
+
+    def log_api_call(self, db: Session, endpoint: str, params: dict, response: requests.Response):
+        try:
+            log = ApiLog(
+                service_name="VoteCollector",
+                endpoint=endpoint,
+                method="GET",
+                request_params=json.dumps(params),
+                response_code=response.status_code,
+                response_body=response.text[:2000],
+                is_error=(response.status_code != 200)
+            )
+            db.add(log)
+            db.commit()
+        except Exception as e:
+            print(f"[VoteCollector] Log error: {e}")
         
     def get_live_chat_id(self, video_id):
         if not self.api_key or not video_id:
@@ -90,11 +107,18 @@ class VoteCollector:
         }
         try:
             r = requests.get(url, params=params)
+            self.log_api_call(SessionLocal(), url, params, r)
+            self.status["raw_response_snippet"] = r.text[:500]
+            if r.status_code != 200:
+                self.status["api_error"] = f"HTTP {r.status_code}: {r.text[:100]}"
+                return None
+            
             data = r.json()
             if "items" in data and len(data["items"]) > 0:
                 return data["items"][0].get("liveStreamingDetails", {}).get("activeLiveChatId")
         except Exception as e:
             print(f"[VoteCollector] Error fetching chat ID: {e}")
+            self.status["api_error"] = str(e)
         return None
 
     def normalize_text(self, text):
@@ -203,10 +227,26 @@ class VoteCollector:
                     params["pageToken"] = self.next_page_token
                 
                 r = requests.get(url, params=params)
-                data = r.json()
+                self.log_api_call(db, url, params, r)
+                self.status["raw_response_snippet"] = r.text[:500]
+                
+                if r.status_code != 200:
+                    self.status["api_error"] = f"HTTP {r.status_code}: {r.text[:100]}"
+                    time.sleep(30)
+                    continue
+
+                try:
+                    data = r.json()
+                except Exception as je:
+                    self.status["api_error"] = f"JSON Parse Error: {str(je)}"
+                    self.status["raw_response_snippet"] = r.text[:500]
+                    time.sleep(30)
+                    continue
                 
                 if "error" in data:
-                    print(f"[VoteCollector] API Error: {data['error'].get('message')}")
+                    err_msg = data['error'].get('message', 'Unknown Error')
+                    self.status["api_error"] = f"YouTube API: {err_msg}"
+                    print(f"[VoteCollector] API Error: {err_msg}")
                     time.sleep(60)
                     continue
                 
@@ -223,7 +263,8 @@ class VoteCollector:
                     "messages_found": len(messages),
                     "total_votes_this_session": self.status.get("total_votes_this_session", 0) + len(new_votes),
                     "current_video_id": target_video_id,
-                    "api_error": None
+                    "api_error": None,
+                    "raw_response_snippet": r.text[:500]
                 })
 
                 # Broadcast new votes if any

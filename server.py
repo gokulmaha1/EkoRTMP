@@ -1190,6 +1190,12 @@ def get_vote_status():
     from services.vote_collector import vote_collector
     return vote_collector.status
 
+@app.get("/api/logs")
+def get_api_logs(db: Session = Depends(get_db)):
+    from database import ApiLog
+    logs = db.query(ApiLog).order_by(ApiLog.created_at.desc()).limit(100).all()
+    return logs
+
 # --- Voting System API ---
 @app.get("/api/votes/counts")
 def get_vote_counts(db: Session = Depends(get_db)):
