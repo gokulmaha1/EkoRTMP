@@ -29,12 +29,22 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- Navigation ---
 function switchView(viewName) {
     // Hide all
-    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.view-section').forEach(el => {
+        el.classList.remove('active');
+        el.classList.add('hidden');
+    });
     document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
 
     // Show target
-    document.getElementById(`view-${viewName}`).classList.add('active');
-    document.getElementById(`nav-${viewName}`).classList.add('active');
+    const targetView = document.getElementById(`view-${viewName}`);
+    if (targetView) {
+        targetView.classList.remove('hidden');
+        targetView.classList.add('active');
+    }
+    const targetNav = document.getElementById(`nav-${viewName}`);
+    if (targetNav) {
+        targetNav.classList.add('active');
+    }
 
     // Update Title
     const titles = {
