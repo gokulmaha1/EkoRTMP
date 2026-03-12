@@ -3,6 +3,8 @@ const WS_URL = 'ws://' + window.location.host + '/ws/news';
 
 // State
 let newsQueue = [];
+let queueImageFilter = 'all'; // 'all' | 'has_image' | 'no_image'
+let queueTypeFilter = '';      // '' | 'TICKER' | 'BREAKING' | 'MAIN_SCREEN'
 
 // Elements
 const elQueue = document.getElementById('newsQueue');
@@ -575,6 +577,26 @@ function connectWebSocket() {
 
 // --- Rendering ---
 
+function setQueueFilter(imageFilter, typeFilter) {
+    if (imageFilter !== null && imageFilter !== undefined) {
+        queueImageFilter = imageFilter;
+        // Update button styles
+        document.querySelectorAll('.queue-filter-btn').forEach(btn => {
+            btn.classList.remove('bg-slate-700', 'text-white');
+            btn.classList.add('text-gray-600');
+        });
+        const activeBtn = document.getElementById(`qf-${imageFilter}`);
+        if (activeBtn) {
+            activeBtn.classList.add('bg-slate-700', 'text-white');
+            activeBtn.classList.remove('text-gray-600');
+        }
+    }
+    if (typeFilter !== null && typeFilter !== undefined) {
+        queueTypeFilter = typeFilter;
+    }
+    renderQueue();
+}
+
 function renderQueue() {
     elQueue.innerHTML = "";
 
@@ -583,9 +605,20 @@ function renderQueue() {
         return;
     }
 
+    // Apply filters
+    let filtered = newsQueue;
+    if (queueImageFilter === 'has_image') filtered = filtered.filter(i => i.media_url);
+    if (queueImageFilter === 'no_image') filtered = filtered.filter(i => !i.media_url);
+    if (queueTypeFilter) filtered = filtered.filter(i => i.type === queueTypeFilter);
+
     // Split into Pending and Active
-    const pendingItems = newsQueue.filter(i => !i.is_active);
-    const activeItems = newsQueue.filter(i => i.is_active);
+    const pendingItems = filtered.filter(i => !i.is_active);
+    const activeItems = filtered.filter(i => i.is_active);
+
+    if (pendingItems.length === 0 && activeItems.length === 0) {
+        elQueue.innerHTML = '<div class="text-center text-gray-400 italic p-8"><i class="fas fa-filter text-2xl mb-2 block"></i>No items match this filter</div>';
+        return;
+    }
 
     // --- RENDER PENDING ---
     if (pendingItems.length > 0) {
@@ -602,13 +635,20 @@ function renderQueue() {
 
 function renderItemCard(item, isPending) {
     const isBreaking = item.type === 'BREAKING';
-    const cardClass = isPending
-        ? 'bg-yellow-50 border-l-4 border-yellow-400 opacity-90'
-        : (isBreaking ? 'border-l-4 border-red-500 bg-red-50' : 'bg-white border-l-4 border-gray-300');
+    const cardBorder = isPending
+        ? 'border-l-4 border-yellow-400'
+        : (isBreaking ? 'border-l-4 border-red-500' : 'border-l-4 border-gray-300');
+    const cardBg = isPending ? 'bg-yellow-50' : (isBreaking ? 'bg-red-50' : 'bg-white');
+
+    // Thumbnail
+    const thumbnail = item.media_url
+        ? `<img src="${item.media_url}" alt="" class="w-20 h-14 object-cover rounded-lg flex-shrink-0 border border-gray-200 shadow-sm" onerror="this.outerHTML='<div class=\'w-20 h-14 rounded-lg flex-shrink-0 bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-300\'><i class=\'fas fa-image text-xl\'></i></div>'">`
+        : `<div class="w-20 h-14 rounded-lg flex-shrink-0 bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-300" title="No image">
+               <i class="fas fa-image text-xl"></i>
+           </div>`;
 
     // Action Buttons
     let actionButtons = '';
-
     if (isPending) {
         actionButtons = `
             <button onclick="approveNews(${item.id})" class="px-3 py-1 rounded bg-green-600 text-white text-xs font-bold hover:bg-green-700 transition shadow-sm">
@@ -633,19 +673,21 @@ function renderItemCard(item, isPending) {
     }
 
     return `
-        <div class="p-3 rounded shadow-sm flex justify-between items-center ${cardClass} mb-2">
-            <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
+        <div class="p-2 rounded shadow-sm flex gap-3 items-center ${cardBorder} ${cardBg} mb-1">
+            ${thumbnail}
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 mb-0.5 flex-wrap">
                     <span class="text-[10px] font-bold uppercase tracking-wider ${isBreaking ? 'text-red-600 bg-red-100 px-1 rounded' : 'text-gray-500'}">
-                        ${item.type} • ${item.category}
+                        ${item.type} &bull; ${item.category}
                     </span>
                     ${item.source === 'RSS' ? `<span class="bg-blue-100 text-blue-600 text-[9px] font-bold px-1 rounded uppercase"><i class="fas fa-rss"></i> RSS</span>` : ''}
-                    ${isPending ? `<span class="bg-yellow-200 text-yellow-800 text-[9px] font-bold px-1 rounded uppercase"><i class="fas fa-clock"></i> WAIT</span>` : ''}
+                    ${isPending ? `<span class="bg-yellow-200 text-yellow-800 text-[9px] font-bold px-1 rounded uppercase"><i class="fas fa-clock"></i> PENDING</span>` : ''}
+                    ${item.media_url ? `<span class="bg-green-100 text-green-700 text-[9px] font-bold px-1 rounded uppercase"><i class="fas fa-image"></i></span>` : ''}
                 </div>
-                <h4 class="font-bold text-lg text-slate-800 leading-tight mt-1">${item.title_tamil}</h4>
-                <p class="text-[10px] text-gray-400 mt-1">ID: ${item.id} • ${new Date(item.created_at).toLocaleTimeString()}</p>
+                <h4 class="font-bold text-sm text-slate-800 leading-tight line-clamp-2">${item.title_tamil}</h4>
+                <p class="text-[10px] text-gray-400 mt-0.5">ID: ${item.id} &bull; ${new Date(item.created_at).toLocaleTimeString()}</p>
             </div>
-            <div class="flex space-x-2 ml-4 items-center">
+            <div class="flex flex-col gap-1.5 items-center ml-1 flex-shrink-0">
                 ${actionButtons}
             </div>
         </div>
