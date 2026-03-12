@@ -1162,6 +1162,20 @@ def set_voting_config(data: VotingConfig, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success"}
 
+@app.get("/api/votes/test-connection")
+def test_vote_connection(api_key: str, video_id: str):
+    from services.vote_collector import vote_collector
+    # Temporarily override config to test
+    old_key = vote_collector.api_key
+    vote_collector.api_key = api_key
+    chat_id = vote_collector.get_live_chat_id(video_id)
+    vote_collector.api_key = old_key # Restore
+    
+    if chat_id:
+        return {"status": "success", "message": "Connected successfully! Chat ID: " + chat_id}
+    else:
+        return {"status": "error", "message": "Failed to connect. Check API Key and Video ID (Video must be LIVE or SCHEDULED)."}
+
 # --- Voting System API ---
 @app.get("/api/votes/counts")
 def get_vote_counts(db: Session = Depends(get_db)):

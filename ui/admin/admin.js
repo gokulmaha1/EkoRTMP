@@ -1393,6 +1393,39 @@ async function resetVotes() {
     }
 }
 
+async function testVoteConnection() {
+    const apiKey = document.getElementById('voteApiKey').value;
+    const mode = document.getElementById('voteStreamMode').value;
+    const videoId = mode === 'dual' ? document.getElementById('voteStreamVideoId').value : document.getElementById('voteMainVideoId').value;
+
+    if (!apiKey || !videoId) {
+        alert("Please enter API Key and Video ID first");
+        return;
+    }
+
+    const statusEl = document.getElementById('voteTestStatus');
+    statusEl.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+    statusEl.classList.add('bg-slate-100', 'text-slate-600');
+    statusEl.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Testing connection...';
+
+    try {
+        const res = await fetch(`${API_BASE}/votes/test-connection?api_key=${encodeURIComponent(apiKey)}&video_id=${encodeURIComponent(videoId)}`);
+        const data = await res.json();
+
+        statusEl.classList.remove('bg-slate-100', 'text-slate-600');
+        if (data.status === 'success') {
+            statusEl.classList.add('bg-green-100', 'text-green-700');
+            statusEl.innerHTML = `<i class="fas fa-check-circle mr-2"></i> ${data.message}`;
+        } else {
+            statusEl.classList.add('bg-red-100', 'text-red-700');
+            statusEl.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i> ${data.message}`;
+        }
+    } catch (e) {
+        statusEl.classList.add('bg-red-100', 'text-red-700');
+        statusEl.innerText = "Error: Failed to reach server";
+    }
+}
+
 function exportVotes() {
     window.location.href = `${API_BASE}/votes/export`;
 }
