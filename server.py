@@ -27,6 +27,7 @@ NTFY_TOPIC = os.environ.get('NTFY_TOPIC', 'eko_news_secret_123') # CHANGE THIS I
 PUBLIC_URL = os.environ.get('PUBLIC_URL', 'http://127.0.0.1:8123') # CHANGE THIS
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="ui"), name="static")
 
 # Log Management
 log_queue = queue.Queue()
