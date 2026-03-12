@@ -827,6 +827,38 @@ async function stopStream() {
     }
 }
 
+async function playHlsBackground() {
+    const url = document.getElementById('inpHlsUrl').value.trim();
+    if (!url) return alert("Please enter an m3u8 / HLS stream URL");
+
+    try {
+        const res = await fetch(`${API_BASE}/overlay/update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ webview_url: url, type: 'HLS' })
+        });
+        if (res.ok) {
+            const btn = document.querySelector('[onclick="playHlsBackground()"]');
+            if (btn) { btn.innerHTML = '<i class="fas fa-check"></i>'; btn.classList.add('bg-green-600'); btn.classList.remove('bg-purple-600'); setTimeout(() => { btn.innerHTML = '<i class="fas fa-play"></i>'; btn.classList.remove('bg-green-600'); btn.classList.add('bg-purple-600'); }, 2000); }
+        }
+    } catch (e) {
+        alert("Failed to send stream to overlay");
+    }
+}
+
+async function clearHlsBackground() {
+    try {
+        await fetch(`${API_BASE}/overlay/update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ webview_url: '', type: 'CLEAR' })
+        });
+        document.getElementById('inpHlsUrl').value = '';
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 function setStreamState(isRunning) {
     if (isRunning) {
         btnStart.classList.add('opacity-50', 'cursor-not-allowed');
