@@ -1298,6 +1298,21 @@ async function loadVotingConfig() {
             document.getElementById('voteDisplayMode').value = config.overlay_display_mode || 'auto';
             document.getElementById('votePollInterval').value = config.poll_interval || 5;
 
+            // Load Party Assets
+            if (config.party_assets) {
+                for (const party in config.party_assets) {
+                    const assets = config.party_assets[party];
+                    if (assets.leader) {
+                        const img = document.getElementById(`preview_leader_${party}`);
+                        if (img) img.src = assets.leader;
+                    }
+                    if (assets.symbol) {
+                        const img = document.getElementById(`preview_symbol_${party}`);
+                        if (img) img.src = assets.symbol;
+                    }
+                }
+            }
+
             toggleVoteDualInput();
         }
     } catch (e) {
@@ -1321,7 +1336,25 @@ async function saveVotingConfig() {
         vote_video_id: document.getElementById('voteStreamVideoId').value,
         stream_mode: document.getElementById('voteStreamMode').value,
         poll_interval: parseInt(document.getElementById('votePollInterval').value),
-        overlay_display_mode: document.getElementById('voteDisplayMode').value
+        overlay_display_mode: document.getElementById('voteDisplayMode').value,
+        party_assets: {
+            DMK_PLUS: {
+                leader: document.getElementById('preview_leader_DMK_PLUS')?.src.replace(window.location.origin, ''),
+                symbol: document.getElementById('preview_symbol_DMK_PLUS')?.src.replace(window.location.origin, '')
+            },
+            ADMK_PLUS: {
+                leader: document.getElementById('preview_leader_ADMK_PLUS')?.src.replace(window.location.origin, ''),
+                symbol: document.getElementById('preview_symbol_ADMK_PLUS')?.src.replace(window.location.origin, '')
+            },
+            NTK: {
+                leader: document.getElementById('preview_leader_NTK')?.src.replace(window.location.origin, ''),
+                symbol: document.getElementById('preview_symbol_NTK')?.src.replace(window.location.origin, '')
+            },
+            TVK: {
+                leader: document.getElementById('preview_leader_TVK')?.src.replace(window.location.origin, ''),
+                symbol: document.getElementById('preview_symbol_TVK')?.src.replace(window.location.origin, '')
+            }
+        }
     };
 
     try {
@@ -1334,6 +1367,41 @@ async function saveVotingConfig() {
     } catch (e) {
         alert("Failed to save voting config");
     }
+}
+
+async function handleAssetUpload(partyCode, type, input) {
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const res = await fetch(`${API_BASE}/votes/upload-asset`, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            // Update preview
+            const previewId = `preview_${type}_${partyCode}`;
+            const img = document.getElementById(previewId);
+            if (img) img.src = data.url;
+
+            // Auto-save the config to persist the new path immediately
+            await saveVotingConfig();
+            console.log(`Uploaded ${type} for ${partyCode}: ${data.url}`);
+        } else {
+            alert("Upload failed: " + (data.detail || "Unknown error"));
+        }
+    } catch (e) {
+        console.error("Upload error:", e);
+        alert("Upload failed. See console.");
+    }
+
+    // Clear input so same file can be re-uploaded if needed
+    input.value = '';
 }
 
 async function fetchVoteResults() {

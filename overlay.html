@@ -1495,6 +1495,16 @@
 
         async function fetchVoteStats() {
             try {
+                // Fetch Voting Config for Assets & Modes
+                const resConfig = await fetch(`${API_BASE}/config/voting`);
+                const config = await resConfig.json();
+                if (config) {
+                    window.votingConfig = config;
+                    if (config.overlay_display_mode) {
+                        currentOverlayMode = config.overlay_display_mode;
+                    }
+                }
+
                 const resCounts = await fetch(`${API_BASE}/votes/counts`);
                 voteCounts = await resCounts.json();
                 renderVPCounters();
@@ -1509,11 +1519,33 @@
 
         function renderVPCounters() {
             const container = document.getElementById('vpCounters');
+            const assets = window.votingConfig?.party_assets || {};
+
             const parties = [
-                { code: 'DMK_PLUS', tamil: 'திமுக+', leader: 'media/leader_dmk.png', symbol: 'media/symbol_dmk.png' },
-                { code: 'ADMK_PLUS', tamil: 'அதிமுக+', leader: 'media/leader_admk.png', symbol: 'media/symbol_admk.png' },
-                { code: 'NTK', tamil: 'நாம் தமிழர்', leader: 'media/leader_ntk.png', symbol: 'media/symbol_ntk.png' },
-                { code: 'TVK', tamil: 'தவெக', leader: 'media/leader_tvk.png', symbol: 'media/symbol_tvk.png' }
+                {
+                    code: 'DMK_PLUS',
+                    tamil: 'திமுக+',
+                    leader: assets.DMK_PLUS?.leader || 'media/leader_dmk.png',
+                    symbol: assets.DMK_PLUS?.symbol || 'media/symbol_dmk.png'
+                },
+                {
+                    code: 'ADMK_PLUS',
+                    tamil: 'அதிமுக+',
+                    leader: assets.ADMK_PLUS?.leader || 'media/leader_admk.png',
+                    symbol: assets.ADMK_PLUS?.symbol || 'media/symbol_admk.png'
+                },
+                {
+                    code: 'NTK',
+                    tamil: 'நாம் தமிழர்',
+                    leader: assets.NTK?.leader || 'media/leader_ntk.png',
+                    symbol: assets.NTK?.symbol || 'media/symbol_ntk.png'
+                },
+                {
+                    code: 'TVK',
+                    tamil: 'தவெக',
+                    leader: assets.TVK?.leader || 'media/leader_tvk.png',
+                    symbol: assets.TVK?.symbol || 'media/symbol_tvk.png'
+                }
             ];
 
             container.innerHTML = parties.map(p => {

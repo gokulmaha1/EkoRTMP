@@ -29,6 +29,7 @@ PUBLIC_URL = os.environ.get('PUBLIC_URL', 'http://127.0.0.1:8123') # CHANGE THIS
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="ui"), name="static")
+app.mount("/media", StaticFiles(directory="media"), name="media")
 
 # Log Management
 log_queue = queue.Queue()
@@ -1140,6 +1141,7 @@ class VotingConfig(BaseModel):
     stream_mode: str = "single"
     poll_interval: int = 30
     overlay_display_mode: str = "auto" # New: auto, news, voting
+    party_assets: Optional[dict] = None # Stores { partyCode: { leader: url, symbol: url } }
 
 @app.get("/api/config/voting")
 def get_voting_config(db: Session = Depends(get_db)):
@@ -1247,3 +1249,26 @@ def export_voters(db: Session = Depends(get_db)):
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=voters_export.csv"}
     )
+
+import uuid
+@app.post("/api/votes/upload-asset")
+async def upload_party_asset(file: UploadFile = File(...)):
+    # Verify file is image
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only images are allowed")
+    
+    # Generate unique filename
+    ext = os.path.splitext(file.filename)[1]
+    filename = f"party_{uuid.uuid4().hex}{ext}"
+    filepath = os.path.join("media", filename)
+    
+    # Save file
+    try:
+        os.makedirs("media", exist_ok=True)
+        with open(filepath, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+        
+        return {"status": "success", "url": f"/media/{filename}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")

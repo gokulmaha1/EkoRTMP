@@ -1135,6 +1135,201 @@
                             </div>
                         </div>
 
+                        <!-- Party Assets Card -->
+                        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-black text-slate-800 flex items-center gap-3">
+                                    <i class="fas fa-images text-purple-500"></i>
+                                    Party Symbols & Leaders
+                                </h3>
+                                <span
+                                    class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md uppercase tracking-widest">Custom
+                                    Uploads</span>
+                            </div>
+
+                            <div class="space-y-6">
+                                <!-- DMK+ -->
+                                <div
+                                    class="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="flex items-center gap-3 mb-4">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600 font-bold text-xs">
+                                            DMK</div>
+                                        <p class="text-sm font-black text-slate-800">DMK+ (திமுக கூட்டணி)</p>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <label
+                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Leader
+                                                Photo</label>
+                                            <div class="flex items-center gap-3">
+                                                <div class="relative group">
+                                                    <img id="preview_leader_DMK_PLUS" src="media/leader_dmk.png"
+                                                        class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 bg-slate-50">
+                                                    <div
+                                                        class="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <i class="fas fa-camera text-white text-xs"></i>
+                                                    </div>
+                                                </div>
+                                                <input type="file" class="hidden" id="upload_leader_DMK_PLUS"
+                                                    accept="image/*"
+                                                    onchange="handleAssetUpload('DMK_PLUS', 'leader', this)">
+                                                <button
+                                                    onclick="document.getElementById('upload_leader_DMK_PLUS').click()"
+                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label
+                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Party
+                                                Symbol</label>
+                                            <div class="flex items-center gap-3">
+                                                <div class="relative group">
+                                                    <img id="preview_symbol_DMK_PLUS" src="media/symbol_dmk.png"
+                                                        class="w-14 h-14 rounded-xl object-contain border-2 border-slate-100 bg-slate-50 p-1">
+                                                    <div
+                                                        class="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                        <i class="fas fa-camera text-white text-xs"></i>
+                                                    </div>
+                                                </div>
+                                                <input type="file" class="hidden" id="upload_symbol_DMK_PLUS"
+                                                    accept="image/*"
+                                                    onchange="handleAssetUpload('DMK_PLUS', 'symbol', this)">
+                                                <button
+                                                    onclick="document.getElementById('upload_symbol_DMK_PLUS').click()"
+                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ADMK+ -->
+                                <div
+                                    class="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="flex items-center gap-3 mb-4">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600 font-bold text-xs">
+                                            ADMK</div>
+                                        <p class="text-sm font-black text-slate-800">ADMK+ (அதிமுக கூட்டணி)</p>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <label
+                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Leader
+                                                Photo</label>
+                                            <div class="flex items-center gap-3">
+                                                <img id="preview_leader_ADMK_PLUS" src="media/leader_admk.png"
+                                                    class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 bg-slate-50">
+                                                <input type="file" class="hidden" id="upload_leader_ADMK_PLUS"
+                                                    accept="image/*"
+                                                    onchange="handleAssetUpload('ADMK_PLUS', 'leader', this)">
+                                                <button
+                                                    onclick="document.getElementById('upload_leader_ADMK_PLUS').click()"
+                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label
+                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Party
+                                                Symbol</label>
+                                            <div class="flex items-center gap-3">
+                                                <img id="preview_symbol_ADMK_PLUS" src="media/symbol_admk.png"
+                                                    class="w-14 h-14 rounded-xl object-contain border-2 border-slate-100 bg-slate-50 p-1">
+                                                <input type="file" class="hidden" id="upload_symbol_ADMK_PLUS"
+                                                    accept="image/*"
+                                                    onchange="handleAssetUpload('ADMK_PLUS', 'symbol', this)">
+                                                <button
+                                                    onclick="document.getElementById('upload_symbol_ADMK_PLUS').click()"
+                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- NTK -->
+                                <div
+                                    class="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="flex items-center gap-3 mb-4">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-yellow-50 flex items-center justify-center text-yellow-600 font-bold text-xs">
+                                            NTK</div>
+                                        <p class="text-sm font-black text-slate-800">NTK (நாம் தமிழர்)</p>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <label
+                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Leader
+                                                Photo</label>
+                                            <div class="flex items-center gap-3">
+                                                <img id="preview_leader_NTK" src="media/leader_ntk.png"
+                                                    class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 bg-slate-50">
+                                                <input type="file" class="hidden" id="upload_leader_NTK"
+                                                    accept="image/*"
+                                                    onchange="handleAssetUpload('NTK', 'leader', this)">
+                                                <button onclick="document.getElementById('upload_leader_NTK').click()"
+                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label
+                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Party
+                                                Symbol</label>
+                                            <div class="flex items-center gap-3">
+                                                <img id="preview_symbol_NTK" src="media/symbol_ntk.png"
+                                                    class="w-14 h-14 rounded-xl object-contain border-2 border-slate-100 bg-slate-50 p-1">
+                                                <input type="file" class="hidden" id="upload_symbol_NTK"
+                                                    accept="image/*"
+                                                    onchange="handleAssetUpload('NTK', 'symbol', this)">
+                                                <button onclick="document.getElementById('upload_symbol_NTK').click()"
+                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- TVK -->
+                                <div
+                                    class="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="flex items-center gap-3 mb-4">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs">
+                                            TVK</div>
+                                        <p class="text-sm font-black text-slate-800">TVK (தவெக)</p>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <label
+                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Leader
+                                                Photo</label>
+                                            <div class="flex items-center gap-3">
+                                                <img id="preview_leader_TVK" src="media/leader_tvk.png"
+                                                    class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 bg-slate-50">
+                                                <input type="file" class="hidden" id="upload_leader_TVK"
+                                                    accept="image/*"
+                                                    onchange="handleAssetUpload('TVK', 'leader', this)">
+                                                <button onclick="document.getElementById('upload_leader_TVK').click()"
+                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label
+                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Party
+                                                Symbol</label>
+                                            <div class="flex items-center gap-3">
+                                                <img id="preview_symbol_TVK" src="media/symbol_tvk.png"
+                                                    class="w-14 h-14 rounded-xl object-contain border-2 border-slate-100 bg-slate-50 p-1">
+                                                <input type="file" class="hidden" id="upload_symbol_TVK"
+                                                    accept="image/*"
+                                                    onchange="handleAssetUpload('TVK', 'symbol', this)">
+                                                <button onclick="document.getElementById('upload_symbol_TVK').click()"
+                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Right: Results Preview -->
                         <div class="glass-card rounded-xl p-6 flex flex-col">
                             <div class="flex justify-between items-center mb-6">
