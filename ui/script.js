@@ -57,10 +57,8 @@ btnStart.addEventListener('click', async () => {
             body: JSON.stringify({ rtmp_url: rtmpUrl, stream_key: streamKey })
         });
         const data = await res.json();
-        console.log('Start stream:', data);
         setTimeout(fetchStatus, 1000); // Check status shortly after
     } catch (err) {
-        console.error('Error starting stream:', err);
         addLog(`Error starting stream: ${err}`, "system");
     } finally {
         setLoading(false);
@@ -72,10 +70,8 @@ btnStop.addEventListener('click', async () => {
     try {
         const res = await fetch(`${API_BASE}/stream/stop`, { method: 'POST' });
         const data = await res.json();
-        console.log('Stop stream:', data);
         setTimeout(fetchStatus, 1000);
     } catch (err) {
-        console.error('Error stopping stream:', err);
     } finally {
         setLoading(false);
     }
