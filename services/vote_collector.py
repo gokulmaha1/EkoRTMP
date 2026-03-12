@@ -9,21 +9,21 @@ from database import SessionLocal, Voter, VoteCount, SystemConfig
 
 # Party Configuration
 PARTIES = {
-    "DMK": {
-        "tamil": "திமுக",
-        "keywords": ["DMK", "VOTE DMK", "திமுக", "உதயசூரியன்"]
+    "DMK_PLUS": {
+        "tamil": "திமுக கூட்டணி",
+        "keywords": ["DMK", "VOTE DMK", "திமுக", "உதயசூரியன்", "DMK+", "DMK PLUS"]
     },
-    "ADMK": {
-        "tamil": "அதிமுக",
-        "keywords": ["ADMK", "AIADMK", "அதிமுக", "இரட்டை இலை"]
-    },
-    "BJP": {
-        "tamil": "பாஜக",
-        "keywords": ["BJP", "பாஜக", "தாமரை"]
+    "ADMK_PLUS": {
+        "tamil": "அதிமுக கூட்டணி",
+        "keywords": ["ADMK", "AIADMK", "அதிமுக", "இரட்டை இலை", "ADMK+", "ADMK PLUS"]
     },
     "NTK": {
         "tamil": "நாம் தமிழர்",
         "keywords": ["NTK", "NAM TAMILAR", "நாம் தமிழர்", "சீமான்"]
+    },
+    "TVK": {
+        "tamil": "தவெக",
+        "keywords": ["TVK", "VIJAY", "தவெக", "விஜய்", "வெற்றி கழகம்"]
     }
 }
 

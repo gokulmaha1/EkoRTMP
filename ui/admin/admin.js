@@ -1336,10 +1336,10 @@ async function fetchVoteResults() {
 
         const countsContainer = document.getElementById('votePreviewCounts');
         const parties = [
-            { code: 'DMK', tamil: 'திமுக', color: 'bg-red-500' },
-            { code: 'ADMK', tamil: 'அதிமுக', color: 'bg-green-500' },
-            { code: 'BJP', tamil: 'பாஜக', color: 'bg-orange-500' },
-            { code: 'NTK', tamil: 'நாம் தமிழர்', color: 'bg-yellow-500' }
+            { code: 'DMK_PLUS', tamil: 'திமுக+', color: 'bg-red-500' },
+            { code: 'ADMK_PLUS', tamil: 'அதிமுக+', color: 'bg-green-500' },
+            { code: 'NTK', tamil: 'நாம் தமிழர்', color: 'bg-yellow-500' },
+            { code: 'TVK', tamil: 'தவெக', color: 'bg-blue-500' }
         ];
 
         if (countsContainer) {
