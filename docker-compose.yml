@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  ekortmp:
+    build: .
+    ports:
+      - "8123:8123"
+    volumes:
+      - ./data:/app/data
+      - ./media:/app/media
+    environment:
+      - RTMP_URL=rtmp://your-streaming-server/live
+      - PUBLIC_URL=http://your-ip:8123
+      - NTFY_TOPIC=eko_news_secret_123
+    restart: always

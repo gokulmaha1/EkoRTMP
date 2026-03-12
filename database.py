@@ -4,8 +4,10 @@ from sqlalchemy.orm import sessionmaker
 import datetime
 import enum
 
+import os
 # Database Setup
-SQLALCHEMY_DATABASE_URL = "sqlite:///./news_system.db"
+os.makedirs("data", exist_ok=True)
+SQLALCHEMY_DATABASE_URL = "sqlite:///./data/news_system.db"
 # check_same_thread=False is needed for SQLite with FastAPI/threading
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

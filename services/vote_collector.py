@@ -11,19 +11,19 @@ from database import SessionLocal, Voter, VoteCount, SystemConfig, ApiLog
 PARTIES = {
     "DMK_PLUS": {
         "tamil": "திமுக கூட்டணி",
-        "keywords": ["DMK", "VOTE DMK", "dmk", "vote dmk", "திமுக", "உதயசூரியன்", "DMK+", "DMK PLUS", "dmk+", "dmk plus"]
+        "keywords": ["DMK", "VOTE DMK", "dmk", "vote dmk", "திமுக", "உதயசூரியன்", "DMK+", "DMK PLUS", "dmk+", "dmk plus", " உதயசூரியன்", "ஸ்டாலின்", "STALIN", "stalin", "☀️"]
     },
     "ADMK_PLUS": {
         "tamil": "அதிமுக கூட்டணி",
-        "keywords": ["ADMK", "AIADMK", "admk", "aiadmk", "அதிமுக", "இரட்டை இலை", "ADMK+", "ADMK PLUS", "admk+", "admk plus"]
+        "keywords": ["ADMK", "AIADMK", "admk", "aiadmk", "அதிமுக", "இரட்டை இலை", "ADMK+", "ADMK PLUS", "admk+", "admk plus", "இரட்டை இலை", "எடப்பாடி", "EPS", "eps", "🍃", "🌿"]
     },
     "NTK": {
         "tamil": "நாம் தமிழர்",
-        "keywords": ["NTK", "NAM TAMILAR", "ntk", "nam tamilar", "நாம் தமிழர்", "சீமான்", "seeman","vivasayi","VIVASAYI","vivasayi katchi"]
+        "keywords": ["NTK", "NAM TAMILAR", "ntk", "nam tamilar", "நாம் தமிழர்", "சீமான்", "seeman","vivasayi","VIVASAYI","vivasayi katchi", "விவசாயி", "SEEMAN", "🌾"]
     },
     "TVK": {
         "tamil": "தவெக",
-        "keywords": ["TVK", "TAVK", "tvk", "tavk", "தவெக", "விஜய்", "vijay", "thalapathy", "THALAPATHY", "தளபதி"]
+        "keywords": ["TVK", "TAVK", "tvk", "tavk", "தவெக", "விஜய்", "vijay", "thalapathy", "THALAPATHY", "தளபதி", "VIJAY", "🚩"]
     }
 }
 
@@ -123,11 +123,10 @@ class VoteCollector:
 
     def normalize_text(self, text):
         if not text: return ""
-        # Basic normalization: uppercase, trim, remove some punctuation
+        # Basic normalization: uppercase, trim
         text = text.upper().strip()
-        # Remove common punctuation but keep Tamil characters
-        import re
-        text = re.sub(r'[^\w\s\u0B80-\u0BFF]', '', text)
+        # Keep Tamil characters, alphanumeric, and spaces. Remove other punctuation but keep common emojis if they are in keywords?
+        # Actually, let's just keep everything and do a 'contains' check.
         return text
 
     def detect_party(self, message):
@@ -226,7 +225,8 @@ class VoteCollector:
                 if self.next_page_token:
                     params["pageToken"] = self.next_page_token
                 
-                r = requests.get(url, params=params)
+                r = requests.get(url, params=params, timeout=10)
+                # Detailed log mapping for debugging
                 self.log_api_call(db, url, params, r)
                 self.status["raw_response_snippet"] = r.text[:500]
                 

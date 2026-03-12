@@ -31,26 +31,24 @@ sudo ufw allow 8123/tcp
 sudo ufw reload
 ```
 
-### 4. Build Docker Image
-Run the following command in the project directory:
+### 4. Run with Docker Compose (Recommended)
+This method ensures your data (votes, settings, images) is saved permanently even after updates.
+
 ```bash
-sudo docker build -t rtmp-broadcaster .
+docker-compose up -d
 ```
 
-### 4. Run the Broadcaster
-You need to specify the RTMP URL where you want to stream.
-
-### 4. Run the Broadcaster
-You need to specify the RTMP URL where you want to stream.
-
+### 5. Alternative: Manual Run with Volumes
 ```bash
 sudo docker run -d \
   --name broadcaster \
   -p 8123:8123 \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/media:/app/media \
   rtmp-broadcaster
 ```
 
-### 5. Access the Dashboard
+### 6. Access the Dashboard
 Open your browser and navigate to:
 `http://YOUR_VPS_IP:8123`
 
