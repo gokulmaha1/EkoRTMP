@@ -250,30 +250,36 @@ async def startup_event():
     # Initialize DB
     database.init_db()
     
-    # Add Default Google News Feed if not exists
+    # Add Default News Feeds
     db = database.SessionLocal()
-    if db.query(NewsFeed).count() == 0:
-        default_feed = NewsFeed(
-            name="Google News (Tamil)",
-            url="https://news.google.com/rss?hl=ta&gl=IN&ceid=IN:ta",
-            source_type="RSS"
-        )
-        db.add(default_feed)
-        db.commit()
-        print("[System] Added default Google News Feed.")
     
-    # Add Daily Thanthi Feed (Requested by User)
-    dt_feed = db.query(NewsFeed).filter(NewsFeed.name == "Daily Thanthi").first()
-    if not dt_feed:
-        new_feed = NewsFeed(
-            name="Daily Thanthi",
-            url="https://rss.app/feeds/Vr3sF7zb27kFP49l.xml",
-            source_type="RSS",
-            is_active=True
-        )
-        db.add(new_feed)
-        db.commit()
-        print("[System] Added Daily Thanthi Feed.")
+    default_feeds = [
+        {"name": "Dinamalar", "url": "https://www.dinamalar.com/rssfeed.asp"},
+        {"name": "Dinamani", "url": "https://www.dinamani.com/rss/"},
+        {"name": "BBC News Tamil", "url": "https://bbc.github.io/world-service-rss/tamil.xml"},
+        {"name": "OneIndia Tamil", "url": "https://tamil.oneindia.com/rss/feeds/tamil-news-fb.xml"},
+        {"name": "Zeenews Tamil", "url": "https://zeenews.india.com/tamil/rss.xml"},
+        {"name": "Google News (Tamil)", "url": "https://news.google.com/rss/search?q=Tamil&hl=ta&gl=IN&ceid=IN:ta"},
+        {"name": "Puthiya Thalaimurai", "url": "https://news.google.com/rss/search?q=puthiyathalaimurai&hl=ta&gl=IN&ceid=IN:ta"},
+        {"name": "Dinakaran", "url": "http://www.dinakaran.com/rss_dkn.asp"},
+        {"name": "Webdunia Tamil", "url": "https://tamil.webdunia.com/rss/"},
+        {"name": "Maalai Malar", "url": "https://www.maalaimalar.com/rss/"},
+        {"name": "Daily Thanthi", "url": "https://rss.app/feeds/Vr3sF7zb27kFP49l.xml"}
+    ]
+    
+    for feed in default_feeds:
+        existing = db.query(NewsFeed).filter(NewsFeed.url == feed["url"]).first()
+        if not existing:
+            new_feed = NewsFeed(
+                name=feed["name"],
+                url=feed["url"],
+                source_type="RSS",
+                is_active=True
+            )
+            db.add(new_feed)
+    
+    db.commit()
+    print("[System] Checked and loaded default Tamil RSS feeds.")
     db.close()
 
     asyncio.create_task(broadcast_logs())
@@ -511,6 +517,8 @@ async def fetch_external_news(req: ExternalFetchRequest):
         return {"status": "success", "items": [item]}
     else:
         return JSONResponse(status_code=400, content={"error": "Invalid source type"})
+
+app.mount("/static", StaticFiles(directory="ui"), name="static")
 
 @app.get("/")
 def read_root():
@@ -906,200 +914,7 @@ async def reject_news_item(news_id: int, db: Session = Depends(get_db)):
     return {"status": "rejected", "is_active": False}
 
 
-# --- Coqui TTS Integration ---
-try:
-    import torch
-except ImportError:
-    torch = None
-    print("WARNING: torch not installed. Coqui TTS will be disabled.")
-
-try:
-    from TTS.api import TTS
-except ImportError:
-    TTS = None
-    print("WARNING: Coqui TTS not installed. Install with 'pip install TTS'")
-except Exception as e:
-    TTS = None
-    print(f"WARNING: Error importing TTS: {e}")
-
-class CoquiTTSWrapper:
-    def __init__(self):
-        self.tts = None
-        self.model_name = "tts_models/ta/tamil_female" # Default Tamil model
-        self.device = "cpu"
-        if torch and torch.cuda.is_available():
-            self.device = "cuda"
-
-    def load_model(self):
-        if self.tts is None and TTS is not None:
-            print(f"Loading Coqui TTS Model: {self.model_name} on {self.device}...")
-            try:
-                self.tts = TTS(self.model_name).to(self.device)
-                print("Model Loaded.")
-            except Exception as e:
-                print(f"Failed to load Coqui Model: {e}")
-                self.tts = None
-
-    def tts_to_file(self, text, file_path):
-        if TTS is None:
-            return False
-            
-        if self.tts is None:
-            self.load_model()
-        
-        if self.tts:
-            try:
-                self.tts.tts_to_file(text=text, file_path=file_path)
-                return True
-            except Exception as e:
-                print(f"Coqui Sync Gen Error: {e}")
-                return False
-        else:
-            print("Coqui TTS not available.")
-            return False
-
-# Global TTS Instance
-coqui_engine = CoquiTTSWrapper()
-
-# Fallback (System Native)
-try:
-    import pyttsx3
-except ImportError:
-    pyttsx3 = None
-
-class TTSRequest(BaseModel):
-    text: str
-    lang: str = "ta"
-
-@app.post("/api/tts")
-async def generate_tts(req: TTSRequest):
-    print(f"DEBUG: /api/tts request received: {req.text}")
-    try:
-        # Define base directory (where server.py is)
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        media_dir = os.path.join(base_dir, "media")
-        
-        if not os.path.exists(media_dir):
-            os.makedirs(media_dir)
-            
-        # Use a unique name to avoid Windows file locking issues
-        # Clean up old files? (Maybe later task)
-        filename = f"tts_{int(time.time()*1000)}.wav"
-        target_file = os.path.join(media_dir, filename)
-        abs_target = os.path.abspath(target_file)
-        
-        print(f"DEBUG: Generating TTS to: {abs_target}")
-
-        success = False
-        
-        errors = []
-        
-        # 1. Try Coqui TTS
-        if TTS is not None:
-            try:
-                # Use Coqui
-                print("DEBUG: Attempting Coqui TTS...")
-                success = coqui_engine.tts_to_file(req.text, abs_target)
-                if success:
-                    print(f"DEBUG: Coqui TTS success")
-            except Exception as e:
-                msg = f"Coqui TTS failed: {e}"
-                print(f"DEBUG: {msg}")
-                errors.append(msg)
-        else:
-            errors.append("Coqui TTS not available (module not loaded)")
-            
-        # 2. Try Google TTS (gtranslate)
-        if not success:
-            print("Fallback: Using Google Translate TTS")
-            try:
-                text_enc = urllib.parse.quote(req.text)
-                # Client 'tw-ob' sometimes blocked, try without or standard
-                url = f"https://translate.google.com/translate_tts?ie=UTF-8&q={text_enc}&tl={req.lang}&client=tw-ob"
-                req_web = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-                with urllib.request.urlopen(req_web) as response, open(abs_target, 'wb') as out_file:
-                    out_file.write(response.read())
-                success = True
-                print("DEBUG: Google TTS success")
-            except Exception as ex:
-                msg = f"Google TTS failed: {ex}"
-                print(f"DEBUG: {msg}")
-                errors.append(msg)
-
-        # 3. Try pyttsx3 (System Native)
-        if not success:
-            if pyttsx3 is not None:
-                print("Fallback: Using pyttsx3 (System Native)")
-                try:
-                    # Initialize engine every time? Or use global? initializing new one might be safer for threading if use drivers allow
-                    # save_to_file might require runAndWait to actually process?
-                    engine = pyttsx3.init()
-                    engine.save_to_file(req.text, abs_target)
-                    engine.runAndWait() 
-                    # Check if file exists and has size
-                    if os.path.exists(abs_target) and os.path.getsize(abs_target) > 0:
-                        success = True
-                        print("DEBUG: pyttsx3 success")
-                    else:
-                        raise Exception("pyttsx3 ran but file is empty or missing")
-                except Exception as ex:
-                    msg = f"pyttsx3 failed: {ex}"
-                    print(f"DEBUG: {msg}")
-                    errors.append(msg)
-            else:
-                errors.append("pyttsx3 not installed")
-
-        # 4. Try PowerShell (Windows only, robust fallback)
-        if not success and os.name == 'nt':
-            print("Fallback: Using PowerShell TTS")
-            try:
-                # Powershell command to save to file
-                # Add-Type -AssemblyName System.Speech; $speak = New-Object System.Speech.Synthesis.SpeechSynthesizer; $speak.SetOutputToWaveFile('C:\path\to\file.wav'); $speak.Speak('Text'); $speak.Dispose();
-                ps_script = f"""
-                Add-Type -AssemblyName System.Speech;
-                $speak = New-Object System.Speech.Synthesis.SpeechSynthesizer;
-                $speak.SetOutputToWaveFile('{abs_target}');
-                $speak.Speak('{req.text.replace("'", "''")}');
-                $speak.Dispose();
-                """
-                # Run powershell
-                cmd = ["powershell", "-Command", ps_script]
-                subprocess.run(cmd, check=True)
-                
-                if os.path.exists(abs_target) and os.path.getsize(abs_target) > 0:
-                    success = True
-                    print("DEBUG: PowerShell TTS success")
-                else:
-                    errors.append("PowerShell ran but file missing/empty")
-            except Exception as ex:
-                msg = f"PowerShell TTS failed: {ex}"
-                print(f"DEBUG: {msg}")
-                errors.append(msg)
-
-        if not success:
-             error_summary = "; ".join(errors)
-             print(f"DEBUG: All TTS engines failed. Python: {sys.executable}")
-             raise Exception(f"All TTS engines failed: {error_summary}")
-
-        # Update trigger file for main.py (absolute path)
-        trigger_file = os.path.join(base_dir, "tts_trigger.json")
-        trigger_data = {
-            "timestamp": time.time(),
-            "file": abs_target,
-            "action": "play" 
-        }
-        
-        with open(trigger_file, "w") as f:
-            json.dump(trigger_data, f)
-            
-        print(f"DEBUG: Written trigger to {trigger_file}")
-            
-        return {"status": "success", "file": abs_target}
-        
-    except Exception as e:
-        print(f"TTS Error: {e}")
-        # Return 500 but log it
-        raise HTTPException(status_code=500, detail=str(e))
+# --- Coqui TTS Integration Removed ---
 
 # --- Volume Ducking Trigger (Kept for manual control if needed) ---
 class DuckRequest(BaseModel):
