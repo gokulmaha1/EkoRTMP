@@ -9,7 +9,7 @@ import queue
 import asyncio
 import time
 import datetime
-import requests # Added for ntfy
+import streamlink # Added for YouTube resolution
 from typing import Optional, List
 from fastapi import FastAPI, UploadFile, Form, WebSocket, WebSocketDisconnect, Depends, HTTPException, File
 from fastapi.staticfiles import StaticFiles
@@ -162,7 +162,45 @@ class StreamManager:
         except Exception as e:
             print(f"Failed to write to log file: {e}")
 
+class YouTubeStreamResolver:
+    def __init__(self):
+        self.session = streamlink.Streamlink()
+        # Pretend to be a real browser to avoid 403 errors
+        self.session.set_option("http-headers", {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        })
+        self.cache = {}
+
+    def get_link(self, youtube_url):
+        # 1. Check if we have a fresh link in memory (Cache for 1 hour)
+        if youtube_url in self.cache:
+            link, expiry = self.cache[youtube_url]
+            if datetime.now() < expiry:
+                return link
+
+        # 2. If not cached, extract a new one
+        try:
+            streams = self.session.streams(youtube_url)
+            if not streams:
+                return None # Stream offline
+
+            # YouTube usually provides 'best' as a HLS stream link
+            if 'best' not in streams:
+                return None
+
+            m3u8_url = streams['best'].to_url()
+            
+            # 3. Store in cache (YouTube links usually last ~4-6 hours)
+            self.cache[youtube_url] = (m3u8_url, datetime.now() + timedelta(hours=2))
+            
+            return m3u8_url
+
+        except Exception as e:
+            print(f"[YouTubeResolver] Error: {e}")
+            return None
+
 stream_manager = StreamManager()
+youtube_resolver = YouTubeStreamResolver()
 
 async def broadcast_logs():
     """Background task to broadcast logs to all connected websockets."""
@@ -358,7 +396,7 @@ class OverlayUpdate(BaseModel):
     hide_overlays: Optional[bool] = None
 
 @app.post("/api/overlay/update")
-def update_overlay(data: OverlayUpdate):
+async def update_overlay(data: OverlayUpdate):
     try:
         if os.path.exists(OVERLAY_FILE):
             with open(OVERLAY_FILE, "r") as f:
@@ -366,10 +404,21 @@ def update_overlay(data: OverlayUpdate):
         else:
             current_data = {}
         
-        if data.webview_url is not None: current_data["webview_url"] = data.webview_url
+        url = data.webview_url
+        if url:
+            # Automatic YouTube Resolution
+            if "youtube.com" in url or "youtu.be" in url:
+                print(f"[Overlay] Resolving YouTube URL: {url}")
+                resolved_url = await asyncio.to_thread(youtube_resolver.get_link, url)
+                if resolved_url:
+                    print(f"[Overlay] Resolved to: {resolved_url}")
+                    url = resolved_url
+                else:
+                    print(f"[Overlay] YouTube Resolution Failed for {url}")
+
+        if data.webview_url is not None: current_data["webview_url"] = url
         if data.title is not None: current_data["title"] = data.title
         if data.subtitle is not None: current_data["subtitle"] = data.subtitle
-        
         
         with open(OVERLAY_FILE, "w") as f:
             json.dump(current_data, f)
@@ -858,8 +907,13 @@ async def update_news(news_id: int, item: NewsUpdate, db: Session = Depends(get_
         raise HTTPException(status_code=404, detail="News item not found")
     
     if item.title_tamil is not None: db_item.title_tamil = item.title_tamil
+    if item.title_english is not None: db_item.title_english = item.title_english
+    if item.type is not None: db_item.type = item.type
+    if item.category is not None: db_item.category = item.category
     if item.is_active is not None: db_item.is_active = item.is_active
-    # ... handle other fields
+    if item.source is not None: db_item.source = item.source
+    if item.source_url is not None: db_item.source_url = item.source_url
+    if item.media_url is not None: db_item.media_url = item.media_url
     
     db.commit()
     db.refresh(db_item)

@@ -660,6 +660,9 @@ function renderItemCard(item, isPending) {
         `;
     } else {
         actionButtons = `
+            <button onclick="openEditModal(${item.id})" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center transition" title="Edit News">
+                <i class="fas fa-edit"></i>
+            </button>
             <button onclick="showNewsOnScreen(${item.id})" class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center justify-center transition" title="Show on Main Screen">
                 <i class="fas fa-tv"></i>
             </button>
@@ -1221,4 +1224,53 @@ async function deleteProgram(id) {
         await fetch(`${API_BASE}/programs/${id}`, { method: 'DELETE' });
         fetchSchedule();
     } catch (e) { console.error(e); }
+}
+
+// --- EDIT NEWS MODAL ---
+function openEditModal(id) {
+    const item = newsQueue.find(n => n.id === id);
+    if (!item) return;
+
+    document.getElementById('editNewsId').value = item.id;
+    document.getElementById('editNewsTitleTamil').value = item.title_tamil;
+    document.getElementById('editNewsCategory').value = item.category || 'GENERAL';
+
+    document.getElementById('modalEditNews').classList.remove('hidden');
+    document.getElementById('modalEditNews').classList.add('flex');
+}
+
+function closeEditModal() {
+    document.getElementById('modalEditNews').classList.add('hidden');
+    document.getElementById('modalEditNews').classList.remove('flex');
+}
+
+async function saveNewsEdit() {
+    const id = document.getElementById('editNewsId').value;
+    const title = document.getElementById('editNewsTitleTamil').value.trim();
+    const category = document.getElementById('editNewsCategory').value.trim();
+
+    if (!title) return alert("Title cannot be empty");
+
+    try {
+        const res = await fetch(`${API_BASE}/news/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title_tamil: title,
+                category: category
+            })
+        });
+
+        if (res.ok) {
+            closeEditModal();
+            // Local update of state to avoid full fetch if possible, 
+            // but fetchNews is safer for consistency
+            fetchNews();
+        } else {
+            alert("Failed to save changes");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error saving news");
+    }
 }
