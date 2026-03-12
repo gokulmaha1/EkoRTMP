@@ -1,0 +1,12 @@
+{
+  "name": "ekonews",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build:css": "tailwindcss -i ui/admin/index.css -o ui/admin/style.css"
+  },
+  "dependencies": {
+    "tailwindcss": "^3.4.1"
+  }
+}
