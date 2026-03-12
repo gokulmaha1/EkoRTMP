@@ -955,6 +955,30 @@
                 lBar.style.width = '0';
                 setTimeout(() => lBar.style.display = 'none', 500);
             }
+
+            // Voting Config / Overlay Mode
+            if (conf.overlay_display_mode) {
+                currentOverlayMode = conf.overlay_display_mode;
+                // Force update UI if not in auto
+                if (currentOverlayMode !== 'auto') {
+                    updateDisplayModeDirectly();
+                }
+            }
+        }
+
+        // Helper to force switch
+        function updateDisplayModeDirectly() {
+            const news = document.getElementById('newsPresentation');
+            const voting = document.getElementById('votingPresentation');
+            if (currentOverlayMode === 'news') {
+                news.style.display = 'flex';
+                voting.style.display = 'none';
+                showVoting = false;
+            } else if (currentOverlayMode === 'voting') {
+                news.style.display = 'none';
+                voting.style.display = 'flex';
+                showVoting = true;
+            }
         }
 
         // --- NEWS HANDLING ---
@@ -1028,6 +1052,7 @@
         let voteCounts = {};
         let ttsQueue = [];
         let isSpeaking = false;
+        let currentOverlayMode = 'auto'; // auto, news, voting
 
         const ws = new WebSocket(WS_URL);
         ws.onopen = () => console.log("WS Connected");
@@ -1479,6 +1504,8 @@
 
         // --- CONTENT ROTATION ---
         function cycleContent() {
+            if (currentOverlayMode !== 'auto') return; // Respect manual mode
+
             const news = document.getElementById('newsPresentation');
             const voting = document.getElementById('votingPresentation');
 

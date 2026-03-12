@@ -39,6 +39,14 @@ class VoteCollector:
         self.polling_interval = 5 # seconds
         self.last_chat_id = None
         self.on_new_vote = None
+        self.status = {
+            "is_running": False,
+            "last_poll_at": None,
+            "messages_found": 0,
+            "total_votes_this_session": 0,
+            "current_video_id": None,
+            "api_error": None
+        }
 
     def load_config(self, db: Session):
         cfg = db.query(SystemConfig).filter(SystemConfig.key == "voting_config").first()
@@ -47,7 +55,7 @@ class VoteCollector:
 
         try:
             data = json.loads(cfg.value)
-            new_api_key = data.get("api_key")
+            new_api_key = data.get("youtube_api_key")
             new_main_id = data.get("main_video_id")
             new_vote_id = data.get("vote_video_id")
             new_mode = data.get("stream_mode", "single")
@@ -208,12 +216,23 @@ class VoteCollector:
                 
                 new_votes = self.process_messages(messages, target_video_id, db)
                 
+                # Update Status
+                self.status.update({
+                    "is_running": True,
+                    "last_poll_at": datetime.datetime.now().strftime("%H:%M:%S"),
+                    "messages_found": len(messages),
+                    "total_votes_this_session": self.status.get("total_votes_this_session", 0) + len(new_votes),
+                    "current_video_id": target_video_id,
+                    "api_error": None
+                })
+
                 # Broadcast new votes if any
                 if new_votes and self.on_new_vote:
                     self.on_new_vote(new_votes)
 
             except Exception as e:
                 print(f"[VoteCollector] Loop Error: {e}")
+                self.status["api_error"] = str(e)
             finally:
                 db.close()
             
