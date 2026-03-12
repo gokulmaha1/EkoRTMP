@@ -8,7 +8,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EKO News Controller</title>
     <!-- Tailwind CSS -->
-    <link rel="stylesheet" href="/static/admin/style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            slate: '#1e293b',
+                            red: '#ef4444',
+                            blue: '#3b82f6',
+                            accent: '#6366f1'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
