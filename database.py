@@ -133,6 +133,27 @@ class SystemConfig(Base):
     key = Column(String, primary_key=True, index=True)
     value = Column(Text) # JSON string or raw text
 
+class Voter(Base):
+    __tablename__ = "voters"
+
+    id = Column(Integer, primary_key=True, index=True)
+    stream_id = Column(String, index=True)
+    author_channel_id = Column(String, index=True)
+    display_name = Column(String)
+    profile_image_url = Column(String, nullable=True)
+    party_code = Column(String, index=True) # e.g., 'DMK', 'ADMK'
+    party_tamil = Column(String) # e.g., 'திமுக'
+    message_id = Column(String)
+    voted_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class VoteCount(Base):
+    __tablename__ = "vote_counts"
+
+    stream_id = Column(String, primary_key=True)
+    party_code = Column(String, primary_key=True)
+    party_tamil = Column(String)
+    total = Column(Integer, default=0)
+
 # Dependency
 def get_db():
     db = SessionLocal()

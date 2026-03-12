@@ -50,20 +50,24 @@ function switchView(viewName) {
 
     // Update Title
     const titles = {
-        'dashboard': 'Live Overview',
-        'news': 'News Manager',
-        'media': 'Media Library',
-        'ads': 'Ad Manager',
-        'ads': 'Ad Manager',
-        'config': 'Layout Configuration',
-        'schedule': 'Program Schedule'
+        dashboard: 'Overview',
+        news: 'News Manager',
+        media: 'Media Library',
+        ads: 'Ad Manager',
+        config: 'Layout Configuration',
+        schedule: 'Broadcast Schedule',
+        voting: 'Live Voting System'
     };
     pageTitle.innerText = titles[viewName] || 'Control Room';
 
     // Lazy Load
     if (viewName === 'media') fetchMedia();
-    if (viewName === 'ads') fetchAds();
+    if (viewName === 'ads') fetchCampaigns();
     if (viewName === 'schedule') fetchSchedule();
+    if (viewName === 'voting') {
+        loadVotingConfig();
+        fetchVoteResults();
+    }
 }
 
 // --- API Interactions ---
@@ -1273,4 +1277,122 @@ async function saveNewsEdit() {
         console.error(e);
         alert("Error saving news");
     }
+}
+
+// --- VOTING SYSTEM ---
+async function loadVotingConfig() {
+    try {
+        const res = await fetch(`${API_BASE}/config/voting`);
+        const config = await res.json();
+        if (config) {
+            document.getElementById('voteApiKey').value = config.youtube_api_key || '';
+            document.getElementById('voteMainVideoId').value = config.main_video_id || '';
+            document.getElementById('voteStreamVideoId').value = config.vote_video_id || '';
+            document.getElementById('voteStreamMode').value = config.stream_mode || 'single';
+            document.getElementById('votePollInterval').value = config.poll_interval || 5;
+
+            toggleVoteDualInput();
+        }
+    } catch (e) {
+        console.error("Error loading voting config:", e);
+    }
+}
+
+document.getElementById('voteStreamMode')?.addEventListener('change', toggleVoteDualInput);
+
+function toggleVoteDualInput() {
+    const el = document.getElementById('voteStreamMode');
+    if (!el) return;
+    const mode = el.value;
+    document.getElementById('voteDualInput')?.classList.toggle('hidden', mode === 'single');
+}
+
+async function saveVotingConfig() {
+    const config = {
+        youtube_api_key: document.getElementById('voteApiKey').value,
+        main_video_id: document.getElementById('voteMainVideoId').value,
+        vote_video_id: document.getElementById('voteStreamVideoId').value,
+        stream_mode: document.getElementById('voteStreamMode').value,
+        poll_interval: parseInt(document.getElementById('votePollInterval').value)
+    };
+
+    try {
+        const res = await fetch(`${API_BASE}/config/voting`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
+        });
+        if (res.ok) alert("Voting configuration saved!");
+    } catch (e) {
+        alert("Failed to save voting config");
+    }
+}
+
+async function fetchVoteResults() {
+    try {
+        // Counts
+        const resCounts = await fetch(`${API_BASE}/votes/counts`);
+        const counts = await resCounts.json();
+
+        const countsContainer = document.getElementById('votePreviewCounts');
+        const parties = [
+            { code: 'DMK', tamil: 'திமுக', color: 'bg-red-500' },
+            { code: 'ADMK', tamil: 'அதிமுக', color: 'bg-green-500' },
+            { code: 'BJP', tamil: 'பாஜக', color: 'bg-orange-500' },
+            { code: 'NTK', tamil: 'நாம் தமிழர்', color: 'bg-yellow-500' }
+        ];
+
+        if (countsContainer) {
+            countsContainer.innerHTML = parties.map(p => `
+                <div class="p-4 rounded-xl border border-slate-100 bg-slate-50">
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-2 h-2 rounded-full ${p.color}"></div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${p.code}</span>
+                    </div>
+                    <div class="flex justify-between items-baseline">
+                        <span class="font-bold text-slate-700">${p.tamil}</span>
+                        <span class="text-2xl font-black text-slate-900">${(counts[p.code] || 0).toLocaleString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Latest Voters
+        const resLatest = await fetch(`${API_BASE}/votes/latest`);
+        const latest = await resLatest.json();
+
+        const latestContainer = document.getElementById('votePreviewLatest');
+        if (latestContainer) {
+            latestContainer.innerHTML = latest.map(v => `
+                <div class="flex items-center gap-3 p-3 rounded-lg border border-slate-100 bg-white">
+                    <img src="${v.profile_image_url}" class="w-8 h-8 rounded-full shadow-sm" alt="">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-slate-800 truncate">${v.display_name}</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">${v.party_tamil}</p>
+                    </div>
+                    <span class="text-[10px] text-slate-300">${new Date(v.voted_at).toLocaleTimeString()}</span>
+                </div>
+            `).join('');
+        }
+
+    } catch (e) {
+        console.error("Error fetching vote results:", e);
+    }
+}
+
+async function resetVotes() {
+    if (!confirm("Are you sure you want to PERMANENTLY reset all votes? This cannot be undone.")) return;
+    try {
+        const res = await fetch(`${API_BASE}/votes/reset`, { method: 'POST' });
+        if (res.ok) {
+            alert("Votes reset successfully!");
+            fetchVoteResults();
+        }
+    } catch (e) {
+        alert("Reset failed");
+    }
+}
+
+function exportVotes() {
+    window.location.href = `${API_BASE}/votes/export`;
 }

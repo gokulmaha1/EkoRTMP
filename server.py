@@ -20,7 +20,8 @@ from sqlalchemy.orm import Session
 
 # Import our new database module
 import database
-from database import NewsItem, SystemConfig, NewsType, NewsCategory, get_db, Program
+from database import NewsItem, SystemConfig, NewsType, NewsCategory, get_db, Program, Voter, VoteCount
+from services.vote_collector import vote_collector
 
 # Notification Config
 NTFY_TOPIC = os.environ.get('NTFY_TOPIC', 'eko_news_secret_123') # CHANGE THIS IN PRODUCTION
@@ -202,6 +203,23 @@ class YouTubeStreamResolver:
 stream_manager = StreamManager()
 youtube_resolver = YouTubeStreamResolver()
 
+def handle_new_votes(votes):
+    """Callback from vote_collector when new votes are detected."""
+    # Since vote_collector runs in a thread, we need a way to 
+    # run broadcast (which is async) in the main event loop.
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            for vote in votes:
+                asyncio.run_coroutine_threadsafe(
+                    broadcast_news_update("NEW_VOTE", vote), 
+                    loop
+                )
+    except Exception as e:
+        print(f"[Server] Error handling new votes: {e}")
+
+vote_collector.on_new_vote = handle_new_votes
+
 async def broadcast_logs():
     """Background task to broadcast logs to all connected websockets."""
     while True:
@@ -321,6 +339,10 @@ async def startup_event():
     print("[System] Checked and loaded default Tamil RSS feeds.")
     db.close()
 
+    # Start Services
+    vote_collector.start()
+
+    # Sync tasks
     asyncio.create_task(broadcast_logs())
     asyncio.create_task(sync_rss_feeds()) # Start RSS Sync
 
@@ -580,6 +602,10 @@ def read_admin():
     if not os.path.exists("ui/admin/index.html"):
         return JSONResponse(status_code=404, content={"error": "Admin UI not found. Please create ui/admin/index.html"})
     return FileResponse("ui/admin/index.html")
+
+@app.get("/overlay-votes")
+async def get_votes_overlay():
+    return FileResponse("votes_overlay.html")
 
 @app.get("/overlay")
 def get_overlay_page():
@@ -1105,3 +1131,73 @@ def stop_stream():
 @app.get("/api/stream/status")
 def get_status():
     return {"running": stream_manager.is_running()}
+
+# --- Voting Configuration API ---
+class VotingConfig(BaseModel):
+    youtube_api_key: Optional[str] = None
+    main_video_id: Optional[str] = None
+    vote_video_id: Optional[str] = None
+    stream_mode: str = "single"
+    poll_interval: int = 5
+
+@app.get("/api/config/voting")
+def get_voting_config(db: Session = Depends(get_db)):
+    config = db.query(SystemConfig).filter(SystemConfig.key == "voting_config").first()
+    if config and config.value:
+        try:
+            return json.loads(config.value)
+        except:
+            return {}
+    return {}
+
+@app.post("/api/config/voting")
+def set_voting_config(data: VotingConfig, db: Session = Depends(get_db)):
+    json_val = json.dumps(data.dict())
+    config = db.query(SystemConfig).filter(SystemConfig.key == "voting_config").first()
+    if config:
+        config.value = json_val
+    else:
+        config = SystemConfig(key="voting_config", value=json_val)
+        db.add(config)
+    db.commit()
+    return {"status": "success"}
+
+# --- Voting System API ---
+@app.get("/api/votes/counts")
+def get_vote_counts(db: Session = Depends(get_db)):
+    counts = db.query(VoteCount).all()
+    return {c.party_code: c.total for c in counts}
+
+@app.get("/api/votes/latest")
+def get_latest_voters(db: Session = Depends(get_db)):
+    voters = db.query(Voter).order_by(Voter.id.desc()).limit(10).all()
+    return voters
+
+@app.post("/api/votes/reset")
+def reset_votes(db: Session = Depends(get_db)):
+    db.query(Voter).delete()
+    db.query(VoteCount).delete()
+    db.commit()
+    return {"status": "reset"}
+
+@app.get("/api/votes/export")
+def export_voters(db: Session = Depends(get_db)):
+    import csv
+    import io
+    from fastapi.responses import StreamingResponse
+    
+    voters = db.query(Voter).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["ID", "Name", "Party", "Time", "Channel ID"])
+    
+    for v in voters:
+        writer.writerow([v.id, v.display_name, v.party_tamil, v.voted_at, v.author_channel_id])
+    
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=voters_export.csv"}
+    )
