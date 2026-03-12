@@ -985,137 +985,177 @@
                     </div>
                 </div>
             </div>
-
             <script src="/static/admin/admin.js"></script>
             <!-- VIEW: VOTING MANAGER -->
             <div id="view-voting" class="view-section">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-                    <!-- Left: Config -->
-                    <div class="glass-card rounded-xl p-6 space-y-6">
-                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fas fa-cog text-blue-500"></i> YouTube Voting Settings
-                        </h3>
-
-                        <div class="space-y-4">
-                            <div>
-                                <label
-                                    class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">YouTube
-                                    API Key</label>
-                                <input type="password" id="voteApiKey"
-                                    class="w-full border border-slate-200 rounded-lg p-3 text-sm"
-                                    placeholder="AIzaSy...">
-                            </div>
-
+                    <div class="space-y-6">
+                        <!-- Collector Status Card -->
+                        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+                            <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
+                                <i class="fas fa-satellite-dish text-blue-500"></i>
+                                Live Collection Status
+                            </h3>
                             <div class="grid grid-cols-2 gap-4">
+                                <div class="p-4 rounded-2xl border border-slate-100 bg-slate-50">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status
+                                    </p>
+                                    <div id="statVoteRunning"
+                                        class="inline-flex items-center gap-2 px-2 py-1 rounded-full text-[10px] font-black uppercase bg-slate-200 text-slate-600">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
+                                        Offline
+                                    </div>
+                                </div>
+                                <div class="p-4 rounded-2xl border border-slate-100 bg-slate-50">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Last
+                                        Poll</p>
+                                    <p id="statVoteLastPoll" class="text-lg font-black text-slate-900">--:--:--</p>
+                                </div>
+                                <div class="p-4 rounded-2xl border border-slate-100 bg-slate-50">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">MSG
+                                        Found</p>
+                                    <p id="statVoteMsgs" class="text-lg font-black text-slate-900">0</p>
+                                </div>
+                                <div class="p-4 rounded-2xl border border-slate-100 bg-slate-50">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">New
+                                        Votes</p>
+                                    <p id="statVoteSession" class="text-lg font-black text-slate-900">0</p>
+                                </div>
+                            </div>
+                            <div id="statVoteError"
+                                class="mt-4 p-3 rounded-xl bg-red-50 text-red-600 text-[10px] font-bold hidden">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                <span id="statVoteErrorMsg"></span>
+                            </div>
+                        </div>
+
+                        <!-- Settings Card -->
+                        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
+                            <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
+                                <i class="fas fa-cog text-blue-500"></i>
+                                YouTube Settings
+                            </h3>
+
+                            <div class="space-y-4">
                                 <div>
                                     <label
-                                        class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Stream
-                                        Mode</label>
-                                    <select id="voteStreamMode"
+                                        class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">YouTube
+                                        API Key</label>
+                                    <input type="password" id="voteApiKey"
+                                        class="w-full border border-slate-200 rounded-lg p-3 text-sm"
+                                        placeholder="AIzaSy...">
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label
+                                            class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Stream
+                                            Mode</label>
+                                        <select id="voteStreamMode"
+                                            class="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white">
+                                            <option value="single">Single Stream</option>
+                                            <option value="dual">Dual Stream</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Poll
+                                            Interval (Sec)</label>
+                                        <input type="number" id="votePollInterval"
+                                            class="w-full border border-slate-200 rounded-lg p-3 text-sm" value="5">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label
+                                        class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Overlay
+                                        Display Mode</label>
+                                    <select id="voteDisplayMode"
                                         class="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white">
-                                        <option value="single">Single Stream</option>
-                                        <option value="dual">Dual Stream</option>
+                                        <option value="auto">Auto Rotate (Every 5s)</option>
+                                        <option value="news">News Only</option>
+                                        <option value="voting">Voting Only</option>
                                     </select>
                                 </div>
+
                                 <div>
                                     <label
-                                        class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Poll
-                                        Interval (Sec)</label>
-                                    <input type="number" id="votePollInterval"
-                                        class="w-full border border-slate-200 rounded-lg p-3 text-sm" value="5">
+                                        class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Main
+                                        Video ID</label>
+                                    <input type="text" id="voteMainVideoId"
+                                        class="w-full border border-slate-200 rounded-lg p-3 text-sm"
+                                        placeholder="v=xxxxxx">
+                                </div>
+
+                                <div id="voteDualInput" class="hidden">
+                                    <label
+                                        class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Voting
+                                        Stream Video ID</label>
+                                    <input type="text" id="voteStreamVideoId"
+                                        class="w-full border border-slate-200 rounded-lg p-3 text-sm"
+                                        placeholder="v=yyyyyy">
+                                </div>
+
+                                <div class="flex gap-4">
+                                    <button onclick="saveVotingConfig()"
+                                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition shadow-lg">
+                                        <i class="fas fa-save mr-2"></i> Save Configuration
+                                    </button>
+                                    <button onclick="testVoteConnection()"
+                                        class="px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-lg font-bold border border-slate-200 transition">
+                                        <i class="fas fa-plug mr-2"></i> Test
+                                    </button>
+                                </div>
+
+                                <div id="voteTestStatus" class="hidden p-3 rounded-lg text-xs font-bold"></div>
+
+                                <div class="pt-6 border-t border-slate-100">
+                                    <h4 class="text-sm font-bold text-red-600 mb-2 uppercase">Danger Zone</h4>
+                                    <button onclick="resetVotes()"
+                                        class="w-full bg-red-100 hover:bg-red-200 text-red-600 py-3 rounded-lg font-bold border border-red-200">
+                                        <i class="fas fa-trash-alt mr-2"></i> RESET ALL VOTES
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Results Preview -->
+                        <div class="glass-card rounded-xl p-6 flex flex-col">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-lg font-bold text-slate-800">Live Standings</h3>
+                                <div class="flex gap-2">
+                                    <a href="/overlay-votes" target="_blank"
+                                        class="text-xs bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-200 font-bold">
+                                        <i class="fas fa-external-link-alt mr-1"></i> Open Overlay
+                                    </a>
+                                    <button onclick="fetchVoteResults()"
+                                        class="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-100 font-bold">
+                                        <i class="fas fa-sync-alt mr-1"></i> Refresh
+                                    </button>
                                 </div>
                             </div>
 
-                            <div>
-                                <label
-                                    class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Overlay
-                                    Display Mode</label>
-                                <select id="voteDisplayMode"
-                                    class="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white">
-                                    <option value="auto">Auto Rotate (Every 5s)</option>
-                                    <option value="news">News Only</option>
-                                    <option value="voting">Voting Only</option>
-                                </select>
+                            <div id="votePreviewCounts" class="grid grid-cols-2 gap-4 mb-8">
+                                <!-- Counters will be injected here -->
                             </div>
 
-                            <div>
-                                <label
-                                    class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Main
-                                    Video ID</label>
-                                <input type="text" id="voteMainVideoId"
-                                    class="w-full border border-slate-200 rounded-lg p-3 text-sm"
-                                    placeholder="v=xxxxxx">
+                            <div class="flex-1 overflow-hidden flex flex-col">
+                                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Recent
+                                    Voters</h4>
+                                <div id="votePreviewLatest" class="space-y-2 overflow-y-auto pr-2">
+                                    <!-- Latest voters injected here -->
+                                </div>
                             </div>
 
-                            <div id="voteDualInput" class="hidden">
-                                <label
-                                    class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Voting
-                                    Stream Video ID</label>
-                                <input type="text" id="voteStreamVideoId"
-                                    class="w-full border border-slate-200 rounded-lg p-3 text-sm"
-                                    placeholder="v=yyyyyy">
-                            </div>
-
-                            <div class="flex gap-4">
-                                <button onclick="saveVotingConfig()"
-                                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition shadow-lg">
-                                    <i class="fas fa-save mr-2"></i> Save Configuration
-                                </button>
-                                <button onclick="testVoteConnection()"
-                                    class="px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-lg font-bold border border-slate-200 transition">
-                                    <i class="fas fa-plug mr-2"></i> Test
+                            <div class="mt-6 pt-4 border-t border-slate-100">
+                                <button onclick="exportVotes()"
+                                    class="w-full bg-green-50 hover:bg-green-100 text-green-700 py-3 rounded-lg font-bold border border-green-200">
+                                    <i class="fas fa-file-export mr-2"></i> EXPORT TO CSV
                                 </button>
                             </div>
-
-                            <div id="voteTestStatus" class="hidden p-3 rounded-lg text-xs font-bold"></div>
-
-                            <div class="pt-6 border-t border-slate-100">
-                                <h4 class="text-sm font-bold text-red-600 mb-2 uppercase">Danger Zone</h4>
-                                <button onclick="resetVotes()"
-                                    class="w-full bg-red-100 hover:bg-red-200 text-red-600 py-3 rounded-lg font-bold border border-red-200">
-                                    <i class="fas fa-trash-alt mr-2"></i> RESET ALL VOTES
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right: Results Preview -->
-                    <div class="glass-card rounded-xl p-6 flex flex-col">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-lg font-bold text-slate-800">Live Standings</h3>
-                            <div class="flex gap-2">
-                                <a href="/overlay-votes" target="_blank"
-                                    class="text-xs bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-200 font-bold">
-                                    <i class="fas fa-external-link-alt mr-1"></i> Open Overlay
-                                </a>
-                                <button onclick="fetchVoteResults()"
-                                    class="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-100 font-bold">
-                                    <i class="fas fa-sync-alt mr-1"></i> Refresh
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="votePreviewCounts" class="grid grid-cols-2 gap-4 mb-8">
-                            <!-- Counters will be injected here -->
-                        </div>
-
-                        <div class="flex-1 overflow-hidden flex flex-col">
-                            <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Recent
-                                Voters</h4>
-                            <div id="votePreviewLatest" class="space-y-2 overflow-y-auto pr-2">
-                                <!-- Latest voters injected here -->
-                            </div>
-                        </div>
-
-                        <div class="mt-6 pt-4 border-t border-slate-100">
-                            <button onclick="exportVotes()"
-                                class="w-full bg-green-50 hover:bg-green-100 text-green-700 py-3 rounded-lg font-bold border border-green-200">
-                                <i class="fas fa-file-export mr-2"></i> EXPORT TO CSV
-                            </button>
                         </div>
                     </div>
                 </div>
-            </div>
 </body>
 
 </html>

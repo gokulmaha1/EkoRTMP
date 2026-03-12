@@ -67,6 +67,9 @@ function switchView(viewName) {
     if (viewName === 'voting') {
         loadVotingConfig();
         fetchVoteResults();
+        startVotingStatusPolling();
+    } else {
+        stopVotingStatusPolling();
     }
 }
 
@@ -1430,4 +1433,54 @@ async function testVoteConnection() {
 
 function exportVotes() {
     window.location.href = `${API_BASE}/votes/export`;
+}
+
+let votingStatusTimer = null;
+
+function startVotingStatusPolling() {
+    if (votingStatusTimer) return;
+    fetchVoteStatus();
+    votingStatusTimer = setInterval(fetchVoteStatus, 3000);
+}
+
+function stopVotingStatusPolling() {
+    if (votingStatusTimer) clearInterval(votingStatusTimer);
+    votingStatusTimer = null;
+}
+
+async function fetchVoteStatus() {
+    try {
+        const res = await fetch(`${API_BASE}/votes/status`);
+        const status = await res.json();
+
+        const elRunning = document.getElementById('statVoteRunning');
+        const elLastPoll = document.getElementById('statVoteLastPoll');
+        const elMsgs = document.getElementById('statVoteMsgs');
+        const elSession = document.getElementById('statVoteSession');
+        const elError = document.getElementById('statVoteError');
+        const elErrorMsg = document.getElementById('statVoteErrorMsg');
+
+        if (!elRunning) return; // Not on the right page
+
+        if (status.is_running) {
+            elRunning.className = 'inline-flex items-center gap-2 px-2 py-1 rounded-full text-[10px] font-black uppercase bg-green-100 text-green-700';
+            elRunning.innerHTML = '<div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div> Live';
+        } else {
+            elRunning.className = 'inline-flex items-center gap-2 px-2 py-1 rounded-full text-[10px] font-black uppercase bg-slate-200 text-slate-600';
+            elRunning.innerHTML = '<div class="w-1.5 h-1.5 rounded-full bg-slate-400"></div> Offline';
+        }
+
+        elLastPoll.innerText = status.last_poll_at || '--:--:--';
+        elMsgs.innerText = status.messages_found || '0';
+        elSession.innerText = status.total_votes_this_session || '0';
+
+        if (status.api_error) {
+            elError.classList.remove('hidden');
+            elErrorMsg.innerText = status.api_error;
+        } else {
+            elError.classList.add('hidden');
+        }
+    } catch (e) {
+        console.error("Error fetching vote status:", e);
+    }
 }
