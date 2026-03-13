@@ -4,6 +4,7 @@ import requests
 import datetime
 import threading
 import json
+import re
 from sqlalchemy.orm import Session
 from database import SessionLocal, Voter, VoteCount, SystemConfig, ApiLog
 
@@ -46,8 +47,28 @@ class VoteCollector:
             "total_votes_this_session": 0,
             "current_video_id": None,
             "api_error": None,
-            "raw_response_snippet": None
+            "raw_response_snippet": None,
+            "last_error_type": None # New: help identify if quota, key, or video
         }
+
+    def extract_video_id(self, input_str):
+        if not input_str: return None
+        input_str = input_str.strip()
+        if len(input_str) == 11: return input_str
+        
+        # Regex for various Youtube URL Formats: watch?v=, youtu.be/, /live/, /shorts/
+        patterns = [
+            r"v=([0-9A-Za-z_-]{11})",
+            r"be/([0-9A-Za-z_-]{11})",
+            r"live/([0-9A-Za-z_-]{11})",
+            r"shorts/([0-9A-Za-z_-]{11})",
+            r"embed/([0-9A-Za-z_-]{11})"
+        ]
+        for p in patterns:
+            match = re.search(p, input_str)
+            if match: return match.group(1)
+            
+        return input_str # Return as-is if no match, maybe it's just a raw ID but not 11?
 
     def load_config(self, db: Session):
         cfg = db.query(SystemConfig).filter(SystemConfig.key == "voting_config").first()
@@ -96,6 +117,9 @@ class VoteCollector:
             print(f"[VoteCollector] Log error: {e}")
         
     def get_live_chat_id(self, video_id):
+        # Extract ID in case a full URL was passed
+        video_id = self.extract_video_id(video_id)
+
         if not self.api_key or not video_id:
             print(f"[VoteCollector] Missing API Key or Video ID for chat fetch.")
             return None
@@ -111,18 +135,34 @@ class VoteCollector:
             r = requests.get(url, params=params)
             self.log_api_call(SessionLocal(), url, params, r)
             self.status["raw_response_snippet"] = r.text[:500]
+            
             if r.status_code != 200:
-                print(f"[VoteCollector] Error fetching chat ID: HTTP {r.status_code}")
-                self.status["api_error"] = f"HTTP {r.status_code}: {r.text[:100]}"
+                error_data = r.json().get("error", {})
+                reason = error_data.get("errors", [{}])[0].get("reason", "unknown")
+                msg = error_data.get("message", "Request Failed")
+                
+                print(f"[VoteCollector] API Error: {reason} - {msg}")
+                self.status["last_error_type"] = reason
+                self.status["api_error"] = f"YouTube API Error ({reason}): {msg}"
                 return None
             
             data = r.json()
             if "items" in data and len(data["items"]) > 0:
-                chat_id = data["items"][0].get("liveStreamingDetails", {}).get("activeLiveChatId")
+                details = data["items"][0].get("liveStreamingDetails", {})
+                chat_id = details.get("activeLiveChatId")
+                
+                if not chat_id:
+                    print(f"[VoteCollector] Video exists but no activeLiveChatId. Is it live?")
+                    self.status["last_error_type"] = "not_live"
+                    self.status["api_error"] = "Video is not currently live or streaming."
+                    return None
+                    
                 print(f"[VoteCollector] Found active chat ID: {chat_id}")
                 return chat_id
             else:
-                print(f"[VoteCollector] No active live chat found for video.")
+                print(f"[VoteCollector] Video ID not found or invalid: {video_id}")
+                self.status["last_error_type"] = "video_not_found"
+                self.status["api_error"] = f"Video ID '{video_id}' not found."
         except Exception as e:
             print(f"[VoteCollector] Exception fetching chat ID: {e}")
             self.status["api_error"] = str(e)
