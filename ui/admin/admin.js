@@ -1451,9 +1451,39 @@ async function fetchVoteResults() {
             `).join('');
         }
 
+        // Reset Timer Sync
+        resetAdminVoteRefreshTimer();
     } catch (e) {
         console.error("Error fetching vote results:", e);
     }
+}
+
+// --- Admin Vote Refresh Timer ---
+const ADMIN_VOTE_REFRESH_INTERVAL = 30000;
+let adminVoteRefreshStartTime = Date.now();
+let adminVoteResultsTimer = null;
+
+function resetAdminVoteRefreshTimer() {
+    adminVoteRefreshStartTime = Date.now();
+    console.log("Admin Vote Refresh Timer Reset");
+}
+
+function updateAdminVoteProgressBar() {
+    const view = document.getElementById('view-voting');
+    if (!view || !view.classList.contains('active')) return;
+
+    const progress = document.getElementById('voteRefreshProgress');
+    const text = document.getElementById('voteRefreshTimerText');
+    if (!progress || !text) return;
+
+    const elapsed = Date.now() - adminVoteRefreshStartTime;
+    const percentage = Math.min((elapsed / ADMIN_VOTE_REFRESH_INTERVAL) * 100, 100);
+    const remaining = Math.max(Math.ceil((ADMIN_VOTE_REFRESH_INTERVAL - elapsed) / 1000), 0);
+
+    progress.style.width = percentage + '%';
+    text.innerText = remaining + 's';
+
+    requestAnimationFrame(updateAdminVoteProgressBar);
 }
 
 async function resetVotes() {
@@ -1512,11 +1542,20 @@ function startVotingStatusPolling() {
     if (votingStatusTimer) return;
     fetchVoteStatus();
     votingStatusTimer = setInterval(fetchVoteStatus, 3000);
+
+    // Periodic Results Refresh (Synced with Progress Bar)
+    fetchVoteResults();
+    if (adminVoteResultsTimer) clearInterval(adminVoteResultsTimer);
+    adminVoteResultsTimer = setInterval(fetchVoteResults, ADMIN_VOTE_REFRESH_INTERVAL);
+    resetAdminVoteRefreshTimer();
+    updateAdminVoteProgressBar();
 }
 
 function stopVotingStatusPolling() {
     if (votingStatusTimer) clearInterval(votingStatusTimer);
+    if (adminVoteResultsTimer) clearInterval(adminVoteResultsTimer);
     votingStatusTimer = null;
+    adminVoteResultsTimer = null;
 }
 
 async function fetchVoteStatus() {

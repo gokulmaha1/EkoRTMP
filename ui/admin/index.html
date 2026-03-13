@@ -985,383 +985,255 @@
                     </div>
                 </div>
             </div>
-            <script src="/static/admin/admin.js"></script>
-            <!-- VIEW: VOTING MANAGER -->
+            <script src="/static/admin/admin.js"></script>            <!-- VIEW: VOTING MANAGER -->
             <div id="view-voting" class="view-section">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-                    <div class="space-y-6">
-                        <!-- Collector Status Card -->
-                        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
-                            <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
+                <div class="space-y-4">
+                    <!-- Compact Top Row: Status -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-4">
+                            <h3 class="text-lg font-black text-slate-800 flex items-center gap-2 mr-4">
                                 <i class="fas fa-satellite-dish text-blue-500"></i>
-                                Live Collection Status
+                                Status
                             </h3>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="p-4 rounded-2xl border border-slate-100 bg-slate-50">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status
-                                    </p>
+                            <div class="flex flex-1 flex-wrap items-center gap-6">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">State:</span>
                                     <div id="statVoteRunning"
-                                        class="inline-flex items-center gap-2 px-2 py-1 rounded-full text-[10px] font-black uppercase bg-slate-200 text-slate-600">
+                                        class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-slate-200 text-slate-600">
                                         <div class="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
                                         Offline
                                     </div>
                                 </div>
-                                <div class="p-4 rounded-2xl border border-slate-100 bg-slate-50">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Last
-                                        Poll</p>
-                                    <p id="statVoteLastPoll" class="text-lg font-black text-slate-900">--:--:--</p>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Last Poll:</span>
+                                    <span id="statVoteLastPoll" class="text-sm font-black text-slate-900">--:--:--</span>
                                 </div>
-                                <div class="p-4 rounded-2xl border border-slate-100 bg-slate-50">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">MSG
-                                        Found</p>
-                                    <p id="statVoteMsgs" class="text-lg font-black text-slate-900">0</p>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Messages:</span>
+                                    <span id="statVoteMsgs" class="text-sm font-black text-slate-900">0</span>
                                 </div>
-                                <div class="p-4 rounded-2xl border border-slate-100 bg-slate-50">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">New
-                                        Votes</p>
-                                    <p id="statVoteSession" class="text-lg font-black text-slate-900">0</p>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Session Votes:</span>
+                                    <span id="statVoteSession" class="text-sm font-black text-slate-900">0</span>
                                 </div>
-                            </div>
-
-                            <!-- Debug Console -->
-                            <div class="mt-6">
-                                <div class="flex items-center justify-between mb-2">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Raw API Log
-                                        (Latest Response)</p>
-                                    <button onclick="toggleDebugConsole()"
-                                        class="text-[10px] font-black text-blue-500 uppercase hover:underline">Toggle
-                                        Console</button>
-                                </div>
-                                <div id="voteDebugConsole" class="hidden">
-                                    <pre id="statVoteRaw"
-                                        class="p-4 rounded-2xl bg-slate-900 text-green-400 text-[10px] font-mono overflow-auto max-h-40 whitespace-pre-wrap">Waiting for data...</pre>
+                                <!-- Progress Bar Column -->
+                                <div class="flex flex-col gap-1 min-w-[120px]">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Refresh Sync</span>
+                                        <span id="voteRefreshTimerText" class="text-[9px] font-bold text-blue-500">30s</span>
+                                    </div>
+                                    <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
+                                        <div id="voteRefreshProgress" class="h-full bg-blue-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div id="statVoteError"
-                                class="mt-4 p-3 rounded-xl bg-red-50 text-red-600 text-[10px] font-bold hidden">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>
-                                <span id="statVoteErrorMsg"></span>
-                            </div>
+                            <button onclick="toggleDebugConsole()"
+                                class="text-[10px] font-black text-blue-500 uppercase hover:underline">Console</button>
                         </div>
+                        <div id="voteDebugConsole" class="hidden mt-3">
+                            <pre id="statVoteRaw"
+                                class="p-3 rounded-xl bg-slate-900 text-green-400 text-[10px] font-mono overflow-auto max-h-32 whitespace-pre-wrap">Waiting for data...</pre>
+                        </div>
+                        <div id="statVoteError"
+                            class="mt-3 p-2 rounded-lg bg-red-50 text-red-600 text-[10px] font-bold hidden">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            <span id="statVoteErrorMsg"></span>
+                        </div>
+                    </div>
 
-                        <!-- Settings Card -->
-                        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
-                            <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-3">
-                                <i class="fas fa-cog text-blue-500"></i>
-                                YouTube Settings
-                            </h3>
-
-                            <div class="space-y-4">
-                                <div>
-                                    <label
-                                        class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">YouTube
-                                        API Key</label>
-                                    <input type="password" id="voteApiKey"
-                                        class="w-full border border-slate-200 rounded-lg p-3 text-sm"
-                                        placeholder="AIzaSy...">
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-4">
+                    <!-- Main Grid: Settings, Assets, Results -->
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                        
+                        <!-- Col 1: Settings -->
+                        <div class="space-y-4">
+                            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+                                <h3 class="text-sm font-black text-slate-800 mb-4 flex items-center gap-2">
+                                    <i class="fas fa-cog text-blue-500"></i> Settings
+                                </h3>
+                                <div class="space-y-3">
                                     <div>
-                                        <label
-                                            class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Stream
-                                            Mode</label>
-                                        <select id="voteStreamMode"
-                                            class="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white">
-                                            <option value="single">Single Stream</option>
-                                            <option value="dual">Dual Stream</option>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">YouTube API Key</label>
+                                        <input type="password" id="voteApiKey" class="w-full border border-slate-200 rounded-lg p-2 text-xs" placeholder="AIzaSy...">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Stream Mode</label>
+                                            <select id="voteStreamMode" class="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white">
+                                                <option value="single">Single</option>
+                                                <option value="dual">Dual</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Poll (Sec)</label>
+                                            <input type="number" id="votePollInterval" class="w-full border border-slate-200 rounded-lg p-2 text-xs" value="5">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Display Mode</label>
+                                        <select id="voteDisplayMode" class="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white">
+                                            <option value="auto">Auto Rotate (5s)</option>
+                                            <option value="news">News Only</option>
+                                            <option value="voting">Voting Only</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label
-                                            class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Poll
-                                            Interval (Sec)</label>
-                                        <input type="number" id="votePollInterval"
-                                            class="w-full border border-slate-200 rounded-lg p-3 text-sm" value="5">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Main Video ID</label>
+                                        <input type="text" id="voteMainVideoId" class="w-full border border-slate-200 rounded-lg p-2 text-xs" placeholder="v=xxxxxx">
                                     </div>
+                                    <div id="voteDualInput" class="hidden">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Voting Video ID</label>
+                                        <input type="text" id="voteStreamVideoId" class="w-full border border-slate-200 rounded-lg p-2 text-xs" placeholder="v=yyyyyy">
+                                    </div>
+                                    <div class="flex gap-2 pt-2">
+                                        <button onclick="saveVotingConfig()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-xs transition shadow-sm">
+                                            Save
+                                        </button>
+                                        <button onclick="testVoteConnection()" class="px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg font-bold text-xs border border-slate-200 transition">
+                                            Test
+                                        </button>
+                                    </div>
+                                    <div id="voteTestStatus" class="hidden p-2 rounded-lg text-[10px] font-bold"></div>
                                 </div>
 
-                                <div>
-                                    <label
-                                        class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Overlay
-                                        Display Mode</label>
-                                    <select id="voteDisplayMode"
-                                        class="w-full border border-slate-200 rounded-lg p-3 text-sm bg-white">
-                                        <option value="auto">Auto Rotate (Every 5s)</option>
-                                        <option value="news">News Only</option>
-                                        <option value="voting">Voting Only</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label
-                                        class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Main
-                                        Video ID</label>
-                                    <input type="text" id="voteMainVideoId"
-                                        class="w-full border border-slate-200 rounded-lg p-3 text-sm"
-                                        placeholder="v=xxxxxx">
-                                </div>
-
-                                <div id="voteDualInput" class="hidden">
-                                    <label
-                                        class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Voting
-                                        Stream Video ID</label>
-                                    <input type="text" id="voteStreamVideoId"
-                                        class="w-full border border-slate-200 rounded-lg p-3 text-sm"
-                                        placeholder="v=yyyyyy">
-                                </div>
-
-                                <div class="flex gap-4">
-                                    <button onclick="saveVotingConfig()"
-                                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition shadow-lg">
-                                        <i class="fas fa-save mr-2"></i> Save Configuration
-                                    </button>
-                                    <button onclick="testVoteConnection()"
-                                        class="px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-lg font-bold border border-slate-200 transition">
-                                        <i class="fas fa-plug mr-2"></i> Test
-                                    </button>
-                                </div>
-
-                                <div id="voteTestStatus" class="hidden p-3 rounded-lg text-xs font-bold"></div>
-
-                                <div class="pt-6 border-t border-slate-100">
-                                    <h4 class="text-sm font-bold text-red-600 mb-2 uppercase">Danger Zone</h4>
-                                    <button onclick="resetVotes()"
-                                        class="w-full bg-red-100 hover:bg-red-200 text-red-600 py-3 rounded-lg font-bold border border-red-200">
-                                        <i class="fas fa-trash-alt mr-2"></i> RESET ALL VOTES
+                                <div class="mt-4 pt-4 border-t border-slate-100">
+                                    <h4 class="text-[10px] font-bold text-red-600 mb-2 uppercase">Danger Zone</h4>
+                                    <button onclick="resetVotes()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-lg font-bold text-xs border border-red-100">
+                                        RESET VOTES
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Party Assets Card -->
-                        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-xl font-black text-slate-800 flex items-center gap-3">
-                                    <i class="fas fa-images text-purple-500"></i>
-                                    Party Symbols & Leaders
+                        <!-- Col 2: Party Assets -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+                            <h3 class="text-sm font-black text-slate-800 mb-4 flex items-center gap-2">
+                                <i class="fas fa-images text-purple-500"></i> Assets
+                            </h3>
+                            <div class="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                                <!-- Helper Macro-like structure for party cards -->
+                                <div class="grid grid-cols-1 gap-3">
+                                    <!-- DMK -->
+                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                        <p class="text-[10px] font-black text-slate-800 mb-2">DMK+ (திமுக கூட்டணி)</p>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div class="text-center">
+                                                <div class="relative group mx-auto w-12 h-12 mb-1">
+                                                    <img id="preview_leader_DMK_PLUS" src="media/leader_dmk.png" class="w-12 h-12 rounded-lg object-cover border border-slate-200">
+                                                    <button onclick="document.getElementById('upload_leader_DMK_PLUS').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                </div>
+                                                <input type="file" class="hidden" id="upload_leader_DMK_PLUS" onchange="handleAssetUpload('DMK_PLUS', 'leader', this)">
+                                                <p class="text-[8px] font-bold text-slate-400">LEADER</p>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="relative group mx-auto w-12 h-12 mb-1">
+                                                    <img id="preview_symbol_DMK_PLUS" src="media/symbol_dmk.png" class="w-12 h-12 rounded-lg object-contain border border-slate-200 p-1">
+                                                    <button onclick="document.getElementById('upload_symbol_DMK_PLUS').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                </div>
+                                                <input type="file" class="hidden" id="upload_symbol_DMK_PLUS" onchange="handleAssetUpload('DMK_PLUS', 'symbol', this)">
+                                                <p class="text-[8px] font-bold text-slate-400">SYMBOL</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- ADMK -->
+                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                        <p class="text-[10px] font-black text-slate-800 mb-2">ADMK+ (அதிமுக கூட்டணி)</p>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div class="text-center">
+                                                <div class="relative group mx-auto w-12 h-12 mb-1">
+                                                    <img id="preview_leader_ADMK_PLUS" src="media/leader_admk.png" class="w-12 h-12 rounded-lg object-cover border border-slate-200">
+                                                    <button onclick="document.getElementById('upload_leader_ADMK_PLUS').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                </div>
+                                                <input type="file" class="hidden" id="upload_leader_ADMK_PLUS" onchange="handleAssetUpload('ADMK_PLUS', 'leader', this)">
+                                                <p class="text-[8px] font-bold text-slate-400">LEADER</p>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="relative group mx-auto w-12 h-12 mb-1">
+                                                    <img id="preview_symbol_ADMK_PLUS" src="media/symbol_admk.png" class="w-12 h-12 rounded-lg object-contain border border-slate-200 p-1">
+                                                    <button onclick="document.getElementById('upload_symbol_ADMK_PLUS').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                </div>
+                                                <input type="file" class="hidden" id="upload_symbol_ADMK_PLUS" onchange="handleAssetUpload('ADMK_PLUS', 'symbol', this)">
+                                                <p class="text-[8px] font-bold text-slate-400">SYMBOL</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- NTK -->
+                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                        <p class="text-[10px] font-black text-slate-800 mb-2">NTK (நாம் தமிழர்)</p>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div class="text-center">
+                                                <div class="relative group mx-auto w-12 h-12 mb-1">
+                                                    <img id="preview_leader_NTK" src="media/leader_ntk.png" class="w-12 h-12 rounded-lg object-cover border border-slate-200">
+                                                    <button onclick="document.getElementById('upload_leader_NTK').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                </div>
+                                                <input type="file" class="hidden" id="upload_leader_NTK" onchange="handleAssetUpload('NTK', 'leader', this)">
+                                                <p class="text-[8px] font-bold text-slate-400">LEADER</p>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="relative group mx-auto w-12 h-12 mb-1">
+                                                    <img id="preview_symbol_NTK" src="media/symbol_ntk.png" class="w-12 h-12 rounded-lg object-contain border border-slate-200 p-1">
+                                                    <button onclick="document.getElementById('upload_symbol_NTK').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                </div>
+                                                <input type="file" class="hidden" id="upload_symbol_NTK" onchange="handleAssetUpload('NTK', 'symbol', this)">
+                                                <p class="text-[8px] font-bold text-slate-400">SYMBOL</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- TVK -->
+                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                        <p class="text-[10px] font-black text-slate-800 mb-2">TVK (தவெக)</p>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div class="text-center">
+                                                <div class="relative group mx-auto w-12 h-12 mb-1">
+                                                    <img id="preview_leader_TVK" src="media/leader_tvk.png" class="w-12 h-12 rounded-lg object-cover border border-slate-200">
+                                                    <button onclick="document.getElementById('upload_leader_TVK').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                </div>
+                                                <input type="file" class="hidden" id="upload_leader_TVK" onchange="handleAssetUpload('TVK', 'leader', this)">
+                                                <p class="text-[8px] font-bold text-slate-400">LEADER</p>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="relative group mx-auto w-12 h-12 mb-1">
+                                                    <img id="preview_symbol_TVK" src="media/symbol_tvk.png" class="w-12 h-12 rounded-lg object-contain border border-slate-200 p-1">
+                                                    <button onclick="document.getElementById('upload_symbol_TVK').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                </div>
+                                                <input type="file" class="hidden" id="upload_symbol_TVK" onchange="handleAssetUpload('TVK', 'symbol', this)">
+                                                <p class="text-[8px] font-bold text-slate-400">SYMBOL</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Col 3: Standings & Voters -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col h-full">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-sm font-black text-slate-800 flex items-center gap-2">
+                                    <i class="fas fa-chart-bar text-green-500"></i> Standings
                                 </h3>
-                                <span
-                                    class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md uppercase tracking-widest">Custom
-                                    Uploads</span>
-                            </div>
-
-                            <div class="space-y-6">
-                                <!-- DMK+ -->
-                                <div
-                                    class="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                                    <div class="flex items-center gap-3 mb-4">
-                                        <div
-                                            class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600 font-bold text-xs">
-                                            DMK</div>
-                                        <p class="text-sm font-black text-slate-800">DMK+ (திமுக கூட்டணி)</p>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-6">
-                                        <div>
-                                            <label
-                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Leader
-                                                Photo</label>
-                                            <div class="flex items-center gap-3">
-                                                <div class="relative group">
-                                                    <img id="preview_leader_DMK_PLUS" src="media/leader_dmk.png"
-                                                        class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 bg-slate-50">
-                                                    <div
-                                                        class="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                        <i class="fas fa-camera text-white text-xs"></i>
-                                                    </div>
-                                                </div>
-                                                <input type="file" class="hidden" id="upload_leader_DMK_PLUS"
-                                                    accept="image/*"
-                                                    onchange="handleAssetUpload('DMK_PLUS', 'leader', this)">
-                                                <button
-                                                    onclick="document.getElementById('upload_leader_DMK_PLUS').click()"
-                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label
-                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Party
-                                                Symbol</label>
-                                            <div class="flex items-center gap-3">
-                                                <div class="relative group">
-                                                    <img id="preview_symbol_DMK_PLUS" src="media/symbol_dmk.png"
-                                                        class="w-14 h-14 rounded-xl object-contain border-2 border-slate-100 bg-slate-50 p-1">
-                                                    <div
-                                                        class="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                        <i class="fas fa-camera text-white text-xs"></i>
-                                                    </div>
-                                                </div>
-                                                <input type="file" class="hidden" id="upload_symbol_DMK_PLUS"
-                                                    accept="image/*"
-                                                    onchange="handleAssetUpload('DMK_PLUS', 'symbol', this)">
-                                                <button
-                                                    onclick="document.getElementById('upload_symbol_DMK_PLUS').click()"
-                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- ADMK+ -->
-                                <div
-                                    class="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                                    <div class="flex items-center gap-3 mb-4">
-                                        <div
-                                            class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600 font-bold text-xs">
-                                            ADMK</div>
-                                        <p class="text-sm font-black text-slate-800">ADMK+ (அதிமுக கூட்டணி)</p>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-6">
-                                        <div>
-                                            <label
-                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Leader
-                                                Photo</label>
-                                            <div class="flex items-center gap-3">
-                                                <img id="preview_leader_ADMK_PLUS" src="media/leader_admk.png"
-                                                    class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 bg-slate-50">
-                                                <input type="file" class="hidden" id="upload_leader_ADMK_PLUS"
-                                                    accept="image/*"
-                                                    onchange="handleAssetUpload('ADMK_PLUS', 'leader', this)">
-                                                <button
-                                                    onclick="document.getElementById('upload_leader_ADMK_PLUS').click()"
-                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label
-                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Party
-                                                Symbol</label>
-                                            <div class="flex items-center gap-3">
-                                                <img id="preview_symbol_ADMK_PLUS" src="media/symbol_admk.png"
-                                                    class="w-14 h-14 rounded-xl object-contain border-2 border-slate-100 bg-slate-50 p-1">
-                                                <input type="file" class="hidden" id="upload_symbol_ADMK_PLUS"
-                                                    accept="image/*"
-                                                    onchange="handleAssetUpload('ADMK_PLUS', 'symbol', this)">
-                                                <button
-                                                    onclick="document.getElementById('upload_symbol_ADMK_PLUS').click()"
-                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- NTK -->
-                                <div
-                                    class="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                                    <div class="flex items-center gap-3 mb-4">
-                                        <div
-                                            class="w-8 h-8 rounded-lg bg-yellow-50 flex items-center justify-center text-yellow-600 font-bold text-xs">
-                                            NTK</div>
-                                        <p class="text-sm font-black text-slate-800">NTK (நாம் தமிழர்)</p>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-6">
-                                        <div>
-                                            <label
-                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Leader
-                                                Photo</label>
-                                            <div class="flex items-center gap-3">
-                                                <img id="preview_leader_NTK" src="media/leader_ntk.png"
-                                                    class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 bg-slate-50">
-                                                <input type="file" class="hidden" id="upload_leader_NTK"
-                                                    accept="image/*"
-                                                    onchange="handleAssetUpload('NTK', 'leader', this)">
-                                                <button onclick="document.getElementById('upload_leader_NTK').click()"
-                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label
-                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Party
-                                                Symbol</label>
-                                            <div class="flex items-center gap-3">
-                                                <img id="preview_symbol_NTK" src="media/symbol_ntk.png"
-                                                    class="w-14 h-14 rounded-xl object-contain border-2 border-slate-100 bg-slate-50 p-1">
-                                                <input type="file" class="hidden" id="upload_symbol_NTK"
-                                                    accept="image/*"
-                                                    onchange="handleAssetUpload('NTK', 'symbol', this)">
-                                                <button onclick="document.getElementById('upload_symbol_NTK').click()"
-                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- TVK -->
-                                <div
-                                    class="p-5 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                                    <div class="flex items-center gap-3 mb-4">
-                                        <div
-                                            class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs">
-                                            TVK</div>
-                                        <p class="text-sm font-black text-slate-800">TVK (தவெக)</p>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-6">
-                                        <div>
-                                            <label
-                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Leader
-                                                Photo</label>
-                                            <div class="flex items-center gap-3">
-                                                <img id="preview_leader_TVK" src="media/leader_tvk.png"
-                                                    class="w-14 h-14 rounded-xl object-cover border-2 border-slate-100 bg-slate-50">
-                                                <input type="file" class="hidden" id="upload_leader_TVK"
-                                                    accept="image/*"
-                                                    onchange="handleAssetUpload('TVK', 'leader', this)">
-                                                <button onclick="document.getElementById('upload_leader_TVK').click()"
-                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label
-                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Party
-                                                Symbol</label>
-                                            <div class="flex items-center gap-3">
-                                                <img id="preview_symbol_TVK" src="media/symbol_tvk.png"
-                                                    class="w-14 h-14 rounded-xl object-contain border-2 border-slate-100 bg-slate-50 p-1">
-                                                <input type="file" class="hidden" id="upload_symbol_TVK"
-                                                    accept="image/*"
-                                                    onchange="handleAssetUpload('TVK', 'symbol', this)">
-                                                <button onclick="document.getElementById('upload_symbol_TVK').click()"
-                                                    class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">UPLOAD</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right: Results Preview -->
-                        <div class="glass-card rounded-xl p-6 flex flex-col">
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-lg font-bold text-slate-800">Live Standings</h3>
-                                <div class="flex gap-2">
-                                    <a href="/overlay-votes" target="_blank"
-                                        class="text-xs bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-200 font-bold">
-                                        <i class="fas fa-external-link-alt mr-1"></i> Open Overlay
-                                    </a>
-                                    <button onclick="fetchVoteResults()"
-                                        class="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-100 font-bold">
-                                        <i class="fas fa-sync-alt mr-1"></i> Refresh
+                                <div class="flex gap-1">
+                                    <button onclick="fetchVoteResults()" class="text-[9px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold border border-blue-100">
+                                        <i class="fas fa-sync-alt"></i>
                                     </button>
+                                    <a href="/overlay-votes" target="_blank" class="text-[9px] bg-slate-100 px-2 py-1 rounded border border-slate-200 font-bold">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
                                 </div>
                             </div>
 
-                            <div id="votePreviewCounts" class="grid grid-cols-2 gap-4 mb-8">
+                            <div id="votePreviewCounts" class="grid grid-cols-2 gap-2 mb-4">
                                 <!-- Counters will be injected here -->
                             </div>
 
-                            <div class="flex-1 overflow-hidden flex flex-col">
-                                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Recent
-                                    Voters</h4>
-                                <div id="votePreviewLatest" class="space-y-2 overflow-y-auto pr-2">
+                            <div class="flex-1 flex flex-col min-h-0">
+                                <h4 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Recent Voters</h4>
+                                <div id="votePreviewLatest" class="space-y-1.5 overflow-y-auto pr-1 flex-1 custom-scrollbar">
                                     <!-- Latest voters injected here -->
                                 </div>
                             </div>
 
-                            <div class="mt-6 pt-4 border-t border-slate-100">
-                                <button onclick="exportVotes()"
-                                    class="w-full bg-green-50 hover:bg-green-100 text-green-700 py-3 rounded-lg font-bold border border-green-200">
-                                    <i class="fas fa-file-export mr-2"></i> EXPORT TO CSV
+                            <div class="mt-4 pt-4 border-t border-slate-100">
+                                <button onclick="exportVotes()" class="w-full bg-green-50 hover:bg-green-100 text-green-700 py-2 rounded-lg font-bold text-xs border border-green-100 transition">
+                                    EXPORT CSV
                                 </button>
                             </div>
                         </div>
