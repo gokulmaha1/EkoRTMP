@@ -192,6 +192,9 @@ class VoteCollector:
 
     def process_messages(self, messages, stream_id, db: Session):
         new_votes = []
+        counts_cache = {} # (stream_id, party_code) -> VoteCount object
+        batch_channel_ids = set() # track users already counted in this specific batch
+
         for msg in messages:
             snippet = msg.get("snippet", {})
             if snippet.get("type") != "textMessageEvent":
@@ -199,6 +202,11 @@ class VoteCollector:
                 
             author = msg.get("authorDetails", {})
             channel_id = author.get("channelId")
+            
+            # 1. Batch-level deduplication (Fast in-memory check)
+            if channel_id in batch_channel_ids:
+                continue
+
             display_name = author.get("displayName")
             profile_url = author.get("profileImageUrl")
             text = snippet.get("textMessageDetails", {}).get("messageText")
@@ -206,7 +214,7 @@ class VoteCollector:
             
             party_code, party_tamil = self.detect_party(text)
             if party_code:
-                # Check for duplicate
+                # 2. DB-level check for duplicate (Existing voters from previous runs)
                 exists = db.query(Voter).filter(
                     Voter.stream_id == stream_id,
                     Voter.author_channel_id == channel_id
@@ -223,28 +231,47 @@ class VoteCollector:
                         message_id=msg_id
                     )
                     db.add(voter)
+                    batch_channel_ids.add(channel_id)
                     
-                    # Update count
-                    count = db.query(VoteCount).filter(
-                        VoteCount.stream_id == stream_id,
-                        VoteCount.party_code == party_code
-                    ).first()
-                    
-                    if not count:
-                        count = VoteCount(stream_id=stream_id, party_code=party_code, party_tamil=party_tamil, total=0)
-                        db.add(count)
+                    # Track counts in memory during the batch to avoid IntegrityError
+                    count_key = (stream_id, party_code)
+                    if count_key in counts_cache:
+                        count = counts_cache[count_key]
+                    else:
+                        count = db.query(VoteCount).filter(
+                            VoteCount.stream_id == stream_id,
+                            VoteCount.party_code == party_code
+                        ).first()
+                        
+                        if not count:
+                            count = VoteCount(stream_id=stream_id, party_code=party_code, party_tamil=party_tamil, total=0)
+                            db.add(count)
+                        
+                        counts_cache[count_key] = count
                     
                     count.total += 1
-                    new_votes.append({
-                        "id": voter.id,
-                        "name": display_name,
-                        "party": party_tamil,
-                        "image": profile_url
-                    })
+                    
+                    # We flush to get the ID for the overlay feed, but don't commit until the end
+                    try:
+                        db.flush()
+                        new_votes.append({
+                            "id": voter.id,
+                            "name": display_name,
+                            "party": party_tamil,
+                            "image": profile_url
+                        })
+                    except Exception as e:
+                        print(f"[VoteCollector] Flush error: {e}")
+                        db.rollback()
+                        continue
         
         if new_votes:
-            db.commit()
-            return new_votes
+            try:
+                db.commit()
+                return new_votes
+            except Exception as e:
+                print(f"[VoteCollector] Commit error: {e}")
+                db.rollback()
         return []
 
     def run_loop(self):
