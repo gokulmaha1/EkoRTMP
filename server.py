@@ -1202,8 +1202,7 @@ def get_api_logs(db: Session = Depends(get_db)):
 @app.get("/api/votes/counts")
 def get_vote_counts(db: Session = Depends(get_db)):
     from services.vote_collector import PARTIES
-    # Debug log
-    # print(f"[DEBUG] PARTIES: {PARTIES.keys()}")
+    print(f"[API] GET /api/votes/counts called")
     
     db_counts = db.query(VoteCount).all()
     
@@ -1214,11 +1213,14 @@ def get_vote_counts(db: Session = Depends(get_db)):
     for c in db_counts:
         results[c.party_code] = c.total
         
+    print(f"[API] Returning vote counts: {results}")
     return results
 
 @app.get("/api/votes/latest")
 def get_latest_voters(db: Session = Depends(get_db)):
+    print(f"[API] GET /api/votes/latest called")
     voters = db.query(Voter).order_by(Voter.id.desc()).limit(10).all()
+    print(f"[API] Returning {len(voters)} latest voters")
     return voters
 
 @app.post("/api/votes/reset")

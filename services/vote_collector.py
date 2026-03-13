@@ -97,8 +97,10 @@ class VoteCollector:
         
     def get_live_chat_id(self, video_id):
         if not self.api_key or not video_id:
+            print(f"[VoteCollector] Missing API Key or Video ID for chat fetch.")
             return None
             
+        print(f"[VoteCollector] Fetching live chat ID for video: {video_id}")
         url = "https://www.googleapis.com/youtube/v3/videos"
         params = {
             "part": "liveStreamingDetails",
@@ -110,14 +112,19 @@ class VoteCollector:
             self.log_api_call(SessionLocal(), url, params, r)
             self.status["raw_response_snippet"] = r.text[:500]
             if r.status_code != 200:
+                print(f"[VoteCollector] Error fetching chat ID: HTTP {r.status_code}")
                 self.status["api_error"] = f"HTTP {r.status_code}: {r.text[:100]}"
                 return None
             
             data = r.json()
             if "items" in data and len(data["items"]) > 0:
-                return data["items"][0].get("liveStreamingDetails", {}).get("activeLiveChatId")
+                chat_id = data["items"][0].get("liveStreamingDetails", {}).get("activeLiveChatId")
+                print(f"[VoteCollector] Found active chat ID: {chat_id}")
+                return chat_id
+            else:
+                print(f"[VoteCollector] No active live chat found for video.")
         except Exception as e:
-            print(f"[VoteCollector] Error fetching chat ID: {e}")
+            print(f"[VoteCollector] Exception fetching chat ID: {e}")
             self.status["api_error"] = str(e)
         return None
 
@@ -225,6 +232,7 @@ class VoteCollector:
                 if self.next_page_token:
                     params["pageToken"] = self.next_page_token
                 
+                print(f"[VoteCollector] Polling chat messages (liveChatId: {chat_id})...")
                 r = requests.get(url, params=params, timeout=10)
                 # Detailed log mapping for debugging
                 self.log_api_call(db, url, params, r)
