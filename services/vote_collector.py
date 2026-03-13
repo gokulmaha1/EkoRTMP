@@ -37,8 +37,10 @@ class VoteCollector:
         self.is_running = False
         self.thread = None
         self.next_page_token = None
-        self.polling_interval = 5 # seconds
+        self.polling_interval = 30 # Hardcoded default
         self.last_chat_id = None
+        self.cached_chat_id = None # Cache for Chat ID
+        self.cached_video_id = None # For cache invalidation
         self.on_new_vote = None
         self.status = {
             "is_running": False,
@@ -48,7 +50,7 @@ class VoteCollector:
             "current_video_id": None,
             "api_error": None,
             "raw_response_snippet": None,
-            "last_error_type": None # New: help identify if quota, key, or video
+            "last_error_type": None
         }
 
     def extract_video_id(self, input_str):
@@ -56,7 +58,6 @@ class VoteCollector:
         input_str = input_str.strip()
         if len(input_str) == 11: return input_str
         
-        # Regex for various Youtube URL Formats: watch?v=, youtu.be/, /live/, /shorts/
         patterns = [
             r"v=([0-9A-Za-z_-]{11})",
             r"be/([0-9A-Za-z_-]{11})",
@@ -68,7 +69,7 @@ class VoteCollector:
             match = re.search(p, input_str)
             if match: return match.group(1)
             
-        return input_str # Return as-is if no match, maybe it's just a raw ID but not 11?
+        return input_str
 
     def load_config(self, db: Session):
         cfg = db.query(SystemConfig).filter(SystemConfig.key == "voting_config").first()
@@ -81,7 +82,7 @@ class VoteCollector:
             new_main_id = data.get("main_video_id")
             new_vote_id = data.get("vote_video_id")
             new_mode = data.get("stream_mode", "single")
-            new_interval = int(data.get("poll_interval", 5))
+            # poll_interval is ignored, now hardcoded to 30s
 
             # Detect change in video/key to reset polling state
             target_id = new_vote_id if new_mode == "dual" else new_main_id
@@ -91,12 +92,12 @@ class VoteCollector:
                 print(f"[VoteCollector] Config changed. Resetting state. Target: {target_id}")
                 self.next_page_token = None
                 self.last_chat_id = None
+                self.cached_chat_id = None # Reset cache
 
             self.api_key = new_api_key
             self.main_video_id = new_main_id
             self.vote_video_id = new_vote_id
             self.stream_mode = new_mode
-            self.polling_interval = new_interval
         except Exception as e:
             print(f"[VoteCollector] Error loading config: {e}")
 
@@ -117,14 +118,17 @@ class VoteCollector:
             print(f"[VoteCollector] Log error: {e}")
         
     def get_live_chat_id(self, video_id):
-        # Extract ID in case a full URL was passed
         video_id = self.extract_video_id(video_id)
+
+        # Use Cache if available
+        if self.cached_chat_id and self.cached_video_id == video_id and not self.status.get("api_error"):
+            return self.cached_chat_id
 
         if not self.api_key or not video_id:
             print(f"[VoteCollector] Missing API Key or Video ID for chat fetch.")
             return None
             
-        print(f"[VoteCollector] Fetching live chat ID for video: {video_id}")
+        print(f"[VoteCollector] Requesting live chat ID for video: {video_id}")
         url = "https://www.googleapis.com/youtube/v3/videos"
         params = {
             "part": "liveStreamingDetails",
@@ -132,7 +136,7 @@ class VoteCollector:
             "key": self.api_key
         }
         try:
-            r = requests.get(url, params=params)
+            r = requests.get(url, params=params, timeout=10)
             self.log_api_call(SessionLocal(), url, params, r)
             self.status["raw_response_snippet"] = r.text[:500]
             
@@ -141,7 +145,7 @@ class VoteCollector:
                 reason = error_data.get("errors", [{}])[0].get("reason", "unknown")
                 msg = error_data.get("message", "Request Failed")
                 
-                print(f"[VoteCollector] API Error: {reason} - {msg}")
+                print(f"[VoteCollector] API Error (ChatID): {reason} - {msg}")
                 self.status["last_error_type"] = reason
                 self.status["api_error"] = f"YouTube API Error ({reason}): {msg}"
                 return None
@@ -157,7 +161,9 @@ class VoteCollector:
                     self.status["api_error"] = "Video is not currently live or streaming."
                     return None
                     
-                print(f"[VoteCollector] Found active chat ID: {chat_id}")
+                print(f"[VoteCollector] Cached chat ID: {chat_id}")
+                self.cached_chat_id = chat_id
+                self.cached_video_id = video_id
                 return chat_id
             else:
                 print(f"[VoteCollector] Video ID not found or invalid: {video_id}")
@@ -300,7 +306,10 @@ class VoteCollector:
                 
                 messages = data.get("items", [])
                 self.next_page_token = data.get("nextPageToken")
-                self.polling_interval = data.get("pollingIntervalMillis", 5000) / 1000.0
+                
+                # We enforce minimum 30s polling, but if YouTube asks for MORE, we respect that.
+                yt_suggested = data.get("pollingIntervalMillis", 5000) / 1000.0
+                self.polling_interval = max(30.0, yt_suggested)
                 
                 new_votes = self.process_messages(messages, target_video_id, db)
                 
@@ -314,6 +323,11 @@ class VoteCollector:
                     "api_error": None,
                     "raw_response_snippet": r.text[:500]
                 })
+
+                if len(messages) > 0:
+                    print(f"[VoteCollector] Poll complete. Found {len(messages)} messages, {len(new_votes)} new votes. Next poll in {self.polling_interval}s.")
+                else:
+                    print(f"[VoteCollector] Poll complete. No new messages. Next poll in {self.polling_interval}s.")
 
                 # Broadcast new votes if any
                 if new_votes and self.on_new_vote:

@@ -1296,7 +1296,6 @@ async function loadVotingConfig() {
             document.getElementById('voteStreamVideoId').value = config.vote_video_id || '';
             document.getElementById('voteStreamMode').value = config.stream_mode || 'single';
             document.getElementById('voteDisplayMode').value = config.overlay_display_mode || 'auto';
-            document.getElementById('votePollInterval').value = config.poll_interval || 5;
 
             // Load Party Assets
             if (config.party_assets) {
@@ -1335,7 +1334,6 @@ async function saveVotingConfig() {
         main_video_id: document.getElementById('voteMainVideoId').value,
         vote_video_id: document.getElementById('voteStreamVideoId').value,
         stream_mode: document.getElementById('voteStreamMode').value,
-        poll_interval: parseInt(document.getElementById('votePollInterval').value),
         overlay_display_mode: document.getElementById('voteDisplayMode').value,
         party_assets: {
             DMK_PLUS: {
