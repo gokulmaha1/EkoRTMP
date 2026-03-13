@@ -261,8 +261,8 @@ class VoteCollector:
                 if not chat_id:
                     time.sleep(30)
                     continue
-
-                url = "https://www.googleapis.com/youtube/v3/liveChatMessages"
+                url = "https://youtube.googleapis.com/youtube/v3/liveChat/messages"
+                # url = "https://www.googleapis.com/youtube/v3/liveChatMessages"
                 params = {
                     "part": "snippet,authorDetails",
                     "liveChatId": chat_id,

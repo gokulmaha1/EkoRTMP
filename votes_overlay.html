@@ -84,12 +84,35 @@
         .count-up {
             font-variant-numeric: tabular-nums;
         }
+
+        /* Progress Bar Styles */
+        .progress-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ef4444, #f87171);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+            transition: width 0.1s linear;
+        }
     </style>
 </head>
 
 <body>
     <!-- Main Overlay Container -->
     <div class="relative w-full h-full flex flex-col justify-end p-8">
+        <!-- Progress Bar Indicator -->
+        <div class="progress-container">
+            <div id="refresh-progress" class="progress-bar"></div>
+        </div>
 
         <!-- Live Counters (Left Sidebar Style) -->
         <div class="absolute top-8 left-8 flex flex-col gap-4 w-72">
@@ -136,6 +159,19 @@
         let voteCounts = {};
         let ttsQueue = [];
         let isSpeaking = false;
+        let refreshStartTime = Date.now();
+        const REFRESH_INTERVAL = 30000; // 30 seconds
+
+        function updateProgressBar() {
+            const elapsed = Date.now() - refreshStartTime;
+            const progress = Math.min((elapsed / REFRESH_INTERVAL) * 100, 100);
+            document.getElementById('refresh-progress').style.width = progress + '%';
+            requestAnimationFrame(updateProgressBar);
+        }
+
+        function resetRefreshTimer() {
+            refreshStartTime = Date.now();
+        }
 
         async function fetchCounts() {
             try {
@@ -181,6 +217,7 @@
                 console.log("[Overlay] Received latest voters:", voters);
                 renderVoterFeed(voters);
                 updateTicker(voters);
+                resetRefreshTimer();
             } catch (e) {
                 console.error("[Overlay] Error fetching latest voters:", e);
             }
@@ -268,10 +305,11 @@
         fetchCounts();
         fetchLatestVoters();
         connectWS();
+        updateProgressBar();
 
         // Interval updates for safety
-        setInterval(fetchCounts, 30000);
-        setInterval(fetchLatestVoters, 30000);
+        setInterval(fetchCounts, REFRESH_INTERVAL);
+        setInterval(fetchLatestVoters, REFRESH_INTERVAL);
 
     </script>
 </body>

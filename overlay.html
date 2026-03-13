@@ -820,16 +820,14 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            animation: slideInRight 0.5s ease-out;
         }
 
-        .v-popup img {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            border: 2px solid white;
+        .vote-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ef4444, #f87171);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
+            transition: width 0.1s linear;
         }
     </style>
 </head>
@@ -892,6 +890,10 @@
 
             <!-- VOTING PRESENTATION -->
             <div id="votingPresentation" class="voting-presentation" style="display: none;">
+                <!-- Vote Refresh Progress Bar -->
+                <div class="vote-progress-container">
+                    <div id="voteRefreshProgress" class="vote-progress-bar"></div>
+                </div>
                 <div class="vp-main">
                     <div class="vp-title-section">
                         <div class="vp-live-dot"></div>
@@ -1132,6 +1134,20 @@
         let ttsQueue = [];
         let isSpeaking = false;
         let currentOverlayMode = 'auto'; // auto, news, voting
+        let voteRefreshStartTime = Date.now();
+        const VOTE_REFRESH_INTERVAL = 30000; // 30 seconds
+
+        function updateVoteProgressBar() {
+            const elapsed = Date.now() - voteRefreshStartTime;
+            const progress = Math.min((elapsed / VOTE_REFRESH_INTERVAL) * 100, 100);
+            const progressBar = document.getElementById('voteRefreshProgress');
+            if (progressBar) progressBar.style.width = progress + '%';
+            requestAnimationFrame(updateVoteProgressBar);
+        }
+
+        function resetVoteRefreshTimer() {
+            voteRefreshStartTime = Date.now();
+        }
 
         const ws = new WebSocket(WS_URL);
         ws.onopen = () => console.log("WS Connected");
@@ -1516,6 +1532,7 @@
                 const resLatest = await fetch(`${API_BASE}/votes/latest`);
                 const latest = await resLatest.json();
                 renderVPVoterFeed(latest);
+                resetVoteRefreshTimer();
             } catch (e) {
                 console.error("Error fetching vote stats:", e);
             }
@@ -1664,6 +1681,10 @@
         fetchNews();
         fetchAds();
         fetchVoteStats();
+        updateVoteProgressBar();
+
+        // Refresh votes every 30s
+        setInterval(fetchVoteStats, VOTE_REFRESH_INTERVAL);
 
         // Start Rotation
         setInterval(cycleContent, 5000);
