@@ -169,9 +169,9 @@
 
         .logo-img {
             position: absolute;
-            top: 0px;
-            right: 15px;
-            height: 85px;
+            top: -17px;
+            right: -11px;
+            height: 86px;
             /* Much larger logo */
             width: auto;
             object-fit: contain;
@@ -231,15 +231,13 @@
 
         .ticker-label {
             display: table-cell;
-            width: 180px;
-            /* Fixed Width */
+            width: 125px;
             vertical-align: middle;
             background: var(--header-gradient);
-            /* Match Header */
             color: white;
             font-size: 22px;
             font-weight: 700;
-            padding: 0 25px;
+            padding: 0 15px;
             height: 100%;
             z-index: 10;
             text-transform: uppercase;
@@ -642,7 +640,7 @@
             display: flex;
             flex-direction: column;
             /* Changed to column */
-            padding: 25px 60px;
+            padding: 5px 60px;
             gap: 20px;
             z-index: 60;
             animation: fadeIn 1s ease-out;
@@ -795,7 +793,7 @@
             content: "";
             position: absolute;
             inset: 0;
-            border-radius: 120px 120px 20px 20px;
+            border-radius: 20px 20px 20px 20px;
             padding: 4px;
             /* Border thickness */
             /* The animated conic gradient */
@@ -890,9 +888,9 @@
             width: 100px;
             height: 100px;
             background: #ffffff;
-            border-radius: 50%;
+            border-radius: 20%;
             border: #cc0000 3px solid;
-            padding: 10px;
+            padding: 2px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
             object-fit: contain;
             filter: none;
@@ -1213,6 +1211,39 @@
             }
         }
 
+        // --- VOTING HEADER ROTATOR ---
+        const votingHeadlines = [
+            "மாபெரும் 2026 தேர்தல் கருத்துக்கணிப்பு",
+            "இலக்கு 1 கோடி வாக்காளர்கள்",
+            "Comment your Vote - Live results"
+        ];
+        let votingHeaderIndex = 0;
+        let votingHeaderInterval = null;
+
+        function startVotingHeaderRotation() {
+            if (votingHeaderInterval) clearInterval(votingHeaderInterval);
+            votingHeaderInterval = setInterval(() => {
+                if (currentOverlayMode !== 'voting') {
+                    clearInterval(votingHeaderInterval);
+                    return;
+                }
+                const el = document.getElementById('topHeadline');
+
+                el.classList.remove('animate-in');
+                el.classList.add('animate-out');
+
+                setTimeout(() => {
+                    votingHeaderIndex = (votingHeaderIndex + 1) % votingHeadlines.length;
+                    el.innerText = votingHeadlines[votingHeaderIndex];
+                    el.style.fontSize = "26px";
+                    el.style.whiteSpace = "nowrap";
+
+                    el.classList.remove('animate-out');
+                    el.classList.add('animate-in');
+                }, 500);
+            }, 2500); // 2.5s cycle per user request (2s visible + 0.5s transition)
+        }
+
         // Helper to force switch
         function updateDisplayModeDirectly() {
             const news = document.getElementById('newsPresentation');
@@ -1224,15 +1255,19 @@
                 news.style.display = 'flex';
                 voting.style.display = 'none';
                 showVoting = false;
+                if (votingHeaderInterval) clearInterval(votingHeaderInterval);
             } else if (currentOverlayMode === 'voting') {
                 news.style.display = 'none';
                 voting.style.display = 'flex';
                 showVoting = true;
 
-                loc.innerText = "மாபெரும் 2026 தேர்தல் கருத்துக்கணிப்பு";
-                el.innerText = "இலக்கு 1 கோடி வாக்காளர்கள்  |  Cast your vote on comments - Live results";
-                el.style.fontSize = "24px";
+                loc.innerText = "நேரலை தொடர்கிறது"; // Live Coverage or similar
+                votingHeaderIndex = 0;
+                el.innerText = votingHeadlines[0];
+                el.style.fontSize = "26px";
                 el.style.whiteSpace = "nowrap";
+
+                startVotingHeaderRotation();
             }
         }
 
@@ -1625,17 +1660,13 @@
             const item = pool[headlineIndex];
 
             // --- HEADER UPDATE ---
-            const el = document.getElementById('topHeadline');
-            el.classList.remove('animate-in');
-            el.classList.add('animate-out');
+            // Only update news headers if voting mode is NOT active to prevent conflicting text.
+            if (currentOverlayMode !== 'voting') {
+                const el = document.getElementById('topHeadline');
+                el.classList.remove('animate-in');
+                el.classList.add('animate-out');
 
-            setTimeout(() => {
-                if (currentOverlayMode === 'voting') {
-                    el.innerText = "இலக்கு 1 கோடி வாக்காளர்கள்  |  Cast your vote on comments - Live results";
-                    el.style.fontSize = "24px";
-                    el.style.whiteSpace = "nowrap";
-                    document.getElementById('locationText').innerText = "மாபெரும் தேர்தல் கருத்துக்கணிப்பு";
-                } else {
+                setTimeout(() => {
                     const text = item.title_tamil || "";
                     el.innerText = text;
                     // Sizing text
@@ -1651,11 +1682,11 @@
 
                     // Location - Always show static label
                     document.getElementById('locationText').innerText = "அண்மை செய்திகள்";
-                }
 
-                el.classList.remove('animate-out');
-                el.classList.add('animate-in');
-            }, 500);
+                    el.classList.remove('animate-out');
+                    el.classList.add('animate-in');
+                }, 500);
+            }
 
 
             const MAX_AGE_MS = 24 * 60 * 60 * 1000;
@@ -1749,6 +1780,13 @@
                     symbol: assets.TVK?.symbol || 'media/symbol_tvk.png'
                 }
             ];
+
+            // Sort parties based on the number of votes secured (descending)
+            parties.sort((a, b) => {
+                const countA = voteCounts[a.code] || 0;
+                const countB = voteCounts[b.code] || 0;
+                return countB - countA;
+            });
 
             container.innerHTML = parties.map((p, i) => {
                 const count = voteCounts[p.code] || 0;
