@@ -417,11 +417,11 @@
 
         @keyframes scroll-linear {
             0% {
-                transform: translateX(0);
+                transform: translate3d(0, 0, 0);
             }
 
             100% {
-                transform: translateX(-50%);
+                transform: translate3d(-50%, 0, 0);
             }
         }
 
@@ -772,8 +772,9 @@
         }
 
         .vp-party-card {
-            background: linear-gradient(to top, rgba(20, 20, 40, 0.95), rgba(40, 40, 80, 0.4));
-            backdrop-filter: blur(20px);
+            background: linear-gradient(to top, rgba(20, 20, 40, 0.95), rgba(40, 40, 80, 0.8));
+            backdrop-filter: blur(10px);
+            transform: translateZ(0); /* Force layer acceleration */
             /* Animated border replaces static border */
             border-radius: 20px 20px 20px 20px;
             /* Arched tops */
@@ -896,7 +897,9 @@
             filter: none;
             z-index: 3;
             pointer-events: none;
-            animation: spinBadge 4s linear infinite;
+            will-change: transform;
+            transform: translateZ(0);
+            animation: spinBadge 6s linear infinite;
         }
 
         @keyframes spinBadge {
@@ -946,16 +949,17 @@
 
         @keyframes scrollHorizontal {
             0% {
-                transform: translateX(0);
+                transform: translate3d(0, 0, 0);
             }
 
             100% {
-                transform: translateX(-50%);
+                transform: translate3d(-50%, 0, 0);
             }
         }
 
         .animate-scroll {
             animation: scrollHorizontal 30s linear infinite;
+            will-change: transform;
         }
 
         /* Vote Popup */
