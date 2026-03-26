@@ -303,13 +303,12 @@
             background: #d60000;
             color: white;
             font-weight: 700;
-            padding: 7px 15px;
+            padding: 3px 10px;
             border-radius: 25px;
             font-size: 14px;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            margin-left: 10px;
+            float: right;
         }
 
         .datetime {
@@ -345,7 +344,7 @@
             border-radius: 50%;
             animation: blink 1s infinite;
             float: left;
-            margin-top: 9px;
+            margin-top: 0px;
             margin-left: 2px;
         }
 
@@ -765,19 +764,9 @@
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
         }
 
-        @property --border-angle {
-            syntax: "<angle>";
-            inherits: false;
-            initial-value: 0deg;
-        }
-
         .vp-party-card {
-            background: linear-gradient(to top, rgba(20, 20, 40, 0.95), rgba(40, 40, 80, 0.8));
-            backdrop-filter: blur(10px);
-            transform: translateZ(0); /* Force layer acceleration */
-            /* Animated border replaces static border */
-            border-radius: 20px 20px 20px 20px;
-            /* Arched tops */
+            background: rgba(20, 20, 40, 1);
+            border-radius: 20px;
             padding: 30px 15px 0 15px;
             display: flex;
             flex-direction: column;
@@ -788,35 +777,49 @@
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             animation: fadeInUp 0.8s ease-out both;
             animation-delay: var(--delay, 0s);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            transform: translateZ(0);
+            /* Hardware Acceleration */
+        }
+
+        .vp-party-card>* {
+            z-index: 3;
+            position: relative;
+        }
+
+        .vp-party-card::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent 0%,
+                    rgba(255, 215, 0, 1) 10%,
+                    rgba(255, 0, 0, 1) 25%,
+                    transparent 50%);
+            animation: spinBorderGPU 4s linear infinite;
+            z-index: 1;
+            pointer-events: none;
         }
 
         .vp-party-card::after {
             content: "";
             position: absolute;
-            inset: 0;
-            border-radius: 20px 20px 20px 20px;
-            padding: 4px;
-            /* Border thickness */
-            /* The animated conic gradient */
-            background: conic-gradient(from var(--border-angle),
-                    transparent 0%,
-                    rgba(255, 215, 0, 0.9) 10%,
-                    rgba(255, 0, 0, 0.9) 25%,
-                    transparent 50%);
-            /* Mask to apply it only to the border area */
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            mask-composite: exclude;
-            z-index: 10;
+            inset: 4px;
+            border-radius: 16px;
+            background: rgba(15, 20, 35, 1);
+            z-index: 2;
             pointer-events: none;
-            animation: spinGlow 3s linear infinite;
-            animation-delay: var(--delay, 0s);
         }
 
-        @keyframes spinGlow {
+        @keyframes spinBorderGPU {
+            0% {
+                transform: rotate(0deg) translateZ(0);
+            }
+
             100% {
-                --border-angle: 360deg;
+                transform: rotate(360deg) translateZ(0);
             }
         }
 
@@ -842,7 +845,7 @@
         .vp-leader-img {
             width: 100%;
             height: auto;
-            max-height: 250px;
+            max-height: 220px;
             object-fit: contain;
             object-position: bottom;
             filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5));
@@ -850,11 +853,14 @@
 
         .vp-party-info {
             text-align: center;
-            z-index: 2;
+            z-index: 10;
+            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 5px;
+            gap: 2px;
+            margin-bottom: 5px;
+            width: 100%;
         }
 
         .vp-party-name {
@@ -1065,7 +1071,7 @@
                     <div class="vp-title-section">
                         <h3 class="vp-title" style="font-size: 18px;">சமீபத்திய வாக்குகள்</h3>
                         <div class="vote-instructions">
-                            <span>🗳️ TO VOTE, TYPE IN CHAT:</span>
+                            <span>TO VOTE, TYPE IN CHAT:</span>
                             <div class="vote-commands">
                                 <span class="vote-cmd">DMK</span>
                                 <span class="vote-cmd">ADMK</span>
@@ -1131,6 +1137,16 @@
 
 
         // --- CLOCK ---
+        // --- SHARED STATE ---
+        let currentOverlayMode = 'voting'; // Default to voting (auto, news, voting)
+        let voteCounts = {};
+        let ttsQueue = [];
+        let isSpeaking = false;
+        let isNewsActive = false;
+        let showVoting = true; // Default to true
+        let voteRefreshStartTime = Date.now();
+        const VOTE_REFRESH_INTERVAL = 30000; // 30 seconds
+
         function updateTime() {
             const now = new Date();
             // Force IST Timezone
@@ -1215,7 +1231,6 @@
             }
         }
 
-        // --- VOTING HEADER ROTATOR ---
         const votingHeadlines = [
             "மாபெரும் 2026 தேர்தல் கருத்துக்கணிப்பு",
             "இலக்கு 1 கோடி வாக்காளர்கள்",
@@ -1225,13 +1240,17 @@
         let votingHeaderInterval = null;
 
         function startVotingHeaderRotation() {
-            if (votingHeaderInterval) clearInterval(votingHeaderInterval);
+            if (votingHeaderInterval) return; // Prevent double intervals
             votingHeaderInterval = setInterval(() => {
-                if (currentOverlayMode !== 'voting') {
+                const voting = document.getElementById('votingPresentation');
+                const el = document.getElementById('topHeadline');
+                
+                // If voting is NO LONGER visible, stop rotating
+                if (window.getComputedStyle(voting).display === 'none') {
                     clearInterval(votingHeaderInterval);
+                    votingHeaderInterval = null;
                     return;
                 }
-                const el = document.getElementById('topHeadline');
 
                 el.classList.remove('animate-in');
                 el.classList.add('animate-out');
@@ -1259,7 +1278,10 @@
                 news.style.display = 'flex';
                 voting.style.display = 'none';
                 showVoting = false;
-                if (votingHeaderInterval) clearInterval(votingHeaderInterval);
+                if (votingHeaderInterval) {
+                    clearInterval(votingHeaderInterval);
+                    votingHeaderInterval = null;
+                }
             } else if (currentOverlayMode === 'voting') {
                 news.style.display = 'none';
                 voting.style.display = 'flex';
@@ -1274,6 +1296,8 @@
                 startVotingHeaderRotation();
             }
         }
+
+        updateDisplayModeDirectly();
 
         // --- NEWS HANDLING ---
         async function fetchNews() {
@@ -1342,13 +1366,7 @@
 
 
 
-        // --- WEBSOCKET ---
-        let voteCounts = {};
-        let ttsQueue = [];
-        let isSpeaking = false;
-        let currentOverlayMode = 'voting'; // Default to voting (auto, news, voting)
-        let voteRefreshStartTime = Date.now();
-        const VOTE_REFRESH_INTERVAL = 30000; // 30 seconds
+
 
         function updateVoteProgressBar() {
             const elapsed = Date.now() - voteRefreshStartTime;
@@ -1721,9 +1739,7 @@
 
 
 
-        // --- VOTING SYSTEM HELPERS ---
-        let showVoting = true; // Default to true
-        let isNewsActive = false;
+
 
         async function fetchVoteStats() {
             try {
@@ -1904,9 +1920,14 @@
             if (showVoting) {
                 news.style.display = 'none';
                 voting.style.display = 'flex';
+                startVotingHeaderRotation();
             } else {
                 voting.style.display = 'none';
                 news.style.display = 'flex';
+                if (votingHeaderInterval) {
+                    clearInterval(votingHeaderInterval);
+                    votingHeaderInterval = null;
+                }
             }
         }
 
