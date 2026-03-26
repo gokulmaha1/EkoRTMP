@@ -985,7 +985,7 @@
                     </div>
                 </div>
             </div>
-            <script src="/static/admin/admin.js"></script>            <!-- VIEW: VOTING MANAGER -->
+            <script src="/static/admin/admin.js"></script> <!-- VIEW: VOTING MANAGER -->
             <div id="view-voting" class="view-section">
                 <div class="space-y-4">
                     <!-- Compact Top Row: Status -->
@@ -997,7 +997,8 @@
                             </h3>
                             <div class="flex flex-1 flex-wrap items-center gap-6">
                                 <div class="flex items-center gap-2">
-                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">State:</span>
+                                    <span
+                                        class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">State:</span>
                                     <div id="statVoteRunning"
                                         class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-slate-200 text-slate-600">
                                         <div class="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
@@ -1005,25 +1006,35 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Last Poll:</span>
-                                    <span id="statVoteLastPoll" class="text-sm font-black text-slate-900">--:--:--</span>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Last
+                                        Poll:</span>
+                                    <span id="statVoteLastPoll"
+                                        class="text-sm font-black text-slate-900">--:--:--</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Messages:</span>
+                                    <span
+                                        class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Messages:</span>
                                     <span id="statVoteMsgs" class="text-sm font-black text-slate-900">0</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Session Votes:</span>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Session
+                                        Votes:</span>
                                     <span id="statVoteSession" class="text-sm font-black text-slate-900">0</span>
                                 </div>
                                 <!-- Progress Bar Column -->
                                 <div class="flex flex-col gap-1 min-w-[120px]">
                                     <div class="flex justify-between items-center">
-                                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Refresh Sync</span>
-                                        <span id="voteRefreshTimerText" class="text-[9px] font-bold text-blue-500">30s</span>
+                                        <span
+                                            class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Refresh
+                                            Sync</span>
+                                        <span id="voteRefreshTimerText"
+                                            class="text-[9px] font-bold text-blue-500">30s</span>
                                     </div>
-                                    <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
-                                        <div id="voteRefreshProgress" class="h-full bg-blue-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                    <div
+                                        class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50">
+                                        <div id="voteRefreshProgress"
+                                            class="h-full bg-blue-500 rounded-full transition-all duration-300"
+                                            style="width: 0%"></div>
                                     </div>
                                 </div>
                             </div>
@@ -1043,7 +1054,7 @@
 
                     <!-- Main Grid: Settings, Assets, Results -->
                     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-                        
+
                         <!-- Col 1: Settings -->
                         <div class="space-y-4">
                             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
@@ -1052,39 +1063,59 @@
                                 </h3>
                                 <div class="space-y-3">
                                     <div>
-                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">YouTube API Key</label>
-                                        <input type="password" id="voteApiKey" class="w-full border border-slate-200 rounded-lg p-2 text-xs" placeholder="AIzaSy...">
+                                        <label
+                                            class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">YouTube
+                                            API Key</label>
+                                        <input type="password" id="voteApiKey"
+                                            class="w-full border border-slate-200 rounded-lg p-2 text-xs"
+                                            placeholder="AIzaSy...">
                                     </div>
                                     <div class="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Stream Mode</label>
-                                            <select id="voteStreamMode" class="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white">
+                                            <label
+                                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Stream
+                                                Mode</label>
+                                            <select id="voteStreamMode"
+                                                class="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white">
                                                 <option value="single">Single</option>
                                                 <option value="dual">Dual</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div>
-                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Display Mode</label>
-                                        <select id="voteDisplayMode" class="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white">
+                                        <label
+                                            class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Display
+                                            Mode</label>
+                                        <select id="voteDisplayMode"
+                                            class="w-full border border-slate-200 rounded-lg p-2 text-xs bg-white">
                                             <option value="auto">Auto Rotate (5s)</option>
                                             <option value="news">News Only</option>
                                             <option value="voting">Voting Only</option>
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Main Video ID</label>
-                                        <input type="text" id="voteMainVideoId" class="w-full border border-slate-200 rounded-lg p-2 text-xs" placeholder="v=xxxxxx">
+                                        <label
+                                            class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Main
+                                            Video ID</label>
+                                        <input type="text" id="voteMainVideoId"
+                                            class="w-full border border-slate-200 rounded-lg p-2 text-xs"
+                                            placeholder="v=xxxxxx">
                                     </div>
                                     <div id="voteDualInput" class="hidden">
-                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Voting Video ID</label>
-                                        <input type="text" id="voteStreamVideoId" class="w-full border border-slate-200 rounded-lg p-2 text-xs" placeholder="v=yyyyyy">
+                                        <label
+                                            class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Voting
+                                            Video ID</label>
+                                        <input type="text" id="voteStreamVideoId"
+                                            class="w-full border border-slate-200 rounded-lg p-2 text-xs"
+                                            placeholder="v=yyyyyy">
                                     </div>
                                     <div class="flex gap-2 pt-2">
-                                        <button onclick="saveVotingConfig()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-xs transition shadow-sm">
+                                        <button onclick="saveVotingConfig()"
+                                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-xs transition shadow-sm">
                                             Save
                                         </button>
-                                        <button onclick="testVoteConnection()" class="px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg font-bold text-xs border border-slate-200 transition">
+                                        <button onclick="testVoteConnection()"
+                                            class="px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg font-bold text-xs border border-slate-200 transition">
                                             Test
                                         </button>
                                     </div>
@@ -1093,7 +1124,8 @@
 
                                 <div class="mt-4 pt-4 border-t border-slate-100">
                                     <h4 class="text-[10px] font-bold text-red-600 mb-2 uppercase">Danger Zone</h4>
-                                    <button onclick="resetVotes()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-lg font-bold text-xs border border-red-100">
+                                    <button onclick="resetVotes()"
+                                        class="w-full bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-lg font-bold text-xs border border-red-100">
                                         RESET VOTES
                                     </button>
                                 </div>
@@ -1114,18 +1146,26 @@
                                         <div class="grid grid-cols-2 gap-4">
                                             <div class="text-center">
                                                 <div class="relative group mx-auto w-12 h-12 mb-1">
-                                                    <img id="preview_leader_DMK_PLUS" src="media/leader_dmk.png" class="w-12 h-12 rounded-lg object-cover border border-slate-200">
-                                                    <button onclick="document.getElementById('upload_leader_DMK_PLUS').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                    <img id="preview_leader_DMK_PLUS" src="media/leader_dmk.png"
+                                                        class="w-12 h-12 rounded-lg object-cover border border-slate-200">
+                                                    <button
+                                                        onclick="document.getElementById('upload_leader_DMK_PLUS').click()"
+                                                        class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
                                                 </div>
-                                                <input type="file" class="hidden" id="upload_leader_DMK_PLUS" onchange="handleAssetUpload('DMK_PLUS', 'leader', this)">
+                                                <input type="file" class="hidden" id="upload_leader_DMK_PLUS"
+                                                    onchange="handleAssetUpload('DMK_PLUS', 'leader', this)">
                                                 <p class="text-[8px] font-bold text-slate-400">LEADER</p>
                                             </div>
                                             <div class="text-center">
                                                 <div class="relative group mx-auto w-12 h-12 mb-1">
-                                                    <img id="preview_symbol_DMK_PLUS" src="media/symbol_dmk.png" class="w-12 h-12 rounded-lg object-contain border border-slate-200 p-1">
-                                                    <button onclick="document.getElementById('upload_symbol_DMK_PLUS').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                    <img id="preview_symbol_DMK_PLUS" src="media/symbol_dmk.png"
+                                                        class="w-12 h-12 rounded-lg object-contain border border-slate-200 p-1">
+                                                    <button
+                                                        onclick="document.getElementById('upload_symbol_DMK_PLUS').click()"
+                                                        class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
                                                 </div>
-                                                <input type="file" class="hidden" id="upload_symbol_DMK_PLUS" onchange="handleAssetUpload('DMK_PLUS', 'symbol', this)">
+                                                <input type="file" class="hidden" id="upload_symbol_DMK_PLUS"
+                                                    onchange="handleAssetUpload('DMK_PLUS', 'symbol', this)">
                                                 <p class="text-[8px] font-bold text-slate-400">SYMBOL</p>
                                             </div>
                                         </div>
@@ -1136,18 +1176,26 @@
                                         <div class="grid grid-cols-2 gap-4">
                                             <div class="text-center">
                                                 <div class="relative group mx-auto w-12 h-12 mb-1">
-                                                    <img id="preview_leader_ADMK_PLUS" src="media/leader_admk.png" class="w-12 h-12 rounded-lg object-cover border border-slate-200">
-                                                    <button onclick="document.getElementById('upload_leader_ADMK_PLUS').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                    <img id="preview_leader_ADMK_PLUS" src="media/leader_admk.png"
+                                                        class="w-12 h-12 rounded-lg object-cover border border-slate-200">
+                                                    <button
+                                                        onclick="document.getElementById('upload_leader_ADMK_PLUS').click()"
+                                                        class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
                                                 </div>
-                                                <input type="file" class="hidden" id="upload_leader_ADMK_PLUS" onchange="handleAssetUpload('ADMK_PLUS', 'leader', this)">
+                                                <input type="file" class="hidden" id="upload_leader_ADMK_PLUS"
+                                                    onchange="handleAssetUpload('ADMK_PLUS', 'leader', this)">
                                                 <p class="text-[8px] font-bold text-slate-400">LEADER</p>
                                             </div>
                                             <div class="text-center">
                                                 <div class="relative group mx-auto w-12 h-12 mb-1">
-                                                    <img id="preview_symbol_ADMK_PLUS" src="media/symbol_admk.png" class="w-12 h-12 rounded-lg object-contain border border-slate-200 p-1">
-                                                    <button onclick="document.getElementById('upload_symbol_ADMK_PLUS').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                    <img id="preview_symbol_ADMK_PLUS" src="media/symbol_admk.png"
+                                                        class="w-12 h-12 rounded-lg object-contain border border-slate-200 p-1">
+                                                    <button
+                                                        onclick="document.getElementById('upload_symbol_ADMK_PLUS').click()"
+                                                        class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
                                                 </div>
-                                                <input type="file" class="hidden" id="upload_symbol_ADMK_PLUS" onchange="handleAssetUpload('ADMK_PLUS', 'symbol', this)">
+                                                <input type="file" class="hidden" id="upload_symbol_ADMK_PLUS"
+                                                    onchange="handleAssetUpload('ADMK_PLUS', 'symbol', this)">
                                                 <p class="text-[8px] font-bold text-slate-400">SYMBOL</p>
                                             </div>
                                         </div>
@@ -1158,18 +1206,26 @@
                                         <div class="grid grid-cols-2 gap-4">
                                             <div class="text-center">
                                                 <div class="relative group mx-auto w-12 h-12 mb-1">
-                                                    <img id="preview_leader_NTK" src="media/leader_ntk.png" class="w-12 h-12 rounded-lg object-cover border border-slate-200">
-                                                    <button onclick="document.getElementById('upload_leader_NTK').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                    <img id="preview_leader_NTK" src="media/leader_ntk.png"
+                                                        class="w-12 h-12 rounded-lg object-cover border border-slate-200">
+                                                    <button
+                                                        onclick="document.getElementById('upload_leader_NTK').click()"
+                                                        class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
                                                 </div>
-                                                <input type="file" class="hidden" id="upload_leader_NTK" onchange="handleAssetUpload('NTK', 'leader', this)">
+                                                <input type="file" class="hidden" id="upload_leader_NTK"
+                                                    onchange="handleAssetUpload('NTK', 'leader', this)">
                                                 <p class="text-[8px] font-bold text-slate-400">LEADER</p>
                                             </div>
                                             <div class="text-center">
                                                 <div class="relative group mx-auto w-12 h-12 mb-1">
-                                                    <img id="preview_symbol_NTK" src="media/symbol_ntk.png" class="w-12 h-12 rounded-lg object-contain border border-slate-200 p-1">
-                                                    <button onclick="document.getElementById('upload_symbol_NTK').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                    <img id="preview_symbol_NTK" src="media/symbol_ntk.png"
+                                                        class="w-12 h-12 rounded-lg object-contain border border-slate-200 p-1">
+                                                    <button
+                                                        onclick="document.getElementById('upload_symbol_NTK').click()"
+                                                        class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
                                                 </div>
-                                                <input type="file" class="hidden" id="upload_symbol_NTK" onchange="handleAssetUpload('NTK', 'symbol', this)">
+                                                <input type="file" class="hidden" id="upload_symbol_NTK"
+                                                    onchange="handleAssetUpload('NTK', 'symbol', this)">
                                                 <p class="text-[8px] font-bold text-slate-400">SYMBOL</p>
                                             </div>
                                         </div>
@@ -1180,18 +1236,26 @@
                                         <div class="grid grid-cols-2 gap-4">
                                             <div class="text-center">
                                                 <div class="relative group mx-auto w-12 h-12 mb-1">
-                                                    <img id="preview_leader_TVK" src="media/leader_tvk.png" class="w-12 h-12 rounded-lg object-cover border border-slate-200">
-                                                    <button onclick="document.getElementById('upload_leader_TVK').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                    <img id="preview_leader_TVK" src="media/leader_tvk.png"
+                                                        class="w-12 h-12 rounded-lg object-cover border border-slate-200">
+                                                    <button
+                                                        onclick="document.getElementById('upload_leader_TVK').click()"
+                                                        class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
                                                 </div>
-                                                <input type="file" class="hidden" id="upload_leader_TVK" onchange="handleAssetUpload('TVK', 'leader', this)">
+                                                <input type="file" class="hidden" id="upload_leader_TVK"
+                                                    onchange="handleAssetUpload('TVK', 'leader', this)">
                                                 <p class="text-[8px] font-bold text-slate-400">LEADER</p>
                                             </div>
                                             <div class="text-center">
                                                 <div class="relative group mx-auto w-12 h-12 mb-1">
-                                                    <img id="preview_symbol_TVK" src="media/symbol_tvk.png" class="w-12 h-12 rounded-lg object-contain border border-slate-200 p-1">
-                                                    <button onclick="document.getElementById('upload_symbol_TVK').click()" class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
+                                                    <img id="preview_symbol_TVK" src="media/symbol_tvk.png"
+                                                        class="w-12 h-12 rounded-lg object-contain border border-slate-200 p-1">
+                                                    <button
+                                                        onclick="document.getElementById('upload_symbol_TVK').click()"
+                                                        class="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[8px] text-white font-bold">EDIT</button>
                                                 </div>
-                                                <input type="file" class="hidden" id="upload_symbol_TVK" onchange="handleAssetUpload('TVK', 'symbol', this)">
+                                                <input type="file" class="hidden" id="upload_symbol_TVK"
+                                                    onchange="handleAssetUpload('TVK', 'symbol', this)">
                                                 <p class="text-[8px] font-bold text-slate-400">SYMBOL</p>
                                             </div>
                                         </div>
@@ -1207,10 +1271,12 @@
                                     <i class="fas fa-chart-bar text-green-500"></i> Standings
                                 </h3>
                                 <div class="flex gap-1">
-                                    <button onclick="fetchVoteResults()" class="text-[9px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold border border-blue-100">
+                                    <button onclick="fetchVoteResults()"
+                                        class="text-[9px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold border border-blue-100">
                                         <i class="fas fa-sync-alt"></i>
                                     </button>
-                                    <a href="/overlay-votes" target="_blank" class="text-[9px] bg-slate-100 px-2 py-1 rounded border border-slate-200 font-bold">
+                                    <a href="/overlay-votes" target="_blank"
+                                        class="text-[9px] bg-slate-100 px-2 py-1 rounded border border-slate-200 font-bold">
                                         <i class="fas fa-external-link-alt"></i>
                                     </a>
                                 </div>
@@ -1221,14 +1287,17 @@
                             </div>
 
                             <div class="flex-1 flex flex-col min-h-0">
-                                <h4 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Recent Voters</h4>
-                                <div id="votePreviewLatest" class="space-y-1.5 overflow-y-auto pr-1 flex-1 custom-scrollbar">
+                                <h4 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Recent
+                                    Voters</h4>
+                                <div id="votePreviewLatest"
+                                    class="space-y-1.5 overflow-y-auto pr-1 flex-1 custom-scrollbar">
                                     <!-- Latest voters injected here -->
                                 </div>
                             </div>
 
                             <div class="mt-4 pt-4 border-t border-slate-100">
-                                <button onclick="exportVotes()" class="w-full bg-green-50 hover:bg-green-100 text-green-700 py-2 rounded-lg font-bold text-xs border border-green-100 transition">
+                                <button onclick="exportVotes()"
+                                    class="w-full bg-green-50 hover:bg-green-100 text-green-700 py-2 rounded-lg font-bold text-xs border border-green-100 transition">
                                     EXPORT CSV
                                 </button>
                             </div>

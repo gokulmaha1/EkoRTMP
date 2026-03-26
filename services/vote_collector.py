@@ -184,10 +184,20 @@ class VoteCollector:
 
     def detect_party(self, message):
         norm_message = self.normalize_text(message)
+        
+        # Collect all keywords and sort by length descending 
+        # to ensure longer strings like 'ADMK' match before 'DMK'
+        all_kws = []
         for code, info in PARTIES.items():
             for kw in info["keywords"]:
-                if kw.upper() in norm_message:
-                    return code, info["tamil"]
+                all_kws.append((kw.upper(), code, info["tamil"]))
+                
+        all_kws.sort(key=lambda x: len(x[0]), reverse=True)
+        
+        for kw, code, tamil in all_kws:
+            if kw in norm_message:
+                return code, tamil
+                
         return None, None
 
     def process_messages(self, messages, stream_id, db: Session):
